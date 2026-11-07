@@ -66,7 +66,7 @@ ALERT_BG = "#5a4a00"
 LINK_COLORS = {
     "q": "#ffd100",                                   # quete
     "i0": "#9d9d9d", "i1": "#ffffff", "i2": "#1eff00", "i3": "#0070dd",   # objets par qualite
-    "i4": "#a335ee", "i5": "#ff8000", "i6": "#e6cc80", "i7": "#00ccff",
+    "i4": "#a335ee", "i5": "#ff8000", "i6": "#e6cc80", "i7": "#00ccff", "i8": "#00ccff",
     "s": "#71d5ff",                                   # sort, talent
     "e": "#ffd000",                                   # enchantement, metier
     "a": "#ffff00",                                   # haut fait

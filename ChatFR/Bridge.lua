@@ -133,7 +133,9 @@ local LTYPE = { item = "i", quest = "q", spell = "s", talent = "s", enchant = "e
 local function LinkMark(color, ltype, name)
   local code = LTYPE[ltype] or "o"
   if code == "i" then
-    code = "i" .. (QUALITY[(color or ""):lower():sub(3)] or "1")
+    -- couleur en hexa (|cffa335ee) ou par nom (|cnIQ4: = qualite 4)
+    local q = color and (color:match("^IQ(%d)$") or QUALITY[color:lower():sub(3)])
+    code = "i" .. (q or "1")
   end
   return "\2" .. code .. "\3" .. name .. "\4"
 end
@@ -144,8 +146,9 @@ function ns.BridgePush(event, msg, author, chan)
   if not kind or type(msg) ~= "string" or type(author) ~= "string" then return end
   msg = msg:gsub("[\1-\31]", " ")
   msg = msg:gsub("|c(%x%x%x%x%x%x%x%x)|H([^:|]+):[^|]*|h(.-)|h|r", LinkMark)
+  msg = msg:gsub("|cn([%w_]+):|H([^:|]+):[^|]*|h(.-)|h|r", LinkMark)
   msg = msg:gsub("|H([^:|]+):[^|]*|h(.-)|h", function(t, n) return LinkMark(nil, t, n) end)
-  msg = msg:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""):gsub("|T.-|t", "")
+  msg = msg:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|cn[%w_]+:", ""):gsub("|r", ""):gsub("|T.-|t", "")
   chan = (type(chan) == "string") and chan:gsub("^%d+%.%s*", ""):gsub("[\1-\31]", " ") or ""
   author = author:gsub("[\1-\31]", " ")
   local rec = kind .. "\31" .. chan .. "\31" .. author .. "\31" .. msg
