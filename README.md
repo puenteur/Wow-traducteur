@@ -73,6 +73,15 @@ Il démarre `translator.py` sans fenêtre de console, avec `pyw` (le lanceur ins
 
 Pour voir les erreurs en cas de problème, lance plutôt `python translator.py` depuis un terminal ouvert dans le dossier `Traducteur`.
 
+### Réglages
+
+Le bouton **Réglages** de la fenêtre permet de :
+
+- **Filtrer les canaux** : dans « Canaux masqués », écris des mots du nom des canaux à cacher, séparés par des virgules (ex. `trade,commerce,recherche`). Le commerce est masqué par défaut.
+- **Être alerté** : renseigne « Ton pseudo » et des « Mots surveillés » (séparés par des virgules) ; la ligne est surlignée et un son est joué quand l'un d'eux apparaît.
+- **Ne voir que les messages étrangers** : décoche « Afficher aussi les messages déjà en français ».
+- Régler l'opacité et la taille du texte, garder la fenêtre au premier plan, couper le son, désactiver la fermeture automatique avec WoW.
+
 ### Commandes utiles de l'addon
 
 | Commande | Effet |
