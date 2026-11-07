@@ -528,6 +528,15 @@ def lexicon_expand(text):
     return re.sub(r"(?<![\w/])[A-Za-z][A-Za-z0-9']*(?:/o|/)?(?![\w])", rep, text)
 
 
+# Prix en pieces ("100 po", "2pa 50pc") : jamais traduits (po = "apres" en polonais, etc.).
+_COIN_RE = re.compile(r"^(?:\s*\d+(?:[.,]\d+)?\s*k?\s*(?:po|pa|pc)(?![A-Za-z\u00c0-\u024f])[\s,.+&;!?-]*(?:et\s+)?)+$", re.I)
+
+
+def is_coin_only(text):
+    """True si le message ne contient que des montants en po / pa / pc (ex. '100 po')."""
+    return bool(_COIN_RE.match(text.strip()))
+
+
 def worth_translating(text):
     letters = re.sub(r"[^A-Za-z\u00c0-\u024f\u0400-\u04ff\u0600-\u06ff\u3040-\u9fff]", "", text)
     return len(letters) >= 2
@@ -914,7 +923,9 @@ class App:
             lex = None
             if not mine and cfg["target"].lower() == "fr":
                 lex = lexicon_full(text)
-            if lex:
+            if is_coin_only(text):
+                pass                                   # "100 po" : affiche tel quel, sans traduction
+            elif lex:
                 trans, lang = lex, "en"           # lexique : pas d'appel a Google
             elif not mine and worth_translating(text):
                 try:
