@@ -493,7 +493,18 @@ LEX_EXPAND = {
     "im": "I'm", "dont": "don't", "cant": "can't", "wont": "won't", "didnt": "didn't",
     "inv": "invite", "dmg": "damage", "lvl": "level", "lvling": "leveling", "dungeon": "dungeon",
     "dps": "DPS", "oom": "out of mana", "gz": "congratulations", "gj": "good job", "wp": "well played",
+    "whisp": "whisper", "wisp": "whisper", "whis": "whisper", "pst": "whisper me",
 }
+
+# Expressions entieres (regex, remplacement) appliquees avant les mots seuls : "LFM Hogger" ne doit pas
+# devenir "cherche plus de Hogger", ni "whisp for inv" "fouette pour inviter".
+LEX_PHRASES = [
+    (r"\blfm(?:\s+for)?\b", "looking for more players for"),
+    (r"\blf(\d)m\b", r"looking for \1 more players"),
+    (r"\b(?:whisp|wisp|whis|whisper|pst|pm|w/)\s+(?:me\s+)?for\s+(?:an?\s+)?(?:inv|invite|invites)\b",
+     "whisper me for an invite"),
+    (r"\bfor\s+inv\b", "for an invite"),
+]
 
 _PUNCT_END = re.compile(r"[\s?!.¿¡…:;,~*]+$")
 _PUNCT_START = re.compile(r"^[\s?!.¿¡…:;,~*]+")
@@ -521,6 +532,9 @@ def lexicon_full(text):
 
 def lexicon_expand(text):
     """Remplace les abreviations par l'anglais complet (mots entiers seulement)."""
+    for pat, repl in LEX_PHRASES:
+        text = re.sub(pat, repl, text, flags=re.I)
+
     def rep(m):
         w = m.group(0)
         full = LEX_EXPAND.get(w.lower())
