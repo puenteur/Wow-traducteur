@@ -59,6 +59,8 @@ Pourquoi une bande de couleurs ? Un addon WoW n'a pas accès à Internet, et le 
 
 Un petit lexique de joueur traduit directement les messages courts (« who » → qui, « ty » → merci, « gg » → bien joué, « lfg » → cherche groupe…) et développe les abréviations anglaises avant Google (« where r u » → « where are you »). Tu peux ajouter tes mots dans `LEX_FULL` et `LEX_EXPAND`, au début de `translator.py`.
 
+Les liens du tchat sont colorés comme dans le jeu : quêtes en jaune, objets selon leur qualité (gris, blanc, vert, bleu, violet, orange), sorts en bleu clair, enchantements en jaune-orangé. Dans la traduction, le nom du lien est traduit par Google : cherche le nom anglais d'origine (ligne du dessus) si tu veux retrouver l'objet ou la quête.
+
 Le traducteur se ferme tout seul quelques secondes après la fermeture de WoW. La fenêtre se déplace par sa barre du haut et se redimensionne par le coin en bas à droite.
 
 ### Windows affiche « Windows a protégé votre ordinateur » ?
@@ -87,6 +89,8 @@ Pour voir les erreurs en cas de problème, lance plutôt `python translator.py` 
 | Pont image : signal absent, capture 0 % non noire | passe le jeu en **Fenêtré** ou **Plein écran (fenêtré)** |
 | Pont image : signal absent, capture non noire | vérifie que l'addon est activé, tape `/cfr pont` si la bande a disparu, retire ce qui la recouvre ; voir `debug_pont.bmp` à côté de `translator.py` |
 | Erreur traduction : … | vérifie Internet ; après une rafale de messages, attends une minute |
+
+Les liens apparaissent sans couleur ou avec de petits carrés bizarres : l'addon et le traducteur ne sont pas de la même version. Mets à jour les deux ensemble (addon `ChatFR` et dossier `Traducteur`).
 
 Fenêtre perdue hors de l'écran : ferme-la, supprime `translator_config.json`, relance.
 Alt+Z (masquer l'interface) cache aussi la bande : le traducteur ne reçoit plus rien tant qu'elle est masquée.

@@ -122,12 +122,30 @@ function ns.BridgeSetShown(on)
   if on then frame:Show() else frame:Hide() end
 end
 
+-- Liens du tchat : on garde le type (objet, quete, sort...) et la qualite de l'objet pour que
+-- le traducteur puisse les colorer. Format : \2 code \3 [Nom] \4  (code = i0..i7 objet par
+-- qualite, q quete, s sort, e enchantement/metier, a haut fait, o autre).
+local QUALITY = { ["9d9d9d"] = "0", ["ffffff"] = "1", ["1eff00"] = "2", ["0070dd"] = "3",
+                  ["a335ee"] = "4", ["ff8000"] = "5", ["e6cc80"] = "6", ["00ccff"] = "7" }
+local LTYPE = { item = "i", quest = "q", spell = "s", talent = "s", enchant = "e",
+                trade = "e", achievement = "a" }
+
+local function LinkMark(color, ltype, name)
+  local code = LTYPE[ltype] or "o"
+  if code == "i" then
+    code = "i" .. (QUALITY[(color or ""):lower():sub(3)] or "1")
+  end
+  return "\2" .. code .. "\3" .. name .. "\4"
+end
+
 function ns.BridgePush(event, msg, author, chan)
   if not frame or not (ChatFRDB and ChatFRDB.bridge) then return end
   local kind = KIND[event]
   if not kind or type(msg) ~= "string" or type(author) ~= "string" then return end
-  msg = msg:gsub("|H.-|h(.-)|h", "%1"):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
-  msg = msg:gsub("|T.-|t", ""):gsub("[\1-\31]", " ")
+  msg = msg:gsub("[\1-\31]", " ")
+  msg = msg:gsub("|c(%x%x%x%x%x%x%x%x)|H([^:|]+):[^|]*|h(.-)|h|r", LinkMark)
+  msg = msg:gsub("|H([^:|]+):[^|]*|h(.-)|h", function(t, n) return LinkMark(nil, t, n) end)
+  msg = msg:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""):gsub("|T.-|t", "")
   chan = (type(chan) == "string") and chan:gsub("^%d+%.%s*", ""):gsub("[\1-\31]", " ") or ""
   author = author:gsub("[\1-\31]", " ")
   local rec = kind .. "\31" .. chan .. "\31" .. author .. "\31" .. msg

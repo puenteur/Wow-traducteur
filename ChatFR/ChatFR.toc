@@ -2,7 +2,7 @@
 ## Title: ChatFR
 ## Notes: Annote le tchat avec des traductions FR (abreviations courantes) et active le log pour le traducteur externe.
 ## Author: Yohann
-## Version: 1.0
+## Version: 1.2
 ## SavedVariables: ChatFRDB
 
 Dictionary.lua

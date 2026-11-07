@@ -61,6 +61,51 @@ COLORS = {
 TRANS_COLOR = "#6fd3ff"
 ALERT_BG = "#5a4a00"
 
+# Liens du tchat (envoyes par l'addon sous la forme \x02 code \x03 [Nom] \x04) :
+# couleurs comme dans le tchat officiel de WoW.
+LINK_COLORS = {
+    "q": "#ffd100",                                   # quete
+    "i0": "#9d9d9d", "i1": "#ffffff", "i2": "#1eff00", "i3": "#0070dd",   # objets par qualite
+    "i4": "#a335ee", "i5": "#ff8000", "i6": "#e6cc80", "i7": "#00ccff",
+    "s": "#71d5ff",                                   # sort, talent
+    "e": "#ffd000",                                   # enchantement, metier
+    "a": "#ffff00",                                   # haut fait
+    "o": "#ffd100",                                   # autre lien
+}
+LINK_RE = re.compile(r"\x02([a-z0-9]+)\x03(.*?)(?:\x04|$)", re.S)
+BRACKET_RE = re.compile(r"\[[^\]]*\]")
+
+
+def split_links(text):
+    """Texte de l'addon -> (texte brut sans marqueurs, [(segment, code ou None), ...])."""
+    spans, pos = [], 0
+    for m in LINK_RE.finditer(text):
+        if m.start() > pos:
+            spans.append((text[pos:m.start()], None))
+        spans.append((m.group(2), m.group(1) if m.group(1) in LINK_COLORS else "o"))
+        pos = m.end()
+    if pos < len(text):
+        spans.append((text[pos:], None))
+    plain = "".join(seg for seg, _ in spans)
+    return plain, spans
+
+
+def color_brackets(trans, codes):
+    """Colore les [liens] d'une traduction, dans l'ordre des liens du message d'origine.
+    Si Google a change le nombre de crochets, on ne colore rien (mieux que de se tromper)."""
+    found = list(BRACKET_RE.finditer(trans))
+    if not codes or len(found) != len(codes):
+        return [(trans, None)]
+    out, pos = [], 0
+    for m, code in zip(found, codes):
+        if m.start() > pos:
+            out.append((trans[pos:m.start()], None))
+        out.append((m.group(0), code))
+        pos = m.end()
+    if pos < len(trans):
+        out.append((trans[pos:], None))
+    return out
+
 
 def load_config():
     cfg = dict(DEFAULTS)
@@ -581,6 +626,8 @@ class App:
         self.text.tag_configure("badge", foreground="#9aa7b4")
         self.text.tag_configure("err", foreground="#ff7070")
         self.text.tag_configure("me", foreground="#ffd479")
+        for code, c in LINK_COLORS.items():     # en dernier : la couleur du lien prime
+            self.text.tag_configure("link_" + code, foreground=c)
         self.text.bind("<Button-1>", self.on_click)
 
         out = tk.Frame(r, bg="#171d24")
@@ -846,6 +893,8 @@ class App:
             except queue.Empty:
                 continue
             cfg = self.cfg
+            raw = text
+            text, _spans = split_links(raw)
             low_chan = chan.lower()
             hidden = [h.strip().lower() for h in cfg["hidden"].split(",") if h.strip()]
             if any(h in low_chan for h in hidden):
@@ -886,7 +935,7 @@ class App:
                                 trans, lang = t2, "en"
                 except Exception as e:  # noqa
                     self.outq.put(("status", "Erreur traduction : %s" % e))
-            self.outq.put(("msg", hhmm, kind, chan, author, text, trans, lang, alert, mine))
+            self.outq.put(("msg", hhmm, kind, chan, author, text, trans, lang, alert, mine, raw))
 
     # ---- affichage ---------------------------------------------------------
     def poll(self):
@@ -906,7 +955,7 @@ class App:
             pass
         self.root.after(100, self.poll)
 
-    def show(self, hhmm, kind, chan, author, text, trans, lang, alert, mine):
+    def show(self, hhmm, kind, chan, author, text, trans, lang, alert, mine, raw=None):
         tgt = self.cfg["target"].lower()
         same = (lang or "").lower().split("-")[0] == tgt
         if same and not self.cfg["show_french"] and not alert:
@@ -922,9 +971,17 @@ class App:
             parts.append(("(%s) " % tail[:14], "badge"))
         marks = (tag, "alert") if alert else (tag,)
         parts.append((author + ": ", *marks))
-        parts.append((text + "\n", *marks))
+        _plain, spans = split_links(raw if raw is not None else text)
+        for seg, code in spans:
+            parts.append((seg, *marks, "link_" + code) if code else (seg, *marks))
+        parts.append(("\n", *marks))
         if trans and not same and trans.strip().lower() != text.strip().lower():
-            parts.append(("\u2192 " + trans + "\n", "trans", "alert") if alert else ("\u2192 " + trans + "\n", "trans"))
+            tmarks = ("trans", "alert") if alert else ("trans",)
+            parts.append(("\u2192 ", *tmarks))
+            codes = [c for _, c in spans if c]
+            for seg, code in color_brackets(trans, codes):
+                parts.append((seg, *tmarks, "link_" + code) if code else (seg, *tmarks))
+            parts.append(("\n", *tmarks))
         self.add(*parts)
         self.line_lang[start_line] = lang if not same else None
         if (not mine and not same and trans and lang not in ("?", "")
