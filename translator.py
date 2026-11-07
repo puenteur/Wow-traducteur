@@ -200,6 +200,33 @@ def google_translate(text, target, source="auto", timeout=8):
     return out, lang
 
 
+# Noms propres que Google prend pour des mots communs ("hogger" -> "porc"). Ils sont remplaces par
+# un code avant l'envoi a Google puis remis tels quels dans la traduction. Ajoute les tiens ici.
+LEX_NAMES = ["Hogger"]
+
+
+def google_translate_safe(text, target, source="auto", timeout=8):
+    """Comme google_translate, mais sans laisser Google traduire les noms de LEX_NAMES."""
+    found = {}
+
+    def mask(m):
+        key = "Zq%dx" % len(found)
+        found[key] = next(n for n in LEX_NAMES if n.lower() == m.group(0).lower())
+        return key
+    if LEX_NAMES:
+        pat = r"(?<!\w)(?:%s)(?!\w)" % "|".join(re.escape(n) for n in LEX_NAMES)
+        text = re.sub(pat, mask, text, flags=re.I)
+    out, lang = google_translate(text, target, source, timeout)
+    for key, name in found.items():
+        out = re.sub(re.escape(key), lambda _m, n=name: n, out, flags=re.I)
+    return out, lang
+
+
+def has_protected_name(text):
+    low = text.lower()
+    return any(re.search(r"(?<!\w)%s(?!\w)" % re.escape(n.lower()), low) for n in LEX_NAMES)
+
+
 # --------------------------------------------------------------------------
 # Pont image : l'addon dessine une bande de cases colorees en haut a gauche de
 # l'ecran de WoW (64 x 12 cases de 6 px, 3 bits par case). On la lit par capture d'ecran.
@@ -946,8 +973,11 @@ class App:
                     trans, lang = google_translate(text, cfg["target"])
                     if lang == "en" and cfg["target"].lower() == "fr":
                         exp = lexicon_expand(text)
-                        if exp != text:           # abreviations : on retraduit la phrase developpee
-                            trans, _ = google_translate(exp, cfg["target"], source="en")
+                        if exp != text or has_protected_name(text):
+                            # abreviations / noms propres : on retraduit la phrase developpee
+                            trans, _ = google_translate_safe(exp, cfg["target"], source="en")
+                    elif lang not in ("?", "") and has_protected_name(text):
+                        trans, _ = google_translate_safe(text, cfg["target"], source=lang)
                     if unreliable_detection(text, lang):
                         # 2-3 mots, langue improbable (ex. "more for hogger" -> norvegien) :
                         # francais mal ecrit, sinon on reessaie en supposant de l'anglais
@@ -955,7 +985,7 @@ class App:
                         if looks_french(text):
                             lang = "fr"
                         else:
-                            t2, _ = google_translate(lexicon_expand(text), cfg["target"], source="en")
+                            t2, _ = google_translate_safe(lexicon_expand(text), cfg["target"], source="en")
                             if t2 and t2.strip().lower() != text.strip().lower():
                                 trans, lang = t2, "en"
                 except Exception as e:  # noqa
