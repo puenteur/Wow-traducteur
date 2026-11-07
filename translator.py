@@ -4,7 +4,7 @@ Traducteur de tchat WoW  (v2)
 
 - Lit WoWChatLog.txt (cree par /chatlog) et traduit chaque message vers le francais
   (langue d'origine detectee automatiquement : [DE], [EN], [PL]...).
-- Couleurs par canal, canaux masquables (commerce masque par defaut).
+- Couleurs par canal, canaux masquables (aucun masque par defaut).
 - Alertes (son + surlignage) quand ton pseudo ou un mot surveille apparait.
 - Zone du bas : tu ecris en francais, ca traduit dans la langue voulue et ca COPIE
   le resultat : il ne reste qu'a faire Ctrl+V dans WoW.
@@ -41,7 +41,7 @@ DEFAULTS = {
     "out_lang": "en",               # langue pour ce que tu ecris
     "my_name": "",                  # ton pseudo (alertes)
     "keywords": "",                 # mots surveilles, separes par des virgules
-    "hidden": "trade,commerce,services,handel,comercio",
+    "hidden": "",
     "sound": True,
     "topmost": True,
     "alpha": 0.92,
