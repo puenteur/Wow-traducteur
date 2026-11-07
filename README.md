@@ -35,6 +35,8 @@ Pourquoi une bande de couleurs ? Un addon WoW n'a pas accès à Internet, et le 
 3. La barre de statut doit afficher **« Pont image : OK (N messages reçus) »**. Les messages arrivent traduits en 1 à 2 secondes, avec un badge de langue (`[EN]`, `[DE]`, `[RU]`…).
 4. Pour répondre : tape en français dans **« Écrire (FR) → »**, appuie sur Entrée, puis **Ctrl+V** dans le tchat de WoW. La langue de réponse se règle seule sur le dernier message étranger reçu.
 
+Un petit lexique de joueur traduit directement les messages courts (« who » → qui, « ty » → merci, « gg » → bien joué, « lfg » → cherche groupe…) et développe les abréviations anglaises avant Google (« where r u » → « where are you »). Tu peux ajouter tes mots dans `LEX_FULL` et `LEX_EXPAND`, au début de `translator.py`.
+
 Le traducteur se ferme tout seul quelques secondes après la fermeture de WoW. La fenêtre se déplace par sa barre du haut et se redimensionne par le coin en bas à droite.
 
 ### `Lancer le traducteur.bat`

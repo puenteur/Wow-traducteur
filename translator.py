@@ -390,6 +390,99 @@ def unreliable_detection(text, lang):
             and (lang or "").lower().split("-")[0] not in PLAUSIBLE_LANGS)
 
 
+# --------------------------------------------------------------------------
+# Petit lexique de joueur (utilise seulement quand la langue cible est le francais)
+# --------------------------------------------------------------------------
+# 1) Messages ENTIERS courts traduits directement, sans Google (evite "who" -> "OMS").
+#    Ajoute tes propres entrees ici : "message en minuscules": "traduction".
+LEX_FULL = {
+    "who": "qui", "who me": "qui, moi", "me": "moi", "where": "où", "when": "quand",
+    "why": "pourquoi", "what": "quoi", "how": "comment", "how much": "combien",
+    "yes": "oui", "yep": "ouais", "yeah": "ouais", "ya": "ouais", "yup": "ouais",
+    "no": "non", "nope": "non", "nah": "non", "ok": "ok", "okay": "ok", "k": "ok", "kk": "ok",
+    "sure": "bien sûr", "maybe": "peut-être", "idk": "je ne sais pas", "dunno": "je ne sais pas",
+    "ty": "merci", "thx": "merci", "thanks": "merci", "tyvm": "merci beaucoup",
+    "thank you": "merci", "ty all": "merci à tous", "thanks all": "merci à tous",
+    "np": "pas de souci", "no problem": "pas de souci", "yw": "de rien", "you're welcome": "de rien",
+    "hi": "salut", "hello": "bonjour", "hey": "salut", "yo": "salut", "hi all": "salut tout le monde",
+    "hello all": "bonjour à tous", "hey all": "salut tout le monde", "sup": "quoi de neuf",
+    "bye": "au revoir", "cya": "à plus", "see ya": "à plus", "gn": "bonne nuit", "good night": "bonne nuit",
+    "gm": "bonjour", "good morning": "bonjour",
+    "gg": "bien joué", "gg wp": "bien joué", "gj": "bien joué", "wp": "bien joué", "ggwp": "bien joué",
+    "gz": "félicitations", "grats": "félicitations", "gratz": "félicitations", "congrats": "félicitations",
+    "lol": "mdr", "lmao": "mdr", "lmfao": "mdr", "rofl": "mdr", "haha": "haha", "xd": "xD",
+    "brb": "je reviens", "afk": "absent (AFK)", "back": "de retour", "re": "re (de retour)",
+    "omw": "j'arrive", "otw": "j'arrive", "coming": "j'arrive", "wait": "attends", "sec": "une seconde",
+    "1 sec": "une seconde", "1 min": "une minute", "ready": "prêt", "rdy": "prêt", "r": "prêt",
+    "go": "on y va", "lets go": "allez, on y va", "let's go": "allez, on y va",
+    "inv": "invite-moi", "inv pls": "invite-moi stp", "inv plz": "invite-moi stp", "invite": "invite-moi",
+    "inv me": "invite-moi", "pls inv": "invite-moi stp", "plz inv": "invite-moi stp",
+    "lfg": "cherche groupe", "lfm": "cherche du monde", "lf1m": "cherche 1 joueur",
+    "lf2m": "cherche 2 joueurs", "lf3m": "cherche 3 joueurs", "lf tank": "cherche un tank",
+    "lf heal": "cherche un soigneur", "lf healer": "cherche un soigneur", "lf dps": "cherche des DPS",
+    "wts": "je vends", "wtb": "j'achète", "wtt": "j'échange", "pst": "écris-moi en privé",
+    "pm me": "écris-moi en privé", "dm me": "écris-moi en privé", "w me": "chuchote-moi",
+    "sry": "désolé", "sorry": "désolé", "my bad": "ma faute", "mb": "ma faute", "oops": "oups",
+    "oom": "plus de mana", "pull": "j'engage", "pulling": "j'engage", "wipe": "on est tous morts",
+    "rez": "ressuscite-moi", "rez pls": "ressuscite-moi stp", "res pls": "ressuscite-moi stp",
+    "buff": "un buff", "buff pls": "un buff stp", "water": "de l'eau", "water pls": "de l'eau stp",
+    "nice": "sympa", "cool": "cool", "wow": "waouh", "omg": "oh mon dieu", "wtf": "c'est quoi ce délire",
+    "ez": "facile", "rip": "paix à son âme (RIP)", "same": "pareil", "me too": "moi aussi",
+    "agreed": "d'accord", "true": "c'est vrai", "fr": "sérieux", "ikr": "je sais, hein",
+    "please": "s'il te plaît", "pls": "stp", "plz": "stp", "help": "à l'aide", "help pls": "aide-moi stp",
+    "anyone": "quelqu'un ?", "any1": "quelqu'un ?", "where are you": "où es-tu", "where r u": "où es-tu",
+}
+
+# 2) Abreviations remplacees par l'anglais complet AVANT Google (le reste de la phrase
+#    passe toujours par Google, qui la comprend mieux).
+LEX_EXPAND = {
+    "u": "you", "r": "are", "ur": "your", "ty": "thank you", "thx": "thanks",
+    "tyvm": "thank you very much", "pls": "please", "plz": "please", "ppl": "people",
+    "lfg": "looking for group", "lfm": "looking for more", "lf": "looking for",
+    "wts": "want to sell", "wtb": "want to buy", "wtt": "want to trade",
+    "idk": "I don't know", "imo": "in my opinion", "btw": "by the way", "tbh": "to be honest",
+    "brb": "be right back", "afk": "away from keyboard", "omw": "on my way",
+    "np": "no problem", "sry": "sorry", "thru": "through", "cuz": "because", "bc": "because",
+    "w/": "with", "w/o": "without", "rn": "right now", "atm": "at the moment", "nvm": "never mind",
+    "dunno": "don't know", "gonna": "going to", "wanna": "want to", "gotta": "have to",
+    "im": "I'm", "dont": "don't", "cant": "can't", "wont": "won't", "didnt": "didn't",
+    "inv": "invite", "dmg": "damage", "lvl": "level", "lvling": "leveling", "dungeon": "dungeon",
+    "dps": "DPS", "oom": "out of mana", "gz": "congratulations", "gj": "good job", "wp": "well played",
+}
+
+_PUNCT_END = re.compile(r"[\s?!.¿¡…:;,~*]+$")
+_PUNCT_START = re.compile(r"^[\s?!.¿¡…:;,~*]+")
+
+
+def _lex_key(text, max_run):
+    """minuscules, sans ponctuation au debut / a la fin, lettres repetees ramenees a max_run."""
+    t = _PUNCT_START.sub("", _PUNCT_END.sub("", text.strip().lower()))
+    t = re.sub(r"\s+", " ", t)
+    return re.sub(r"(\w)\1{%d,}" % max_run, r"\1" * max_run, t)
+
+
+def lexicon_full(text):
+    """Traduction directe d'un message entier court, ou None."""
+    if len(text) > 40:
+        return None
+    for run in (2, 1):                      # "yesss" -> "yess" -> "yes" ; "lolll" -> "lol"
+        val = LEX_FULL.get(_lex_key(text, run))
+        if val is not None:
+            if "?" in text and not val.endswith("?"):
+                val += " ?"
+            return val
+    return None
+
+
+def lexicon_expand(text):
+    """Remplace les abreviations par l'anglais complet (mots entiers seulement)."""
+    def rep(m):
+        w = m.group(0)
+        full = LEX_EXPAND.get(w.lower())
+        return full if full is not None else w
+    return re.sub(r"(?<![\w/])[A-Za-z][A-Za-z0-9']*(?:/o|/)?(?![\w])", rep, text)
+
+
 def worth_translating(text):
     letters = re.sub(r"[^A-Za-z\u00c0-\u024f\u0400-\u04ff\u0600-\u06ff\u3040-\u9fff]", "", text)
     return len(letters) >= 2
@@ -580,7 +673,7 @@ class App:
             v = tk.BooleanVar(value=bool(self.cfg.get(key, True)))
             bv[key] = v
             tk.Checkbutton(w, text=lab, variable=v, bg="#171d24", fg=FG, selectcolor="#0b0e11",
-                           activebackground="#171d24", activeforeground=FG).grid(
+                           activebackground="#171d24", activeforeground=FG, highlightthickness=0).grid(
                 row=row, column=0, columnspan=2, sticky="w", padx=6)
             row += 1
         av = tk.DoubleVar(value=float(self.cfg["alpha"]))
@@ -769,9 +862,18 @@ class App:
                     if kw and kw in low:
                         alert = True
             trans, lang = None, "?"
-            if not mine and worth_translating(text):
+            lex = None
+            if not mine and cfg["target"].lower() == "fr":
+                lex = lexicon_full(text)
+            if lex:
+                trans, lang = lex, "en"           # lexique : pas d'appel a Google
+            elif not mine and worth_translating(text):
                 try:
                     trans, lang = google_translate(text, cfg["target"])
+                    if lang == "en" and cfg["target"].lower() == "fr":
+                        exp = lexicon_expand(text)
+                        if exp != text:           # abreviations : on retraduit la phrase developpee
+                            trans, _ = google_translate(exp, cfg["target"], source="en")
                     if unreliable_detection(text, lang):
                         # 2-3 mots, langue improbable (ex. "more for hogger" -> norvegien) :
                         # francais mal ecrit, sinon on reessaie en supposant de l'anglais
@@ -779,7 +881,7 @@ class App:
                         if looks_french(text):
                             lang = "fr"
                         else:
-                            t2, _ = google_translate(text, cfg["target"], source="en")
+                            t2, _ = google_translate(lexicon_expand(text), cfg["target"], source="en")
                             if t2 and t2.strip().lower() != text.strip().lower():
                                 trans, lang = t2, "en"
                 except Exception as e:  # noqa
