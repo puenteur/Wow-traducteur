@@ -2,6 +2,27 @@
 
 Traduction en direct du tchat de **World of Warcraft: Forever** vers le français (ou une autre langue), avec réponse dans la langue de ton interlocuteur.
 
+## En bref
+
+1. Installe Python (en cochant « Add python.exe to PATH »).
+2. Copie l'addon `ChatFR` dans le dossier `AddOns` de WoW Forever.
+3. Mets le jeu en mode **Fenêtré** ou **Plein écran (fenêtré)**.
+4. Lance WoW, puis double-clique sur `Lancer le traducteur.bat`.
+5. Attends « Pont image : OK » dans la barre de statut : les messages arrivent traduits.
+
+Le détail de chaque étape est plus bas.
+
+## Téléchargement
+
+Va sur la page [Releases](https://github.com/puenteur/Wow-traducteur/releases/latest) et télécharge **les deux fichiers** :
+
+- `ChatFR-addon.zip` : l'addon, à décompresser
+- `WoW-Traducteur.zip` : le traducteur, à décompresser (il contient le dossier `Traducteur`)
+
+Évite le bouton vert « Code → Download ZIP » : il mélange tout dans un seul dossier et ne contient pas de dossier `Traducteur`. Si tu l'utilises quand même, garde `translator.py` et `Lancer le traducteur.bat` **ensemble dans le même dossier**.
+
+## Les deux morceaux
+
 Deux morceaux, **tous les deux obligatoires** :
 
 | Morceau | Où | Rôle |
@@ -21,8 +42,9 @@ Pourquoi une bande de couleurs ? Un addon WoW n'a pas accès à Internet, et le 
 ## Installation
 
 1. **Python** : installe-le depuis python.org en cochant **« Add python.exe to PATH »**.
+   Pour vérifier : ouvre une invite de commandes (touche Windows, tape `cmd`, Entrée) et tape `python --version`. Un numéro de version doit s'afficher. Si Windows ouvre le Microsoft Store à la place, Python n'est pas installé : installe-le depuis python.org, pas depuis le Store.
 2. **Addon** : copie le dossier `ChatFR` dans `World of Warcraft\_forever_\Interface\AddOns`.
-   Le chemin final doit être `...\AddOns\ChatFR\ChatFR.toc` (pas de dossier `ChatFR` en double).
+   Le chemin exact de WoW dépend de ton installation : c'est le dossier d'installation du jeu, puis `_forever_\Interface\AddOns`. Le chemin final doit être `...\AddOns\ChatFR\ChatFR.toc` (pas de dossier `ChatFR` en double).
    Au lancement de WoW, vérifie dans **AddOns** que ChatFR est coché.
 3. **Affichage** : dans WoW, *Options → Graphismes → Mode d'affichage* → **Fenêtré** ou **Plein écran (fenêtré)**.
 4. **Traducteur** : copie le dossier `Traducteur` dans un endroit stable (par ex. `Documents\WoW Traducteur`, pas dans `Program Files`).
@@ -38,6 +60,10 @@ Pourquoi une bande de couleurs ? Un addon WoW n'a pas accès à Internet, et le 
 Un petit lexique de joueur traduit directement les messages courts (« who » → qui, « ty » → merci, « gg » → bien joué, « lfg » → cherche groupe…) et développe les abréviations anglaises avant Google (« where r u » → « where are you »). Tu peux ajouter tes mots dans `LEX_FULL` et `LEX_EXPAND`, au début de `translator.py`.
 
 Le traducteur se ferme tout seul quelques secondes après la fermeture de WoW. La fenêtre se déplace par sa barre du haut et se redimensionne par le coin en bas à droite.
+
+### Windows affiche « Windows a protégé votre ordinateur » ?
+
+C'est normal pour un fichier `.bat` téléchargé. Clique sur **Informations complémentaires**, puis **Exécuter quand même**. Le fichier ne fait que lancer `translator.py`, le code est lisible dans ce dépôt. Certains antivirus peuvent aussi se méfier d'un programme qui capture l'écran : le traducteur ne lit que la petite bande de cases colorées, tu peux l'ajouter aux exceptions si besoin.
 
 ### `Lancer le traducteur.bat`
 
