@@ -76,6 +76,24 @@ LINK_RE = re.compile(r"\x02([a-z0-9]+)\x03(.*?)(?:\x04|$)", re.S)
 BRACKET_RE = re.compile(r"\[[^\]]*\]")
 
 
+# Marqueurs de raid du tchat ({rt1}, {star}...) : la fenetre ne peut pas afficher l'image, on met un symbole.
+RAID_MARKS = {
+    "rt1": "\u2605", "star": "\u2605", "etoile": "\u2605",
+    "rt2": "\u25cf", "circle": "\u25cf", "rond": "\u25cf", "cercle": "\u25cf",
+    "rt3": "\u25c6", "diamond": "\u25c6", "losange": "\u25c6",
+    "rt4": "\u25b2", "triangle": "\u25b2",
+    "rt5": "\u263e", "moon": "\u263e", "lune": "\u263e",
+    "rt6": "\u25a0", "square": "\u25a0", "carre": "\u25a0",
+    "rt7": "\u2716", "cross": "\u2716", "croix": "\u2716", "x": "\u2716",
+    "rt8": "\u2620", "skull": "\u2620", "crane": "\u2620",
+}
+_MARK_RE = re.compile(r"\{(" + "|".join(sorted(RAID_MARKS, key=len, reverse=True)) + r")\}", re.I)
+
+
+def replace_raid_marks(text):
+    return _MARK_RE.sub(lambda m: RAID_MARKS[m.group(1).lower()], text)
+
+
 def split_links(text):
     """Texte de l'addon -> (texte brut sans marqueurs, [(segment, code ou None), ...])."""
     spans, pos = [], 0
@@ -950,7 +968,7 @@ class App:
             except queue.Empty:
                 continue
             cfg = self.cfg
-            raw = text
+            raw = replace_raid_marks(text)
             text, _spans = split_links(raw)
             low_chan = chan.lower()
             hidden = [h.strip().lower() for h in cfg["hidden"].split(",") if h.strip()]

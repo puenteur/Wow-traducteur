@@ -61,6 +61,8 @@ Un petit lexique de joueur traduit directement les messages courts (« who » �
 
 Les liens du tchat sont colorés comme dans le jeu : quêtes en jaune, objets selon leur qualité (gris, blanc, vert, bleu, violet, orange), sorts en bleu clair, enchantements en jaune-orangé. Dans la traduction, le nom du lien est traduit par Google : cherche le nom anglais d'origine (ligne du dessus) si tu veux retrouver l'objet ou la quête.
 
+Les marqueurs de raid du tchat (`{rt1}`…`{rt8}`) sont remplacés par des symboles : ★ étoile, ● rond, ◆ losange, ▲ triangle, ☾ lune, ■ carré, ✖ croix, ☠ crâne.
+
 Le traducteur se ferme tout seul quelques secondes après la fermeture de WoW. La fenêtre se déplace par sa barre du haut et se redimensionne par le coin en bas à droite.
 
 ### Windows affiche « Windows a protégé votre ordinateur » ?
