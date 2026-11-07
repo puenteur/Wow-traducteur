@@ -1042,13 +1042,13 @@ class App:
             return
         tag = "me" if mine else kind
         badge = "[%s] " % lang.upper() if lang not in ("?", "") and not mine else ""
-        tail = chan.split(" - ")[0].strip() if kind in ("channel", "lfg") else ""   # "General - Foret d'Elwynn" -> "General"
+        tail = chan if kind in ("channel", "lfg") else ""
         start_line = int(self.text.index("end-1c").split(".")[0])
         parts = [(hhmm + " ", "badge")]
         if badge:
             parts.append((badge, "badge"))
         if tail:
-            parts.append(("(%s) " % tail[:28], "badge"))
+            parts.append(("(%s) " % tail, "badge"))
         marks = (tag, "alert") if alert else (tag,)
         parts.append((author + ": ", *marks))
         _plain, spans = split_links(raw if raw is not None else text)
