@@ -205,17 +205,25 @@ def google_translate(text, target, source="auto", timeout=8):
 LEX_NAMES = ["Hogger"]
 
 
+def _name_re(name):
+    """Regex d'un nom propre qui tolere les lettres repetees ("hoggeer", "hoggerr")."""
+    return "".join(re.escape(c) + "+" for c in name.lower())
+
+
+def _names_pattern():
+    return r"(?<!\w)(?:%s)(?!\w)" % "|".join(_name_re(n) for n in LEX_NAMES)
+
+
 def google_translate_safe(text, target, source="auto", timeout=8):
     """Comme google_translate, mais sans laisser Google traduire les noms de LEX_NAMES."""
     found = {}
 
     def mask(m):
         key = "Zq%dx" % len(found)
-        found[key] = next(n for n in LEX_NAMES if n.lower() == m.group(0).lower())
+        found[key] = next(n for n in LEX_NAMES if re.fullmatch(_name_re(n), m.group(0), re.I))
         return key
     if LEX_NAMES:
-        pat = r"(?<!\w)(?:%s)(?!\w)" % "|".join(re.escape(n) for n in LEX_NAMES)
-        text = re.sub(pat, mask, text, flags=re.I)
+        text = re.sub(_names_pattern(), mask, text, flags=re.I)
     out, lang = google_translate(text, target, source, timeout)
     for key, name in found.items():
         out = re.sub(re.escape(key), lambda _m, n=name: n, out, flags=re.I)
@@ -223,8 +231,7 @@ def google_translate_safe(text, target, source="auto", timeout=8):
 
 
 def has_protected_name(text):
-    low = text.lower()
-    return any(re.search(r"(?<!\w)%s(?!\w)" % re.escape(n.lower()), low) for n in LEX_NAMES)
+    return bool(LEX_NAMES) and bool(re.search(_names_pattern(), text, re.I))
 
 
 # --------------------------------------------------------------------------
