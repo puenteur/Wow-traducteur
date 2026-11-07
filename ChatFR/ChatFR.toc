@@ -1,0 +1,13 @@
+## Interface: 16001, 120000, 110207
+## Title: ChatFR
+## Notes: Annote le tchat avec des traductions FR (abreviations courantes) et active le log pour le traducteur externe.
+## Author: Yohann
+## Version: 1.0
+## SavedVariables: ChatFRDB
+
+Dictionary.lua
+Vocabulary.lua
+Vocabulary2.lua
+Vocabulary3.lua
+Bridge.lua
+ChatFR.lua
