@@ -20,6 +20,7 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from ctypes import wintypes
@@ -59,6 +60,7 @@ COLORS = {
     "channel": "#c8c8c8", "lfg": "#ffe066", "other": "#c8c8c8",
 }
 TRANS_COLOR = "#6fd3ff"
+NAME_COLOR = "#e8b964"      # pseudo des autres joueurs
 ALERT_BG = "#5a4a00"
 
 # Liens du tchat (envoyes par l'addon sous la forme \x02 code \x03 [Nom] \x04) :
@@ -206,16 +208,49 @@ def parse(line):
 # --------------------------------------------------------------------------
 # Traduction (Google, sans installation)
 # --------------------------------------------------------------------------
+_GT_HOSTS = ("translate.googleapis.com", "translate.google.com")
+_gt_lock = threading.Lock()
+_gt_last = [0.0]
+_gt_cache = {}
+
+
 def google_translate(text, target, source="auto", timeout=8):
-    """-> (traduction, langue_detectee)"""
-    url = "https://translate.googleapis.com/translate_a/single?" + urllib.parse.urlencode(
-        {"client": "gtx", "sl": source, "tl": target, "dt": "t", "q": text})
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        data = json.loads(r.read().decode("utf-8"))
-    out = "".join(seg[0] for seg in data[0] if seg and seg[0])
-    lang = data[2] if len(data) > 2 and isinstance(data[2], str) else "?"
-    return out, lang
+    """-> (traduction, langue_detectee). Google limite le nombre de requetes (erreur 429) :
+    on espace les appels, on garde un cache et on reessaie apres une courte pause."""
+    key = (text, target, source)
+    with _gt_lock:
+        if key in _gt_cache:
+            return _gt_cache[key]
+    params = urllib.parse.urlencode({"client": "gtx", "sl": source, "tl": target, "dt": "t", "q": text})
+    last_err = None
+    for attempt in range(4):
+        host = _GT_HOSTS[attempt % 2]                  # on alterne entre les deux adresses
+        with _gt_lock:                                 # 0,3 s minimum entre deux requetes
+            wait = 0.3 - (time.time() - _gt_last[0])
+            if wait > 0:
+                time.sleep(wait)
+            _gt_last[0] = time.time()
+        req = urllib.request.Request("https://%s/translate_a/single?%s" % (host, params),
+                                     headers={"User-Agent": "Mozilla/5.0"})
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                data = json.loads(r.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            last_err = e
+            if e.code in (429, 503):
+                time.sleep(1.5 * (attempt + 1))
+                continue
+            raise
+        out = "".join(seg[0] for seg in data[0] if seg and seg[0])
+        lang = data[2] if len(data) > 2 and isinstance(data[2], str) else "?"
+        with _gt_lock:
+            if len(_gt_cache) > 500:
+                _gt_cache.clear()
+            _gt_cache[key] = (out, lang)
+        return out, lang
+    if getattr(last_err, "code", None) == 429:
+        raise RuntimeError("Google limite les requetes (429), reessaie dans quelques minutes")
+    raise last_err
 
 
 # Noms propres que Google prend pour des mots communs ("hogger" -> "porc"). Ils sont remplaces par
@@ -445,6 +480,18 @@ def capture_stats(buf):
     return 100 * cnt // max(1, tot), (sr // tot, sg // tot, sb // tot)
 
 
+def wow_window_exists():
+    """True si la fenetre de WoW existe (meme reduite). None si on ne peut pas savoir."""
+    if os.name != "nt":
+        return None
+    try:
+        _gdi_setup()
+        u = ctypes.windll.user32
+        return bool(u.FindWindowW("GxWindowClass", None) or u.FindWindowW(None, "World of Warcraft"))
+    except Exception:  # noqa
+        return None
+
+
 def wow_running():
     """True si un processus WoW (wow*.exe) tourne. None si on ne peut pas savoir."""
     if os.name != "nt":
@@ -557,6 +604,24 @@ LEX_PHRASES = [
      "whisper me for an invite"),
     (r"\bfor\s+inv\b", "for an invite"),
 ]
+
+# 3) Francais qui contient du jargon anglais ("un last tank et on part") : Google le prend pour de
+#    l'anglais et traduit "tank" par "reservoir". Si la phrase contient des mots francais sans
+#    ambiguite, on remplace ces expressions par leur forme francaise AVANT l'envoi a Google.
+LEX_FR_MIX = [
+    (r"\blast\s+(tank|heal|healer|dps)\b", r"dernier \1"),
+]
+_FR_ONLY_WORDS = set("un une et le les pour des du avec je tu est pas qui dans mon nous vous sur".split())
+
+
+def fr_mix_fix(text):
+    """Francais avec du jargon anglais -> jargon francise (pour Google seulement)."""
+    if not (set(re.findall(r"[a-z\u00e0-\u00ff]+", text.lower())) & _FR_ONLY_WORDS):
+        return text
+    for pat, repl in LEX_FR_MIX:
+        text = re.sub(pat, repl, text, flags=re.I)
+    return text
+
 
 _PUNCT_END = re.compile(r"[\s?!.¿¡…:;,~*]+$")
 _PUNCT_START = re.compile(r"^[\s?!.¿¡…:;,~*]+")
@@ -701,6 +766,7 @@ class App:
         self.text.tag_configure("badge", foreground="#9aa7b4")
         self.text.tag_configure("err", foreground="#ff7070")
         self.text.tag_configure("me", foreground="#ffd479")
+        self.text.tag_configure("name", foreground=NAME_COLOR)   # apres les canaux : la couleur du pseudo prime
         for code, c in LINK_COLORS.items():     # en dernier : la couleur du lien prime
             self.text.tag_configure("link_" + code, foreground=c)
         self.text.bind("<Button-1>", self.on_click)
@@ -949,7 +1015,8 @@ class App:
             time.sleep(1)
             if not self.cfg.get("autoclose", True):
                 continue
-            r = wow_running()
+            # La fenetre du jeu fait foi (le nom du .exe de Forever n'est pas fiable).
+            r = wow_window_exists()
             if r is None:
                 continue
             if r:
@@ -995,7 +1062,7 @@ class App:
                 trans, lang = lex, "en"           # lexique : pas d'appel a Google
             elif not mine and worth_translating(text):
                 try:
-                    trans, lang = google_translate(text, cfg["target"])
+                    trans, lang = google_translate(fr_mix_fix(text), cfg["target"])
                     if lang == "en" and cfg["target"].lower() == "fr":
                         exp = lexicon_expand(text)
                         if exp != text or has_protected_name(text):
@@ -1050,7 +1117,8 @@ class App:
         if tail:
             parts.append(("(%s) " % tail, "badge"))
         marks = (tag, "alert") if alert else (tag,)
-        parts.append((author + ": ", *marks))
+        parts.append((author, *marks) if mine else (author, *marks, "name"))
+        parts.append((": ", *marks))
         _plain, spans = split_links(raw if raw is not None else text)
         for seg, code in spans:
             parts.append((seg, *marks, "link_" + code) if code else (seg, *marks))
