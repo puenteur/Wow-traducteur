@@ -218,6 +218,8 @@ _GT_HOSTS = ("translate.googleapis.com", "translate.google.com")
 _gt_lock = threading.Lock()
 _gt_last = [0.0]
 _gt_cache = {}
+_gt_pause = [0.0]          # apres un 429 : plus aucune requete jusqu'a cette heure (sinon Google prolonge le blocage)
+GT_PAUSE = 120             # secondes
 
 
 def google_translate(text, target, source="auto", timeout=8):
@@ -227,6 +229,9 @@ def google_translate(text, target, source="auto", timeout=8):
     with _gt_lock:
         if key in _gt_cache:
             return _gt_cache[key]
+    reste = _gt_pause[0] - time.time()
+    if reste > 0:
+        raise RuntimeError("Google en pause (trop de requetes), reprise dans %d s" % reste)
     params = urllib.parse.urlencode({"client": "gtx", "sl": source, "tl": target, "dt": "t", "q": text})
     last_err = None
     for attempt in range(4):
@@ -260,7 +265,8 @@ def google_translate(text, target, source="auto", timeout=8):
             _gt_cache[key] = (out, lang)
         return out, lang
     if getattr(last_err, "code", None) == 429:
-        raise RuntimeError("Google limite les requetes (429), reessaie dans quelques minutes")
+        _gt_pause[0] = time.time() + GT_PAUSE
+        raise RuntimeError("Google limite les requetes (429), pause de %d s" % GT_PAUSE)
     raise RuntimeError("Google ne repond pas (%s)" % (getattr(last_err, "reason", None) or last_err))
 
 
