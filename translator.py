@@ -699,6 +699,10 @@ LEX_FULL = {
     "agreed": "d'accord", "true": "c'est vrai", "fr": "sérieux", "ikr": "je sais, hein",
     "please": "s'il te plaît", "pls": "stp", "plz": "stp", "help": "à l'aide", "help pls": "aide-moi stp",
     "anyone": "quelqu'un ?", "any1": "quelqu'un ?", "where are you": "où es-tu", "where r u": "où es-tu",
+    # groupe ("pt ?" etait traduit "pd ?" par Google)
+    "pt": "on se groupe", "party": "on se groupe", "grp": "on se groupe", "group": "on se groupe",
+    "inv pt": "invite-moi dans le groupe", "join": "tu rejoins", "tank": "un tank", "heal": "un soigneur",
+    "healer": "un soigneur", "dps": "des DPS", "duo": "on se met en duo", "full": "groupe complet",
 }
 
 # 2) Abreviations remplacees par l'anglais complet AVANT Google (le reste de la phrase
@@ -717,6 +721,7 @@ LEX_EXPAND = {
     "inv": "invite", "dmg": "damage", "lvl": "level", "lvling": "leveling", "dungeon": "dungeon",
     "dps": "DPS", "oom": "out of mana", "gz": "congratulations", "gj": "good job", "wp": "well played",
     "whisp": "whisper", "wisp": "whisper", "whis": "whisper", "pst": "whisper me",
+    "pt": "group", "grp": "group",
 }
 
 # Expressions entieres (regex, remplacement) appliquees avant les mots seuls : "LFM Hogger" ne doit pas
@@ -1324,7 +1329,10 @@ class App:
 
         def run():
             try:
-                res, _ = google_translate(txt, lang)
+                # tu ecris en francais : on le dit a Google (sinon "bonjour" seul est pris pour de l'anglais)
+                res, _ = google_translate(txt, lang, source="fr")
+                if res.strip().lower() == txt.strip().lower():
+                    res, _ = google_translate(txt, lang)   # pas du francais finalement : detection auto
                 self.outq.put(("out", txt, res, lang, None))
             except Exception as e:  # noqa
                 self.outq.put(("out", txt, "", lang, str(e)))
