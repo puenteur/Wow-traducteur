@@ -727,6 +727,16 @@ f:SetScript("OnEvent", function(_, event, name, author, a3, a4, a5, a6, a7, a8, 
     pcall(StartLogFlush)
     local okM, errM = pcall(CreateMinimapButton)
     if not okM then Say("bouton minicarte indisponible : " .. tostring(errM)) end
+    -- Annonce unique (par compte) d'une nouvelle version du traducteur externe.
+    -- Changer TRAD_NOTICE a chaque nouvelle version du traducteur a annoncer.
+    local TRAD_NOTICE = "1.2"
+    if ChatFRDB.tradNotice ~= TRAD_NOTICE then
+      ChatFRDB.tradNotice = TRAD_NOTICE
+      local function notice()
+        Say("nouvelle version du traducteur (" .. TRAD_NOTICE .. ") : a telecharger sur github.com/puenteur/Wow-traducteur (Releases).")
+      end
+      if C_Timer and C_Timer.After then C_Timer.After(5, notice) else notice() end
+    end
     if ChatFRDB.autolog and LoggingChat and not LoggingChat() then
       LoggingChat(true)
       Say("log du tchat active (pour le traducteur externe).")
