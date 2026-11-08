@@ -215,7 +215,7 @@ def parse(line):
 # Traduction (Google, sans installation)
 # --------------------------------------------------------------------------
 # translate.googleapis.com d'abord (c'est celle qui marche dans le navigateur), l'autre en dernier recours.
-_GT_HOSTS = ("translate.googleapis.com", "translate.googleapis.com", "translate.googleapis.com", "translate.google.com")
+_GT_HOSTS = ("translate.googleapis.com", "translate.google.com")
 # En-tete d'un vrai navigateur : avec un simple "Mozilla/5.0", Google renvoie plus vite des 429.
 _GT_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
           "(KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36")
@@ -238,7 +238,7 @@ def _google(text, target, source="auto", timeout=8):
         raise RuntimeError("Google en pause (trop de requetes), reprise dans %d s" % reste)
     params = urllib.parse.urlencode({"client": "gtx", "sl": source, "tl": target, "dt": "t", "q": text})
     last_err = None
-    for attempt in range(4):
+    for attempt in range(2):                           # 2 essais courts, puis les services de secours
         host = _GT_HOSTS[attempt]
         with _gt_lock:                                 # 0,3 s minimum entre deux requetes
             wait = 0.3 - (time.time() - _gt_last[0])
@@ -252,14 +252,16 @@ def _google(text, target, source="auto", timeout=8):
                 data = json.loads(r.read().decode("utf-8"))
         except urllib.error.HTTPError as e:
             last_err = e
-            if e.code in (429, 503):
-                time.sleep(1.5 * (attempt + 1))
+            if e.code == 429:
+                break                                  # bloque : inutile d'insister, on passe au secours
+            if e.code == 503:
+                time.sleep(0.5)
                 continue
             raise
         except (urllib.error.URLError, OSError, ValueError) as e:
             # coupure reseau, delai depasse, reponse tronquee : on reessaie aussi
             last_err = e
-            time.sleep(1.0 * (attempt + 1))
+            time.sleep(0.5)
             continue
         out = "".join(seg[0] for seg in data[0] if seg and seg[0])
         lang = data[2] if len(data) > 2 and isinstance(data[2], str) else "?"
@@ -301,7 +303,7 @@ LINGVA_HOSTS = ["lingva.ml", "lingva.lunar.icu", "translate.plausibility.cloud"]
 _lingva_dead = {}          # serveur -> heure jusqu'a laquelle on ne l'essaie plus
 
 
-def _lingva(text, target, source, timeout=6):
+def _lingva(text, target, source, timeout=4):
     last = None
     for host in LINGVA_HOSTS:
         if _lingva_dead.get(host, 0) > time.time():
@@ -331,7 +333,7 @@ def google_translate(text, target, source="auto", timeout=8):
             res = _lingva(text, target, source)
         except Exception as e1:  # noqa
             try:
-                res = _mymemory(text, target, source, timeout)
+                res = _mymemory(text, target, source, 5)
             except Exception as e2:  # noqa
                 raise RuntimeError("%s ; Lingva : %s ; MyMemory : %s" % (e, e1, e2))
         with _gt_lock:
