@@ -540,6 +540,42 @@ def looks_french(text):
     return hits >= 2 or (len(words) <= 3 and hits >= 1)
 
 
+# Pour ne pas interroger Google sur les messages deja en francais (moins de requetes = moins de 429).
+# Mots surement francais (pas de mots partages avec l'anglais, l'espagnol ou l'italien comme "la", "de", "a").
+SURE_FR = set("je j tu il elle nous vous ils elles on est suis sont es ai as avons avez ont et ou mais donc "
+              "le les un une des du au aux ce cet cette ces mon ma mes ton ta tes son sa ses notre votre leur "
+              "pour avec dans sur sous chez pas ne plus rien jamais qui quoi quel quelle quels quand comment "
+              "pourquoi combien ou oui ouais merci salut bonjour bonsoir svp stp cherche cherchons recrute "
+              "vend vends achete achète groupe guilde donjon quelqu quelqu'un personne besoin veux veut peux "
+              "peut faut faire aller viens venir ici ça ca c qu d l m n s t y bien très tres trop aussi encore "
+              "deja déjà alors voila voilà fait mort mdr ptdr bonne bon nuit".split())
+# Mots d'une autre langue : s'il y en a un, on laisse Google decider (message mixte ou etranger).
+NOT_FR = set("the a an is are was be been i you he she we they it my your his her our their this that "
+             "these those and or but to of in on at for with from by as if so not no yes any some anyone "
+             "someone need needs looking want wants sell selling buy buying have has can could would will "
+             "do does please pls plz thanks thx ty hi hello hey what where when who why how there here "
+             "last first just all only lf lfm lfg wts wtb el los las para por hay alguien busco necesito "
+             "gracias hola ich und der die das nicht ist wer sucht bitte danke per che sono cerco gilda "
+             "ciao grazie voce você não obrigado".split())
+_FOREIGN_CHARS = re.compile("[\u00f1\u00e3\u00f5\u00df\u00e4\u00f6\u00fc\u00e1\u00ed\u00f3\u00fa\u0105\u0119\u0142\u017c\u017a\u015b\u0107\u0144]")
+_FR_ACCENTS = re.compile("[\u00e0\u00e2\u00e7\u00e8\u00e9\u00ea\u00eb\u00ee\u00ef\u00f4\u00f9\u00fb\u0153]")
+
+
+def sure_french(text):
+    """True seulement si le message est clairement en francais (sans mot etranger)."""
+    t = text.lower()
+    if not is_latin_text(t) or _FOREIGN_CHARS.search(t):
+        return False
+    words = [w.strip("'") for w in re.findall("[a-z\u00e0-\u00ff\u0153']+", t)]
+    parts = []
+    for w in words:
+        parts.extend(p for p in w.split("'") if p)      # j'ai -> j, ai
+    if not parts or any(p in NOT_FR for p in parts):
+        return False
+    hits = sum(1 for p in parts if p in SURE_FR)
+    return hits >= 2 or (hits >= 1 and (len(parts) <= 3 or bool(_FR_ACCENTS.search(t))))
+
+
 def is_latin_text(text):
     letters = [c for c in text if c.isalpha()]
     return bool(letters) and all(ord(c) < 0x250 for c in letters)
@@ -1082,6 +1118,8 @@ class App:
                 pass                                   # "100 po" : affiche tel quel, sans traduction
             elif lex:
                 trans, lang = lex, "en"           # lexique : pas d'appel a Google
+            elif not mine and cfg["target"].lower() == "fr" and sure_french(text):
+                lang = "fr"                            # deja en francais : pas d'appel a Google
             elif not mine and worth_translating(text):
                 try:
                     trans, lang = google_translate(fr_mix_fix(text), cfg["target"])
