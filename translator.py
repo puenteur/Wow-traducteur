@@ -226,7 +226,7 @@ _gt_pause = [0.0]          # apres un 429 : plus aucune requete jusqu'a cette he
 GT_PAUSE = 120             # secondes
 
 
-def google_translate(text, target, source="auto", timeout=8):
+def _google(text, target, source="auto", timeout=8):
     """-> (traduction, langue_detectee). Google limite le nombre de requetes (erreur 429) :
     on espace les appels, on garde un cache et on reessaie apres une courte pause."""
     key = (text, target, source)
@@ -272,6 +272,41 @@ def google_translate(text, target, source="auto", timeout=8):
         _gt_pause[0] = time.time() + GT_PAUSE
         raise RuntimeError("Google limite les requetes (429), pause de %d s" % GT_PAUSE)
     raise RuntimeError("Google ne repond pas (%s)" % (getattr(last_err, "reason", None) or last_err))
+
+
+def _mymemory(text, target, source, timeout=8):
+    """Service de secours gratuit (api.mymemory.translated.net), sans cle, ~5000 caracteres/jour."""
+    out_lang = "?" if source == "auto" else source
+    # "autodetect" d'abord ; si MyMemory le refuse : anglais (le plus courant), ou francais si on traduit vers l'anglais
+    for src in ([("autodetect"), ("fr" if target == "en" else "en")] if source == "auto" else [source]):
+        params = urllib.parse.urlencode({"q": text, "langpair": "%s|%s" % (src, target)})
+        req = urllib.request.Request("https://api.mymemory.translated.net/get?" + params,
+                                     headers={"User-Agent": _GT_UA})
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            data = json.loads(r.read().decode("utf-8"))
+        rd = data.get("responseData") or {}
+        out = (rd.get("translatedText") or "").strip()
+        status = str(data.get("responseStatus"))
+        if status == "200" and out and not out.upper().startswith("MYMEMORY WARNING"):
+            det = rd.get("detectedLanguage") or (src if src != "autodetect" else out_lang)
+            return out, str(det).lower().split("-")[0]
+        if "MYMEMORY WARNING" in out.upper() or status == "429":
+            raise RuntimeError("quota du jour atteint")
+    raise RuntimeError("MyMemory a refuse la requete (%s)" % status)
+
+
+def google_translate(text, target, source="auto", timeout=8):
+    """Google ; si Google bloque (429) ou ne repond pas : MyMemory en secours."""
+    try:
+        return _google(text, target, source, timeout)
+    except RuntimeError as e:
+        try:
+            res = _mymemory(text, target, source, timeout)
+        except Exception as e2:  # noqa
+            raise RuntimeError("%s ; secours MyMemory : %s" % (e, e2))
+        with _gt_lock:
+            _gt_cache[(text, target, source)] = res
+        return res
 
 
 # Noms propres que Google prend pour des mots communs ("hogger" -> "porc"). Ils sont remplaces par
