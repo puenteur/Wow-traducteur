@@ -247,6 +247,11 @@ def google_translate(text, target, source="auto", timeout=8):
                 time.sleep(1.5 * (attempt + 1))
                 continue
             raise
+        except (urllib.error.URLError, OSError, ValueError) as e:
+            # coupure reseau, delai depasse, reponse tronquee : on reessaie aussi
+            last_err = e
+            time.sleep(1.0 * (attempt + 1))
+            continue
         out = "".join(seg[0] for seg in data[0] if seg and seg[0])
         lang = data[2] if len(data) > 2 and isinstance(data[2], str) else "?"
         with _gt_lock:
@@ -256,7 +261,7 @@ def google_translate(text, target, source="auto", timeout=8):
         return out, lang
     if getattr(last_err, "code", None) == 429:
         raise RuntimeError("Google limite les requetes (429), reessaie dans quelques minutes")
-    raise last_err
+    raise RuntimeError("Google ne repond pas (%s)" % (getattr(last_err, "reason", None) or last_err))
 
 
 # Noms propres que Google prend pour des mots communs ("hogger" -> "porc"). Ils sont remplaces par
@@ -1092,7 +1097,8 @@ class App:
                             if t2 and t2.strip().lower() != text.strip().lower():
                                 trans, lang = t2, "en"
                 except Exception as e:  # noqa
-                    self.outq.put(("status", "Erreur traduction : %s" % e))
+                    # affiche l'erreur sous le message (la barre d'etat est vite ecrasee par le pont)
+                    trans, lang = "\u26a0 traduction impossible : %s" % e, "?"
             self.outq.put(("msg", hhmm, kind, chan, author, text, trans, lang, alert, mine, raw))
 
     def check_update(self):
