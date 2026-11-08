@@ -581,16 +581,16 @@ def looks_french(text):
 
 # Pour ne pas interroger Google sur les messages deja en francais (moins de requetes = moins de 429).
 # Mots surement francais (pas de mots partages avec l'anglais, l'espagnol ou l'italien comme "la", "de", "a").
-SURE_FR = set("je j tu il elle nous vous ils elles on est suis sont es ai as avons avez ont et ou mais donc "
+SURE_FR = set("je j tu il elle nous vous ils elles est suis sont es ai as avons avez ont et ou mais donc "
               "le les un une des du au aux ce cet cette ces mon ma mes ton ta tes son sa ses notre votre leur "
               "pour avec dans sur sous chez pas ne plus rien jamais qui quoi quel quelle quels quand comment "
               "pourquoi combien ou oui ouais merci salut bonjour bonsoir svp stp cherche cherchons recrute "
               "vend vends achete achète groupe guilde donjon quelqu quelqu'un personne besoin veux veut peux "
-              "peut faut faire aller viens venir ici ça ca c qu d l m n s t y bien très tres trop aussi encore "
+              "peut faut faire avoir etre être connait connais sais quelqun qqn aller viens venir ici ça ca c qu d l m n s t y bien très tres trop aussi encore "
               "deja déjà alors voila voilà fait mort mdr ptdr bonne bon nuit".split())
 # Mots d'une autre langue : s'il y en a un, on laisse Google decider (message mixte ou etranger).
-NOT_FR = set("the a an is are was be been i you he she we they it my your his her our their this that "
-             "these those and or but to of in on at for with from by as if so not no yes any some anyone "
+NOT_FR = set("the an is are was be been i you he she we they it my your his her our their this that "
+             "these those and or but to of in at for with from by as if so not no yes any some anyone "
              "someone need needs looking want wants sell selling buy buying have has can could would will "
              "do does please pls plz thanks thx ty hi hello hey what where when who why how there here "
              "last first just all only lf lfm lfg wts wtb el los las para por hay alguien busco necesito "
