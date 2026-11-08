@@ -23,6 +23,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import webbrowser
 from ctypes import wintypes
 import tkinter as tk
 from tkinter import ttk
@@ -31,6 +32,11 @@ try:
     import winsound
 except ImportError:  # pas sous Windows
     winsound = None
+
+VERSION = "1.2"
+# Verification de mise a jour : le fichier version.txt du depot contient le numero de la derniere version.
+VERSION_URL = "https://raw.githubusercontent.com/puenteur/Wow-traducteur/main/version.txt"
+RELEASE_URL = "https://github.com/puenteur/Wow-traducteur/releases/latest"
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(HERE, "translator_config.json")
@@ -702,6 +708,7 @@ class App:
         threading.Thread(target=self.bridge_reader, daemon=True).start()
         threading.Thread(target=self.worker, daemon=True).start()
         threading.Thread(target=self.watch_wow, daemon=True).start()
+        threading.Thread(target=self.check_update, daemon=True).start()
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.root.after(100, self.poll)
 
@@ -721,7 +728,11 @@ class App:
         btn = dict(bg="#1b232c", fg=FG, relief="flat", bd=0, padx=8, pady=2, activebackground="#2a343f",
                    activeforeground=FG, cursor="hand2", font=("Segoe UI", 9), highlightthickness=0)
         tk.Button(bar, text="\u2699 R\u00e9glages", command=self.open_settings, **btn).pack(side="left", padx=(6, 3), pady=4)
-        tk.Button(bar, text="Effacer", command=self.clear, **btn).pack(side="left", padx=3, pady=4)
+        self._clear_btn = tk.Button(bar, text="Effacer", command=self.clear, **btn)
+        self._clear_btn.pack(side="left", padx=3, pady=4)
+        # bouton cache, affiche seulement si une nouvelle version existe sur GitHub
+        self.update_btn = tk.Button(bar, text="", command=lambda: webbrowser.open(RELEASE_URL),
+                                    **dict(btn, bg="#1f6f9f", fg="white", activebackground="#2a86bd"))
         closeb = tk.Button(bar, text="\u2715", command=self.on_close, bg=BAR, fg="#9aa7b4", relief="flat", bd=0,
                            padx=10, pady=2, activebackground="#c0392b", activeforeground="white",
                            cursor="hand2", font=("Segoe UI", 10), highlightthickness=0)
@@ -1084,6 +1095,18 @@ class App:
                     self.outq.put(("status", "Erreur traduction : %s" % e))
             self.outq.put(("msg", hhmm, kind, chan, author, text, trans, lang, alert, mine, raw))
 
+    def check_update(self):
+        """Une seule requete au demarrage. Sans Internet ou si GitHub ne repond pas : rien."""
+        try:
+            req = urllib.request.Request(VERSION_URL, headers={"User-Agent": "WoW-Traducteur"})
+            with urllib.request.urlopen(req, timeout=8) as r:
+                latest = r.read(32).decode("utf-8", "replace").strip()
+            num = lambda v: tuple(int(x) for x in re.findall(r"\d+", v))
+            if num(latest) and num(latest) > num(VERSION):
+                self.outq.put(("update", latest))
+        except Exception:
+            pass
+
     # ---- affichage ---------------------------------------------------------
     def poll(self):
         try:
@@ -1098,6 +1121,9 @@ class App:
                     return
                 elif item[0] == "out":
                     self.show_out(*item[1:])
+                elif item[0] == "update":
+                    self.update_btn.config(text="Mise \u00e0 jour %s dispo" % item[1])
+                    self.update_btn.pack(side="left", padx=3, pady=4, after=self._clear_btn)
         except queue.Empty:
             pass
         self.root.after(100, self.poll)
