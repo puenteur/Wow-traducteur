@@ -295,15 +295,45 @@ def _mymemory(text, target, source, timeout=8):
     raise RuntimeError("MyMemory a refuse la requete (%s)" % status)
 
 
+# Lingva : serveurs publics gratuits, sans compte, qui interrogent Google a notre place
+# (ils passent donc meme quand Google bloque notre adresse). Serveurs de benevoles : ils tombent parfois.
+LINGVA_HOSTS = ["lingva.ml", "lingva.lunar.icu", "translate.plausibility.cloud"]
+_lingva_dead = {}          # serveur -> heure jusqu'a laquelle on ne l'essaie plus
+
+
+def _lingva(text, target, source, timeout=6):
+    last = None
+    for host in LINGVA_HOSTS:
+        if _lingva_dead.get(host, 0) > time.time():
+            continue
+        url = "https://%s/api/v1/%s/%s/%s" % (host, source, target, urllib.parse.quote(text, safe=""))
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": _GT_UA, "Accept": "application/json"})
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                data = json.loads(r.read().decode("utf-8"))
+            out = (data.get("translation") or "").strip()
+            if not out:
+                raise ValueError(data.get("error") or "reponse vide")
+            det = (data.get("info") or {}).get("detectedSource") or (source if source != "auto" else "?")
+            return out, str(det).lower().split("-")[0]
+        except Exception as e:  # noqa
+            last = e
+            _lingva_dead[host] = time.time() + 600      # serveur en panne : on l'oublie 10 min
+    raise RuntimeError("aucun serveur ne repond (%s)" % last if last else "serveurs en pause")
+
+
 def google_translate(text, target, source="auto", timeout=8):
-    """Google ; si Google bloque (429) ou ne repond pas : MyMemory en secours."""
+    """Google ; s'il bloque (429) ou ne repond pas : Lingva, puis MyMemory."""
     try:
         return _google(text, target, source, timeout)
     except RuntimeError as e:
         try:
-            res = _mymemory(text, target, source, timeout)
-        except Exception as e2:  # noqa
-            raise RuntimeError("%s ; secours MyMemory : %s" % (e, e2))
+            res = _lingva(text, target, source)
+        except Exception as e1:  # noqa
+            try:
+                res = _mymemory(text, target, source, timeout)
+            except Exception as e2:  # noqa
+                raise RuntimeError("%s ; Lingva : %s ; MyMemory : %s" % (e, e1, e2))
         with _gt_lock:
             _gt_cache[(text, target, source)] = res
         return res
