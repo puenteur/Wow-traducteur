@@ -1185,8 +1185,11 @@ class App:
             lex = None
             if not mine and cfg["target"].lower() == "fr":
                 lex = lexicon_full(text)
+            outside_links = "".join(seg for seg, code in _spans if not code)
             if is_coin_only(text):
                 pass                                   # "100 po" : affiche tel quel, sans traduction
+            elif _spans and any(c for _, c in _spans) and not worth_translating(outside_links):
+                pass                                   # seulement des liens ("[Quete] ?") : rien a traduire
             elif lex:
                 trans, lang = lex, "en"           # lexique : pas d'appel a Google
             elif not mine and cfg["target"].lower() == "fr" and sure_french(text):
