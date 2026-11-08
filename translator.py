@@ -214,7 +214,11 @@ def parse(line):
 # --------------------------------------------------------------------------
 # Traduction (Google, sans installation)
 # --------------------------------------------------------------------------
-_GT_HOSTS = ("translate.googleapis.com", "translate.google.com")
+# translate.googleapis.com d'abord (c'est celle qui marche dans le navigateur), l'autre en dernier recours.
+_GT_HOSTS = ("translate.googleapis.com", "translate.googleapis.com", "translate.googleapis.com", "translate.google.com")
+# En-tete d'un vrai navigateur : avec un simple "Mozilla/5.0", Google renvoie plus vite des 429.
+_GT_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+          "(KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36")
 _gt_lock = threading.Lock()
 _gt_last = [0.0]
 _gt_cache = {}
@@ -235,14 +239,14 @@ def google_translate(text, target, source="auto", timeout=8):
     params = urllib.parse.urlencode({"client": "gtx", "sl": source, "tl": target, "dt": "t", "q": text})
     last_err = None
     for attempt in range(4):
-        host = _GT_HOSTS[attempt % 2]                  # on alterne entre les deux adresses
+        host = _GT_HOSTS[attempt]
         with _gt_lock:                                 # 0,3 s minimum entre deux requetes
             wait = 0.3 - (time.time() - _gt_last[0])
             if wait > 0:
                 time.sleep(wait)
             _gt_last[0] = time.time()
         req = urllib.request.Request("https://%s/translate_a/single?%s" % (host, params),
-                                     headers={"User-Agent": "Mozilla/5.0"})
+                                     headers={"User-Agent": _GT_UA, "Accept": "*/*"})
         try:
             with urllib.request.urlopen(req, timeout=timeout) as r:
                 data = json.loads(r.read().decode("utf-8"))
