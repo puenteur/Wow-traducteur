@@ -16,8 +16,8 @@ Le détail de chaque étape est plus bas.
 
 Va sur la page [Releases](https://github.com/puenteur/Wow-traducteur/releases/latest) et télécharge **les deux fichiers** :
 
-- `ChatFR-addon.zip` : l'addon, à décompresser
-- `WoW-Traducteur.zip` : le traducteur, à décompresser (il contient le dossier `Traducteur`)
+- `ChatFR-<version>.zip` (ex. `ChatFR-1.4.2.zip`) : l'addon, à décompresser
+- `WoW-Traducteur-<version>.zip` (ex. `WoW-Traducteur-1.4.zip`) : le traducteur, à décompresser (il contient le dossier `Traducteur`)
 
 Évite le bouton vert « Code → Download ZIP » : il mélange tout dans un seul dossier et ne contient pas de dossier `Traducteur`. Si tu l'utilises quand même, garde `translator.py` et `Lancer le traducteur.bat` **ensemble dans le même dossier**.
 
@@ -57,7 +57,7 @@ Pourquoi une bande de couleurs ? Un addon WoW n'a pas accès à Internet, et le 
 3. La barre de statut doit afficher **« Pont image : OK (N messages reçus) »**. Les messages arrivent traduits en 1 à 2 secondes, avec un badge de langue (`[EN]`, `[DE]`, `[RU]`…).
 4. Pour répondre : tape en français dans **« Écrire (FR) → »**, appuie sur Entrée, puis **Ctrl+V** dans le tchat de WoW. La langue de réponse se règle seule sur le dernier message étranger reçu.
 
-Un petit lexique de joueur traduit directement les messages courts (« who » → qui, « ty » → merci, « gg » → bien joué, « lfg » → cherche groupe…) et développe les abréviations anglaises avant Google (« where r u » → « where are you »). Tu peux ajouter tes mots dans `LEX_FULL` et `LEX_EXPAND`, et les noms de monstres ou de lieux que Google traduit à tort (« Hogger » → « porc ») dans `LEX_NAMES`, dans `translator.py`. Les prix en pièces (« 100 po », « 2 pa 50 pc ») ne sont jamais traduits.
+Un petit lexique de joueur traduit directement les messages courts (« who » → qui, « ty » → merci, « gg » → bien joué, « lfg » → cherche groupe…) et développe les abréviations anglaises avant Google (« where r u » → « where are you »). Les abréviations de donjons, raids, zones et villes sont remplacées par leur nom français (« SFK » → Donjon d'Ombrecroc, « STV » → Vallée de Strangleronce, « UC » → Fossoyeuse…). Le jargon « tank », « heal », « healer » et « DPS » reste tel quel. Tu peux ajouter tes mots dans `LEX_FULL` et `LEX_EXPAND`, et les noms de monstres ou de lieux que Google traduit à tort (« Hogger » → « porc ») dans `LEX_NAMES`, et tes abréviations de lieux dans `LEX_PLACES`, dans `translator.py`. Les prix en pièces (« 100 po », « 2 pa 50 pc ») ne sont jamais traduits.
 
 Les liens du tchat sont colorés comme dans le jeu : quêtes en jaune, objets selon leur qualité (gris, blanc, vert, bleu, violet, orange), sorts en bleu clair, enchantements en jaune-orangé. Dans la traduction, le nom du lien est traduit par Google : cherche le nom anglais d'origine (ligne du dessus) si tu veux retrouver l'objet ou la quête.
 

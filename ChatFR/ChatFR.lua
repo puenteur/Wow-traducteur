@@ -699,8 +699,87 @@ f:RegisterEvent("PLAYER_LOGIN")
 for _, ev in ipairs(EVENTS) do
   f:RegisterEvent(ev)
 end
-f:SetScript("OnEvent", function(_, event, name, author, a3, a4, a5, a6, a7, a8, a9)
+-- Fenetre d'annonce "nouvelle version du traducteur" (voir PLAYER_LOGIN).
+local TRAD_NOTICE = "1.4"
+local TRAD_URL = "github.com/puenteur/Wow-traducteur"
+local noticeFrame
+
+local function ShowTradNotice()
+  if not noticeFrame then
+    local p = CreateFrame("Frame", "ChatFRNotice", UIParent, "BackdropTemplate")
+    noticeFrame = p
+    p:SetSize(440, 190)
+    p:SetPoint("CENTER", 0, 120)
+    p:SetFrameStrata("DIALOG")
+    p:SetClampedToScreen(true)
+    p:SetMovable(true)
+    p:EnableMouse(true)
+    p:RegisterForDrag("LeftButton")
+    p:SetScript("OnDragStart", function(self) self:StartMoving() end)
+    p:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
+    p:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 2 })
+    p:SetBackdropColor(0, 0, 0, 0.95)
+    p:SetBackdropBorderColor(1, 0.82, 0, 1)
+
+    local title = p:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    title:SetPoint("TOP", 0, -14)
+    title:SetText("ChatFR : mise à jour du traducteur")
+
+    local body = p:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    body:SetPoint("TOP", title, "BOTTOM", 0, -12)
+    body:SetWidth(400)
+    body:SetJustifyH("CENTER")
+    body:SetText("La version " .. TRAD_NOTICE .. " de WoW Traducteur est disponible.\n" ..
+                 "Télécharge le zip WoW-Traducteur dans les Releases de :")
+
+    -- Adresse dans une zone de texte : clic dedans puis Ctrl+C pour la copier.
+    local eb = CreateFrame("EditBox", nil, p, "InputBoxTemplate")
+    eb:SetSize(300, 24)
+    eb:SetPoint("TOP", body, "BOTTOM", 0, -10)
+    eb:SetAutoFocus(false)
+    eb:SetText(TRAD_URL)
+    eb:SetCursorPosition(0)
+    eb:SetScript("OnTextChanged", function(self, user) if user then self:SetText(TRAD_URL) end end)
+    eb:SetScript("OnEditFocusGained", function(self) self:HighlightText() end)
+    eb:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+    eb:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
+
+    local hint = p:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    hint:SetPoint("TOP", eb, "BOTTOM", 0, -4)
+    hint:SetText("(clique sur l'adresse puis Ctrl+C pour la copier)")
+
+    local ok = CreateFrame("Button", nil, p, "UIPanelButtonTemplate")
+    ok:SetSize(120, 24)
+    ok:SetPoint("BOTTOM", 0, 14)
+    ok:SetText("OK")
+    ok:SetScript("OnClick", function()
+      ChatFRDB.tradNotice = TRAD_NOTICE          -- ne plus afficher pour cette version
+      p:Hide()
+    end)
+  end
+  noticeFrame:Show()
+end
+
+-- Chuchotement Battle.net : l'auteur arrive sous forme de code protege ("|Ks18|k") que seul
+-- le tchat du jeu sait afficher. On le remplace par le nom du BattleTag (ou du personnage).
+local function BNetName(bnID)
+  if not bnID or not C_BattleNet or not C_BattleNet.GetAccountInfoByID then return nil end
+  local info = C_BattleNet.GetAccountInfoByID(bnID)
+  if not info then return nil end
+  if type(info.battleTag) == "string" and info.battleTag ~= "" then
+    return (info.battleTag:gsub("#.*$", ""))
+  end
+  local g = info.gameAccountInfo
+  if g and type(g.characterName) == "string" and g.characterName ~= "" then return g.characterName end
+  return nil
+end
+
+f:SetScript("OnEvent", function(_, event, name, author, a3, a4, a5, a6, a7, a8, a9, ...)
   if event:sub(1, 9) == "CHAT_MSG_" then
+    if event == "CHAT_MSG_BN_WHISPER" then
+      local okN, bn = pcall(BNetName, (select(4, ...)))   -- 13e argument : bnSenderID
+      if okN and bn then author = bn end
+    end
     local ok, err = pcall(OnChat, event, name, author, a4, a9)
     if not ok and not ns.errShown then
       ns.errShown = true
@@ -727,13 +806,14 @@ f:SetScript("OnEvent", function(_, event, name, author, a3, a4, a5, a6, a7, a8, 
     pcall(StartLogFlush)
     local okM, errM = pcall(CreateMinimapButton)
     if not okM then Say("bouton minicarte indisponible : " .. tostring(errM)) end
-    -- Annonce unique (par compte) d'une nouvelle version du traducteur externe.
-    -- Changer TRAD_NOTICE a chaque nouvelle version du traducteur a annoncer.
-    local TRAD_NOTICE = "1.2"
+    -- Annonce d'une nouvelle version du traducteur externe : fenetre au centre de l'ecran,
+    -- remontree a chaque connexion tant que le joueur n'a pas clique "OK".
+    -- Changer TRAD_NOTICE (plus haut) a chaque nouvelle version du traducteur a annoncer.
     if ChatFRDB.tradNotice ~= TRAD_NOTICE then
-      ChatFRDB.tradNotice = TRAD_NOTICE
       local function notice()
-        Say("nouvelle version du traducteur (" .. TRAD_NOTICE .. ") : a telecharger sur github.com/puenteur/Wow-traducteur (Releases).")
+        Say("|cffffd100NOUVELLE VERSION DU TRADUCTEUR (" .. TRAD_NOTICE .. ")|r : a telecharger sur " .. TRAD_URL .. " (Releases).")
+        local okN, errN = pcall(ShowTradNotice)
+        if not okN then Say("annonce indisponible : " .. tostring(errN)) end
       end
       if C_Timer and C_Timer.After then C_Timer.After(5, notice) else notice() end
     end

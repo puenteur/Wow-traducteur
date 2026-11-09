@@ -33,7 +33,7 @@ try:
 except ImportError:  # pas sous Windows
     winsound = None
 
-VERSION = "1.2"
+VERSION = "1.4"
 # Verification de mise a jour : le fichier version.txt du depot contient le numero de la derniere version.
 VERSION_URL = "https://raw.githubusercontent.com/puenteur/Wow-traducteur/main/version.txt"
 RELEASE_URL = "https://github.com/puenteur/Wow-traducteur/releases/latest"
@@ -345,34 +345,144 @@ def google_translate(text, target, source="auto", timeout=8):
 # un code avant l'envoi a Google puis remis tels quels dans la traduction. Ajoute les tiens ici.
 LEX_NAMES = ["Hogger"]
 
+# Donjons, raids, zones et villes (repris du Dictionary.lua de ChatFR) : masques comme LEX_NAMES,
+# puis remplaces par leur nom francais (seulement quand la langue cible est le francais).
+# "SFK" -> "Donjon d'Ombrecroc". Ajoute les tiens ici : "abreviation en minuscules": "nom francais".
+LEX_PLACES = {
+    'rfc': 'Gouffre de Ragefeu', 'ragefire chasm': 'Gouffre de Ragefeu', 'wc': 'Cavernes des lamentations',
+    'wailing caverns': 'Cavernes des lamentations', 'vc': 'Mortemines',
+    'dm': 'Mortemines (ou Hache-tripes)', 'deadmines': 'Mortemines', 'sfk': "Donjon d'Ombrecroc",
+    'shadowfang keep': "Donjon d'Ombrecroc", 'bfd': 'Profondeurs de Brassenoire',
+    'blackfathom deeps': 'Profondeurs de Brassenoire', 'stockades': 'Les Cachots', 'stocks': 'Les Cachots',
+    'the stockade': 'Les Cachots', 'stockade': 'Les Cachots', 'gnomer': 'Gnomeregan',
+    'gnomeregan': 'Gnomeregan', 'rfk': 'Kraal de Tranchebauge', 'razorfen kraul': 'Kraal de Tranchebauge',
+    'sm': 'Monastère écarlate', 'scarlet monastery': 'Monastère écarlate',
+    'sm gy': 'Monastère écarlate : cimetière', 'sm lib': 'Monastère écarlate : bibliothèque',
+    'sm arm': 'Monastère écarlate : armurerie', 'sm cath': 'Monastère écarlate : cathédrale',
+    'rfd': 'Souilles de Tranchebauge', 'razorfen downs': 'Souilles de Tranchebauge', 'uld': 'Uldaman',
+    'ulda': 'Uldaman', 'uldaman': 'Uldaman', 'zf': "Zul'Farrak", "zul'farrak": "Zul'Farrak",
+    'mara': 'Maraudon', 'maraudon': 'Maraudon', 'st': "Temple d'Atal'Hakkar",
+    'sunken temple': "Temple d'Atal'Hakkar", "temple of atal'hakkar": "Temple d'Atal'Hakkar",
+    'brd': 'Profondeurs de Blackrock', 'blackrock depths': 'Profondeurs de Blackrock',
+    'lbrs': 'Pic Blackrock inférieur', 'ubrs': 'Pic Blackrock supérieur',
+    'lower blackrock spire': 'Pic Blackrock inférieur', 'upper blackrock spire': 'Pic Blackrock supérieur',
+    'brs': 'Pic Blackrock', 'strat': 'Stratholme', 'stratholme': 'Stratholme', 'scholo': 'Scholomance',
+    'scholomance': 'Scholomance', 'dire maul': 'Hache-tripes', 'dme': 'Hache-tripes est',
+    'dmw': 'Hache-tripes ouest', 'dmn': 'Hache-tripes nord', 'dm east': 'Hache-tripes est',
+    'dm west': 'Hache-tripes ouest', 'dm north': 'Hache-tripes nord', 'mc': 'Cœur du Magma',
+    'molten core': 'Cœur du Magma', 'bwl': "Repaire de l'Aile noire",
+    'blackwing lair': "Repaire de l'Aile noire", 'zg': "Zul'Gurub", "zul'gurub": "Zul'Gurub",
+    'aq20': "Ruines d'Ahn'Qiraj", 'aq40': "Temple d'Ahn'Qiraj", 'aq': "Ahn'Qiraj", 'ony': 'Onyxia',
+    'onyxia': 'Onyxia', 'naxx': 'Naxxramas', 'naxxramas': 'Naxxramas', 'kara': 'Karazhan',
+    'karazhan': 'Karazhan', 'gruul': 'Repaire de Gruul', 'mag': 'Magtheridon',
+    'magtheridon': 'Magtheridon', 'ssc': 'Caverne du sanctuaire du Serpent', 'tk': 'Donjon de la Tempête',
+    'tempest keep': 'Donjon de la Tempête', 'bt': 'Temple noir', 'black temple': 'Temple noir',
+    'mh': "Sommet d'Hyjal", 'hyjal': "Sommet d'Hyjal", 'swp': 'Plateau du Puits de soleil',
+    'sunwell': 'Puits de soleil', 'za': "Zul'Aman", "zul'aman": "Zul'Aman", 'ulduar': 'Ulduar',
+    'toc': 'Épreuve du croisé', 'icc': 'Citadelle de la Couronne de glace', 'voa': "Caveau d'Archavon",
+    'os': 'Sanctum Obsidien', 'eoe': "Œil de l'éternité", 'fl': 'Terres de Feu',
+    'dragon soul': 'Âme des dragons', 'hellfire': 'Péninsule des Flammes infernales',
+    'ramparts': 'Remparts des Flammes infernales', 'blood furnace': 'Fournaise du sang',
+    'shattered halls': 'Salles brisées', 'slave pens': 'Les enclos aux esclaves',
+    'underbog': 'Basse-tourbière', 'steamvault': 'Caveau de la vapeur', 'mana tombs': 'Tombes-mana',
+    'auchenai crypts': 'Cryptes Auchenaï', 'sethekk halls': 'Salles des Sethekk',
+    'shadow labyrinth': 'Labyrinthe des ombres', 'mechanar': 'Méchanar', 'botanica': 'Botanica',
+    'arcatraz': 'Arcatraz', 'old hillsbrad': "Contreforts de Hautebrande d'antan",
+    'black morass': 'Le Noir Marécage', 'magisters terrace': 'Terrasse des Magistères',
+    'stormwind': 'Hurlevent', 'sw': 'Hurlevent', 'ironforge': 'Forgefer', 'darnassus': 'Darnassus',
+    'exodar': 'Exodar', 'orgrimmar': 'Orgrimmar', 'org': 'Orgrimmar',
+    'thunder bluff': 'Les Pitons-du-Tonnerre', 'tb': 'Les Pitons-du-Tonnerre', 'undercity': 'Fossoyeuse',
+    'uc': 'Fossoyeuse', 'silvermoon': "Lune-d'argent", 'shattrath': 'Shattrath', 'dalaran': 'Dalaran',
+    'booty bay': 'Baie-du-Butin', 'gadgetzan': 'Gadgetzan', 'ratchet': 'Cabestan', 'menethil': 'Menethil',
+    'theramore': 'Theramore', 'auberdine': 'Auberdine', 'astranaar': 'Astranaar',
+    'crossroads': 'Le Carrefour', 'the crossroads': 'Le Carrefour', 'xroads': 'Le Carrefour',
+    'sentinel hill': 'Colline-aux-Sentinelles', 'goldshire': "Comté-de-l'Or", 'lakeshire': 'Bourg-du-Lac',
+    'darkshire': 'Sombre-comté', 'southshore': 'Southshore', 'tarren mill': 'Moulin-de-Tarren',
+    'brill': 'Brill', 'razor hill': 'Tranchecolline', 'valley of trials': 'Vallée des Épreuves',
+    'elwynn forest': "Forêt d'Elwynn", 'elwynn': "Forêt d'Elwynn", 'westfall': "Marche de l'Ouest",
+    'duskwood': 'Bois de la Pénombre', 'redridge': 'Les Carmines', 'redridge mountains': 'Les Carmines',
+    'stranglethorn': 'Strangleronce', 'stranglethorn vale': 'Vallée de Strangleronce',
+    'stv': 'Vallée de Strangleronce', 'barrens': 'Les Tarides', 'the barrens': 'Les Tarides',
+    'northern barrens': 'Tarides du nord', 'southern barrens': 'Tarides du sud', 'tanaris': 'Tanaris',
+    'ungoro': "Un'Goro", "un'goro": "Un'Goro", "un'goro crater": "Cratère d'Un'Goro",
+    'winterspring': "Berceau-de-l'Hiver", 'silithus': 'Silithus', 'felwood': 'Gangrebois',
+    'ashenvale': 'Orneval', 'stonetalon': 'Les Serres-Rocheuses', 'desolace': 'Désolace',
+    'feralas': 'Féralas', 'dustwallow': "Marécage d'Âprefange", 'dustwallow marsh': "Marécage d'Âprefange",
+    'thousand needles': 'Mille pointes', 'azshara': 'Azshara', 'hillsbrad': 'Contreforts de Hautebrande',
+    'hillsbrad foothills': 'Contreforts de Hautebrande', 'arathi': 'Arathi',
+    'arathi highlands': "Hautes-terres d'Arathi", 'alterac': 'Alterac',
+    'alterac mountains': "Montagnes d'Alterac", 'badlands': 'Terres ingrates',
+    'searing gorge': 'Gorge des Vents brûlants', 'burning steppes': 'Steppes ardentes',
+    'blasted lands': 'Terres foudroyées', 'swamp of sorrows': 'Marais des Chagrins',
+    'deadwind pass': 'Défilé de Deuillevent', 'tirisfal': 'Clairières de Tirisfal',
+    'tirisfal glades': 'Clairières de Tirisfal', 'silverpine': 'Forêt des Pins-Argentés',
+    'silverpine forest': 'Forêt des Pins-Argentés', 'hinterlands': 'Les Hinterlands',
+    'the hinterlands': 'Les Hinterlands', 'wetlands': 'Les Paluns', 'loch modan': 'Loch Modan',
+    'dun morogh': 'Dun Morogh', 'teldrassil': 'Teldrassil', 'darkshore': 'Sombrivage',
+    'moonglade': 'Reflet-de-Lune', 'mulgore': 'Mulgore', 'durotar': 'Durotar',
+    'epl': "Maleterres de l'est", 'wpl': "Maleterres de l'ouest",
+    'eastern plaguelands': "Maleterres de l'est", 'western plaguelands': "Maleterres de l'ouest",
+    'plaguelands': 'Maleterres', 'eversong': 'Bois des Chants éternels', 'ghostlands': 'Orfraie',
+    'azuremyst': 'Île de Brume-azur', 'bloodmyst': 'Île de Brume-sang',
+    'hellfire peninsula': 'Péninsule des Flammes infernales', 'zangarmarsh': 'Marécage de Zangar',
+    'terokkar': 'Forêt de Terokkar', 'nagrand': 'Nagrand', "blade's edge": 'Les Tranchantes',
+    'blades edge': 'Les Tranchantes', 'netherstorm': 'Raz-de-Néant',
+    'shadowmoon valley': "Vallée d'Ombrelune", 'northrend': 'Norfendre', 'outland': 'Outreterre',
+    'kalimdor': 'Kalimdor', 'eastern kingdoms': "Royaumes de l'est", 'ek': "Royaumes de l'est",
+    'azeroth': 'Azeroth', 'gg': 'bien joué',
+}
+# Jargon que les joueurs francais utilisent tel quel : masque comme LEX_NAMES pour que Google ne le
+# traduise pas ("need heal" -> "besoin de heal", pas "besoin de soins").
+LEX_KEEP = {"tank": "tank", "tanks": "tanks", "heal": "heal", "heals": "heals",
+            "healer": "healer", "healers": "healers", "dps": "DPS",
+            "gank": "gank", "ganked": "ganké", "ganking": "gank", "ganks": "gank"}
+# "dm me" / "dm pls" = message prive, pas les Mortemines.
+_PLACE_NOT_BEFORE = {"dm": r"(?!\s*(?:me|him|her|them|u|you|pls|plz)\b)"}
+
 
 def _name_re(name):
     """Regex d'un nom propre qui tolere les lettres repetees ("hoggeer", "hoggerr")."""
     return "".join(re.escape(c) + "+" for c in name.lower())
 
 
-def _names_pattern():
-    return r"(?<!\w)(?:%s)(?!\w)" % "|".join(_name_re(n) for n in LEX_NAMES)
+def _protected(target):
+    """{nom ou abreviation: texte remis apres Google}, les plus longs d'abord ("sm gy" avant "sm")."""
+    d = {n: n for n in LEX_NAMES}
+    if (target or "").lower() == "fr":
+        d.update(LEX_PLACES)
+        d.update(LEX_KEEP)
+    return dict(sorted(d.items(), key=lambda kv: len(kv[0]), reverse=True))
+
+
+def _names_pattern(target):
+    names = _protected(target)
+    if not names:
+        return None
+    return r"(?<!\w)(?:%s)(?!\w)" % "|".join(_name_re(n) + _PLACE_NOT_BEFORE.get(n.lower(), "")
+                                             for n in names)
 
 
 def google_translate_safe(text, target, source="auto", timeout=8):
-    """Comme google_translate, mais sans laisser Google traduire les noms de LEX_NAMES."""
+    """Comme google_translate, mais sans laisser Google traduire les noms de LEX_NAMES / LEX_PLACES."""
     found = {}
+    names = _protected(target)
+    pat = _names_pattern(target)
 
     def mask(m):
         key = "Zq%dx" % len(found)
-        found[key] = next(n for n in LEX_NAMES if re.fullmatch(_name_re(n), m.group(0), re.I))
+        found[key] = next(v for n, v in names.items() if re.fullmatch(_name_re(n), m.group(0), re.I))
         return key
-    if LEX_NAMES:
-        text = re.sub(_names_pattern(), mask, text, flags=re.I)
+    if pat:
+        text = re.sub(pat, mask, text, flags=re.I)
     out, lang = google_translate(text, target, source, timeout)
     for key, name in found.items():
         out = re.sub(re.escape(key), lambda _m, n=name: n, out, flags=re.I)
     return out, lang
 
 
-def has_protected_name(text):
-    return bool(LEX_NAMES) and bool(re.search(_names_pattern(), text, re.I))
+def has_protected_name(text, target="fr"):
+    pat = _names_pattern(target)
+    return bool(pat) and bool(re.search(pat, text, re.I))
 
 
 # --------------------------------------------------------------------------
@@ -632,9 +742,14 @@ _FOREIGN_CHARS = re.compile("[\u00f1\u00e3\u00f5\u00df\u00e4\u00f6\u00fc\u00e1\u
 _FR_ACCENTS = re.compile("[\u00e0\u00e2\u00e7\u00e8\u00e9\u00ea\u00eb\u00ee\u00ef\u00f4\u00f9\u00fb\u0153]")
 
 
+# Smileys (":D", ";p", "xD"...) : le "d" de ":D" etait compte comme le "d'" francais, et
+# "wow cheers :D" etait pris pour du francais (donc pas traduit).
+_SMILEY = re.compile(r"(?<!\w)(?:[:;=8][-'^o]?[dDpPoO)(\]\[/\\|*3sS]+|[xX][dDpP]+)(?!\w)")
+
+
 def sure_french(text):
     """True seulement si le message est clairement en francais (sans mot etranger)."""
-    t = text.lower()
+    t = _SMILEY.sub(" ", text).lower()
     if not is_latin_text(t) or _FOREIGN_CHARS.search(t):
         return False
     words = [w.strip("'") for w in re.findall("[a-z\u00e0-\u00ff\u0153']+", t)]
@@ -722,6 +837,8 @@ LEX_EXPAND = {
     "dps": "DPS", "oom": "out of mana", "gz": "congratulations", "gj": "good job", "wp": "well played",
     "whisp": "whisper", "wisp": "whisper", "whis": "whisper", "pst": "whisper me",
     "pt": "group", "grp": "group",
+    "any1": "anyone", "some1": "someone", "every1": "everyone",
+    "mats": "materials", "mat": "material",
 }
 
 # Expressions entieres (regex, remplacement) appliquees avant les mots seuls : "LFM Hogger" ne doit pas
@@ -732,6 +849,8 @@ LEX_PHRASES = [
     (r"\b(?:whisp|wisp|whis|whisper|pst|pm|w/)\s+(?:me\s+)?for\s+(?:an?\s+)?(?:inv|invite|invites)\b",
      "whisper me for an invite"),
     (r"\bfor\s+inv\b", "for an invite"),
+    # question qui commence par "any" ("any group for SFK?") : Google traduit "tout groupe".
+    (r"^\s*any\s+(?!(?:one|body|1|more|way|ways|time|how)\b)", "is there any "),
 ]
 
 # 3) Francais qui contient du jargon anglais ("un last tank et on part") : Google le prend pour de
@@ -1204,10 +1323,10 @@ class App:
                     trans, lang = google_translate(fr_mix_fix(text), cfg["target"])
                     if lang == "en" and cfg["target"].lower() == "fr":
                         exp = lexicon_expand(text)
-                        if exp != text or has_protected_name(text):
+                        if exp != text or has_protected_name(text, cfg["target"]):
                             # abreviations / noms propres : on retraduit la phrase developpee
                             trans, _ = google_translate_safe(exp, cfg["target"], source="en")
-                    elif lang not in ("?", "") and has_protected_name(text):
+                    elif lang not in ("?", "") and has_protected_name(text, cfg["target"]):
                         trans, _ = google_translate_safe(text, cfg["target"], source=lang)
                     if unreliable_detection(text, lang):
                         # 2-3 mots, langue improbable (ex. "more for hogger" -> norvegien) :
