@@ -19,6 +19,7 @@ Le détail de chaque étape est plus bas.
 - Tous les canaux : dire, crier, groupe, raid, guilde, chuchotements (en jeu et Battle.net), Général, Commerce, Recherche de groupe…
 - Lexique de joueur : abréviations (gg, ty, lfm, pst, wts, any1…), jargon gardé tel quel (tank, heal, DPS, gank), donjons et zones en français (SFK → Donjon d'Ombrecroc), prix en pièces jamais traduits.
 - Messages longs reçus en entier, liens d'objets et de quêtes colorés comme dans le jeu (liens Questie simplifiés), marqueurs de raid affichés en symboles.
+- **Fiche d'objet au survol** : passe la souris sur un objet ou une quête en lien pour voir son infobulle (stats, niveau, prix), lue directement dans le jeu, comme dans WoW.
 - Les messages déjà en français ne passent pas par Google.
 
 **Répondre**
@@ -46,8 +47,8 @@ Le détail de chaque étape est plus bas.
 
 Va sur la page [Releases](https://github.com/puenteur/Wow-traducteur/releases/latest) et télécharge **les deux fichiers** :
 
-- `ChatFR-<version>.zip` (ex. `ChatFR-1.6.zip`) : l'addon, à décompresser
-- `WoW-Traducteur-<version>.zip` (ex. `WoW-Traducteur-1.6.zip`) : le traducteur, à décompresser (il contient le dossier `Traducteur`)
+- `ChatFR-<version>.zip` (ex. `ChatFR-1.7.zip`) : l'addon, à décompresser
+- `WoW-Traducteur-<version>.zip` (ex. `WoW-Traducteur-1.7.zip`) : le traducteur, à décompresser (il contient le dossier `Traducteur`)
 
 Évite le bouton vert « Code → Download ZIP » : il mélange tout dans un seul dossier et ne contient pas de dossier `Traducteur`. Si tu l'utilises quand même, garde `translator.py` et `Lancer le traducteur.bat` **ensemble dans le même dossier**.
 

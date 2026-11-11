@@ -711,7 +711,7 @@ for _, ev in ipairs(EVENTS) do
   f:RegisterEvent(ev)
 end
 -- Fenetre d'annonce "nouvelle version du traducteur" (voir PLAYER_LOGIN).
-local TRAD_NOTICE = "1.6"
+local TRAD_NOTICE = "1.7"
 local TRAD_URL = "github.com/puenteur/Wow-traducteur"
 local noticeFrame
 

@@ -33,13 +33,16 @@ try:
 except ImportError:  # pas sous Windows
     winsound = None
 
-VERSION = "1.6"
+VERSION = "1.7"
 # Verification de mise a jour : le fichier version.txt du depot contient le numero de la derniere version.
 VERSION_URL = "https://raw.githubusercontent.com/puenteur/Wow-traducteur/main/version.txt"
+# Fiche d'un objet / d'une quete cliques dans la fenetre (recherche par nom, en francais).
+WOWHEAD_SEARCH = "https://www.wowhead.com/classic/fr/search?q="
 RELEASE_URL = "https://github.com/puenteur/Wow-traducteur/releases/latest"
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(HERE, "translator_config.json")
+TIPS_PATH = os.path.join(HERE, "infobulles.json")     # infobulles d'objets gardees entre deux lancements
 
 DEFAULTS = {
     "source": "pont",               # "pont" (capture de la bande de l'addon) ou "log"
@@ -189,6 +192,7 @@ HELP_TEXT = """# Comment ça marche
 - Tous les canaux : dire, crier, groupe, raid, guilde, chuchotements (en jeu et Battle.net), Général, Commerce, Recherche de groupe...
 - Lexique de joueur : abréviations (gg, ty, lfm, pst, wts, any1...), jargon gardé tel quel (tank, heal, DPS, gank), donjons et zones en français (SFK -> Donjon d'Ombrecroc), prix en pièces jamais traduits.
 - Liens d'objets et de quêtes colorés comme dans le jeu, marqueurs de raid affichés en symboles.
+- Passe la souris sur un objet ou une quête en lien : sa fiche s'affiche (stats, niveau, prix), comme dans WoW.
 - Les messages déjà en français ne passent pas par Google.
 # Répondre
 - Écris en français dans « Écrire (FR) » puis clique sur « Traduire + copier » : la traduction est copiée. Dans WoW : Entrée, Ctrl+V, Entrée.
@@ -737,6 +741,8 @@ def parse_bridge_record(payload):
         kind, chan, author, text = payload.decode("utf-8", "replace").split("\x1f", 3)
     except ValueError:
         return None
+    if kind == "tip":                    # infobulle d'objet : lignes dans le champ canal, nom en auteur
+        return time.strftime("%H:%M"), "tip", chan, author, ""
     if not text.strip():
         return None
     low = chan.lower()
@@ -1130,6 +1136,13 @@ def worth_translating(text):
 class App:
     def __init__(self):
         self.cfg = load_config()
+        self.tips = {}                       # infobulles recues de ChatFR : nom (minuscules) -> lignes
+        try:
+            with open(TIPS_PATH, encoding="utf-8") as f:
+                self.tips = {k: v for k, v in json.load(f).items() if isinstance(v, list)}
+        except (OSError, ValueError, AttributeError):
+            self.tips = {}
+        self._tips_dirty = False
         self.T = THEMES.get(str(self.cfg.get("theme", "")), _SOMBRE)
         self.root = tk.Tk()
         self.root.title("WoW Traducteur")
@@ -1243,6 +1256,8 @@ class App:
         for k, c in (T["colors"] or COLORS).items():
             self.text.tag_configure(k, foreground=c)
         self.text.tag_configure("trans", foreground=T["trans"], lmargin1=18, lmargin2=18)
+        self.text.bind("<Motion>", self.on_motion)          # survol des liens -> fiche de l'objet
+        self.text.bind("<Leave>", self.on_text_leave)
         self.text.tag_configure("alert", background=T["alert_bg"])
         self.text.tag_configure("badge", foreground=T["badge"])
         self.text.tag_configure("err", foreground=T["err"])
@@ -1251,6 +1266,9 @@ class App:
                                 font=("Segoe UI", int(self.cfg["font_size"]), "bold"))
         for code, c in (T["links"] or LINK_COLORS).items():     # en dernier : la couleur du lien prime
             self.text.tag_configure("link_" + code, foreground=c)
+            # main au survol : un clic ouvre la fiche sur Wowhead (voir on_click)
+            self.text.tag_bind("link_" + code, "<Enter>", lambda e: self.text.config(cursor="hand2"))
+            self.text.tag_bind("link_" + code, "<Leave>", lambda e: self.text.config(cursor=""))
         self.text.bind("<Button-1>", self.on_click)
 
         P = T["panel"]
@@ -1350,6 +1368,86 @@ class App:
         self.text.configure(state="disabled")
         self.line_lang = {}
 
+    def save_tips(self):
+        self._tips_dirty = False
+        try:
+            tmp = TIPS_PATH + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(self.tips, f, ensure_ascii=False)
+            os.replace(tmp, TIPS_PATH)
+        except OSError:
+            pass
+
+    def close_tip(self):
+        w = getattr(self, "_tip_win", None)
+        if w is not None and w.winfo_exists():
+            w.destroy()
+        self._tip_win = None
+
+    def show_tip(self, name, lines, color, x, y):
+        """Petit cadre facon infobulle de WoW, pres de la souris. Clic dessus pour fermer."""
+        self.close_tip()
+        w = tk.Toplevel(self.root)
+        self._tip_win = w
+        w.overrideredirect(True)
+        w.attributes("-topmost", True)
+        w.configure(bg="#c0c0c0")                          # liseré gris clair
+        f = tk.Frame(w, bg="#0a0d1c", padx=10, pady=7)
+        f.pack(padx=1, pady=1)
+        fs = int(self.cfg["font_size"])
+        tk.Label(f, text=name, bg="#0a0d1c", fg=color, font=("Segoe UI", fs + 1, "bold"),
+                 anchor="w", justify="left", wraplength=340).pack(fill="x")
+        for ln in lines:
+            low = ln.lower()
+            if low.startswith(("utiliser", "équipé", "chances quand", "use:", "equip:")):
+                c = "#1eff00"
+            elif ln.startswith(("\"", "\u00ab", "\u201c")):
+                c = "#ffd100"
+            elif low.startswith(("requiert", "niveau", "level", "requires")):
+                c = "#ffffff"
+            else:
+                c = "#e8e8e8"
+            tk.Label(f, text=ln, bg="#0a0d1c", fg=c, font=("Segoe UI", fs), anchor="w",
+                     justify="left", wraplength=340).pack(fill="x")
+        more = tk.Label(f, text="Voir sur Wowhead \u2197", bg="#0a0d1c", fg="#6fa8ff", cursor="hand2",
+                        font=("Segoe UI", fs - 1, "underline"), anchor="w")
+        more.pack(fill="x", pady=(6, 0))
+        more.bind("<Button-1>", lambda e: (webbrowser.open(WOWHEAD_SEARCH + urllib.parse.quote(name)),
+                                           self.close_tip()))
+        for wdg in [w, f] + [c for c in f.winfo_children() if c is not more]:
+            wdg.bind("<ButtonRelease-1>", lambda e: self.close_tip())
+        w.bind("<Escape>", lambda e: self.close_tip())
+        # se ferme aussi toute seule : quand la souris en sort, ou au bout de 8 s si on n'y va pas
+        state = {"in": False}
+
+        def enter(_e):
+            state["in"] = True
+
+        def leave(_e):
+            def check():
+                if self._tip_win is w and w.winfo_exists() and getattr(self, "_hover_name", None) != name:
+                    px, py = w.winfo_pointerxy()
+                    x0, y0 = w.winfo_rootx(), w.winfo_rooty()
+                    if not (x0 <= px < x0 + w.winfo_width() and y0 <= py < y0 + w.winfo_height()):
+                        self.close_tip()
+            w.after(300, check)
+
+        def timeout():
+            if self._tip_win is w and w.winfo_exists() and not state["in"]:
+                if getattr(self, "_hover_name", None) == name:   # souris toujours sur le lien
+                    w.after(1000, timeout)
+                else:
+                    self.close_tip()
+        w.bind("<Enter>", enter)
+        w.bind("<Leave>", leave)
+        w.after(8000, timeout)
+        w.update_idletasks()
+        tw, th = w.winfo_reqwidth(), w.winfo_reqheight()
+        sw, sh = w.winfo_screenwidth(), w.winfo_screenheight()
+        px = min(max(0, x + 14), sw - tw)
+        py = y + 14 if y + 14 + th <= sh else max(0, y - th - 10)
+        w.geometry("+%d+%d" % (px, py))
+
     def set_reply_to(self, name, quiet=False):
         """Destinataire des reponses : "Traduire + copier" copiera "/w Nom texte"."""
         self.reply_to = name or None
@@ -1366,8 +1464,76 @@ class App:
             if not quiet:
                 self.out_result.config(text="Reponse normale (sans /w).", fg=self.T["muted"])
 
+    def link_at(self, idx):
+        """(tag, nom) du lien d'objet / de quete sous l'index, ou (None, "")."""
+        link = next((t for t in self.text.tag_names(idx) if t.startswith("link_")), None)
+        if not link:
+            return None, ""
+        rng = self.text.tag_prevrange(link, idx + "+1c")
+        if not rng:
+            return link, ""
+        # plusieurs liens colles ("[A][B][C]") forment une seule zone : on garde celui vise
+        full = self.text.get(*rng)
+        off = len(self.text.get(rng[0], idx))
+        a, b = full.rfind("[", 0, off + 1), full.find("]", off)
+        if a != -1 and b != -1 and a < b:
+            return link, full[a + 1:b].strip()
+        return link, full.strip().strip("[]").strip()
+
+    def open_link_tip(self, link, name, x, y):
+        lines = self.tips.get(name.lower())
+        col = self.text.tag_cget(link, "foreground") or self.T["fg"]
+        if not lines:                            # pas recue (lien d'avant la mise a jour...)
+            lines = ["(fiche pas encore reçue du jeu : elle arrivera au prochain lien de cet objet)"]
+        self.show_tip(name, lines, col, x, y)
+        self._tip_name = name
+
+    def on_motion(self, event):
+        """Survol d'un lien : la fiche s'affiche apres un court instant, comme dans WoW."""
+        idx = self.text.index("@%d,%d" % (event.x, event.y))
+        link, name = self.link_at(idx)
+        job = getattr(self, "_hover_job", None)
+        if name and name == getattr(self, "_hover_name", None):
+            return
+        if job:
+            self.root.after_cancel(job)
+            self._hover_job = None
+        self._hover_name = name or None
+        if name:
+            self._hover_job = self.root.after(250, lambda: (
+                setattr(self, "_hover_job", None),
+                self.open_link_tip(link, name, self.root.winfo_pointerx(), self.root.winfo_pointery())))
+        elif getattr(self, "_tip_win", None) is not None:
+            self.root.after(300, self._close_tip_if_away)
+
+    def on_text_leave(self, _event):
+        job = getattr(self, "_hover_job", None)
+        if job:
+            self.root.after_cancel(job)
+            self._hover_job = None
+        self._hover_name = None
+        self.root.after(300, self._close_tip_if_away)
+
+    def _close_tip_if_away(self):
+        """Ferme la fiche si la souris n'est ni sur son lien ni sur la fiche elle-meme."""
+        w = getattr(self, "_tip_win", None)
+        if w is None or not w.winfo_exists():
+            return
+        if getattr(self, "_hover_name", None) == getattr(self, "_tip_name", None):
+            return
+        px, py = w.winfo_pointerxy()
+        x0, y0 = w.winfo_rootx(), w.winfo_rooty()
+        if not (x0 <= px < x0 + w.winfo_width() and y0 <= py < y0 + w.winfo_height()):
+            self.close_tip()
+
     def on_click(self, event):
         idx = self.text.index("@%d,%d" % (event.x, event.y))
+        link, name = self.link_at(idx)
+        if link:                                         # clic sur un objet / une quete : sa fiche
+            if name:
+                self.open_link_tip(link, name, event.x_root, event.y_root)
+            return
+        self.close_tip()
         if "name" in self.text.tag_names(idx):         # clic sur un pseudo : on lui repondra en chuchotement
             rng = self.text.tag_prevrange("name", idx + "+1c")
             if rng:
@@ -1612,7 +1778,9 @@ class App:
                         seen_first = True      # paquet deja affiche avant le lancement : ignore
                     elif payload:
                         p = parse_bridge_record(payload)
-                        if p:
+                        if p and p[1] == "tip":
+                            self.outq.put(("tip", p[3], p[2]))
+                        elif p:
                             nmsg += 1
                             self.nparsed += 1
                             self.inq.put(p)
@@ -1756,6 +1924,15 @@ class App:
                     return
                 elif item[0] == "out":
                     self.show_out(*item[1:])
+                elif item[0] == "tip":
+                    key = item[1].strip().lower()
+                    self.tips.pop(key, None)
+                    self.tips[key] = [l for l in item[2].split("\x1e") if l.strip()]
+                    while len(self.tips) > 3000:              # garde les plus recents
+                        self.tips.pop(next(iter(self.tips)))
+                    if not self._tips_dirty:                  # enregistre au plus toutes les 5 s
+                        self._tips_dirty = True
+                        self.root.after(5000, self.save_tips)
                 elif item[0] == "wowfront":
                     self.follow_wow(item[1])
                 elif item[0] == "update":
@@ -1879,6 +2056,7 @@ class App:
         """WoW plus au premier plan -> on se cache ; WoW revient -> on revient (sauf si tu avais
         reduit le traducteur toi-meme avec son bouton)."""
         if not front:
+            self.close_tip()
             if not self._minimized and not getattr(self, "_auto_hidden", False):
                 self._save_geometry()
                 self._auto_hidden = True
@@ -1953,6 +2131,7 @@ class App:
 
     def on_close(self):
         self.stop = True
+        self.save_tips()
         try:
             self.cfg["geometry"] = self.root.geometry()
         except tk.TclError:

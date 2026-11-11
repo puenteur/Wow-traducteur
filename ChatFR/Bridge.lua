@@ -152,16 +152,79 @@ local function LinkMark(color, ltype, name)
   return "\2" .. code .. "\3" .. name .. "\4"
 end
 
+-- Infobulles des objets / quetes lies dans le tchat : lues dans le jeu (en francais, vraies stats)
+-- et envoyees UNE fois par session et par objet. Le texte va dans le champ "canal" et le message
+-- reste vide : les anciens traducteurs ignorent ces enregistrements.
+local tipSent, scan = {}, nil
+
+-- Icones de pieces ("25|A:coin-copper:14:14:2:0|a", ou |T...CopperIcon|t) -> "25 pc", puis on
+-- enleve les autres icones et codes couleur.
+local function CleanCodes(t)
+  t = t:gsub("|A:[^|]*coin%-gold[^|]*|a", " po"):gsub("|A:[^|]*coin%-silver[^|]*|a", " pa")
+       :gsub("|A:[^|]*coin%-copper[^|]*|a", " pc")
+  t = t:gsub("|T[^|]*[Gg]old[Ii]con[^|]*|t", " po"):gsub("|T[^|]*[Ss]ilver[Ii]con[^|]*|t", " pa")
+       :gsub("|T[^|]*[Cc]opper[Ii]con[^|]*|t", " pc")
+  t = t:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|cn[%w_]+:", ""):gsub("|r", "")
+       :gsub("|T.-|t", ""):gsub("|A.-|a", "")
+  return t
+end
+local TIP_TYPES = { item = true, quest = true, spell = true, enchant = true }
+
+local function TipLines(hlink)
+  if not scan then
+    scan = CreateFrame("GameTooltip", "ChatFRScanTip", nil, "GameTooltipTemplate")
+  end
+  scan:SetOwner(WorldFrame, "ANCHOR_NONE")
+  scan:ClearLines()
+  if not pcall(scan.SetHyperlink, scan, hlink) then return {} end
+  local out = {}
+  for i = 2, math.min(scan:NumLines() or 0, 18) do          -- ligne 1 = le nom, deja connu
+    local l, r = _G["ChatFRScanTipTextLeft" .. i], _G["ChatFRScanTipTextRight" .. i]
+    local t = l and l:GetText()
+    if t and not (issecretvalue and issecretvalue(t)) and t ~= "" then
+      local rt = r and r:IsShown() and r:GetText()
+      if rt and not (issecretvalue and issecretvalue(rt)) and rt ~= "" then t = t .. "   " .. rt end
+      t = CleanCodes(t):gsub("[\1-\31]", " ")
+      out[#out + 1] = t
+    end
+  end
+  scan:Hide()
+  return out
+end
+
+local function PushTip(hlink, name, tries)
+  -- une fois toutes les 2 min par objet au plus (si le traducteur a ete relance entre-temps)
+  local now = GetTime and GetTime() or 0
+  if (tipSent[name] and now - tipSent[name] < 120) or not frame then return end
+  local lines = TipLines(hlink)
+  if #lines == 0 then                                      -- objet pas encore connu du jeu : on reessaie
+    if (tries or 0) < 3 and C_Timer and C_Timer.After then
+      C_Timer.After(1, function() pcall(PushTip, hlink, name, (tries or 0) + 1) end)
+    end
+    return
+  end
+  local body, nm = "", name:gsub("[\1-\31]", " ")
+  for _, t in ipairs(lines) do
+    local nb = (body == "") and t or (body .. "\30" .. t)
+    if #nb + #nm + 8 > MAXREC then break end
+    body = nb
+  end
+  tipSent[name] = now
+  queue[#queue + 1] = "tip\31" .. body .. "\31" .. nm .. "\31"
+  if #queue > MAXQ then table.remove(queue, 1) end
+end
+
 function ns.BridgePush(event, msg, author, chan)
   if not frame or not (ChatFRDB and ChatFRDB.bridge) then return end
   local kind = KIND[event]
   if not kind or type(msg) ~= "string" or type(author) ~= "string" then return end
   if issecretvalue and (issecretvalue(msg) or issecretvalue(author) or issecretvalue(chan)) then return end
+  local raw = msg                                     -- liens d'origine, pour les infobulles
   msg = msg:gsub("[\1-\31]", " ")
   msg = msg:gsub("|c(%x%x%x%x%x%x%x%x)|H([^:|]+):[^|]*|h(.-)|h|r", LinkMark)
   msg = msg:gsub("|cn([%w_]+):|H([^:|]+):[^|]*|h(.-)|h|r", LinkMark)
   msg = msg:gsub("|H([^:|]+):[^|]*|h(.-)|h", function(t, n) return LinkMark(nil, t, n) end)
-  msg = msg:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|cn[%w_]+:", ""):gsub("|r", ""):gsub("|T.-|t", "")
+  msg = CleanCodes(msg)
   chan = (type(chan) == "string") and chan:gsub("^%d+%.%s*", ""):gsub("[\1-\31]", " ") or ""
   author = author:gsub("[\1-\31]", " ")
   local rec = kind .. "\31" .. chan .. "\31" .. author .. "\31" .. msg
@@ -177,6 +240,9 @@ function ns.BridgePush(event, msg, author, chan)
   end
   queue[#queue + 1] = rec
   if #queue > MAXQ then table.remove(queue, 1) end
+  for hl, ltype, name in (raw or ""):gmatch("|H(([^:|]+):[^|]*)|h%[(.-)%]|h") do
+    if TIP_TYPES[ltype] then pcall(PushTip, hl, name) end
+  end
 end
 
 local function Create()
