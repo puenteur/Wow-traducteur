@@ -1,12 +1,12 @@
 -- Pont image : WoW n'ecrit le log du tchat sur le disque qu'a la fermeture du jeu.
 -- On dessine donc en haut a gauche de l'ecran une petite bande de cases colorees qui
 -- contient le dernier message ; translator.py la lit par capture d'ecran.
--- Cases : 64 x 12, 6 pixels chacune. Chaque case = 3 bits (couleur R/V/B allumee ou non :
+-- Cases : 64 x 16, 6 pixels chacune. Chaque case = 3 bits (couleur R/V/B allumee ou non :
 -- l'ecran deforme les couleurs, 2 niveaux seulement pour rester lisible).
 
 local ADDON_NAME, ns = ...
 
-local COLS, ROWS, CELL = 64, 12, 6
+local COLS, ROWS, CELL = 64, 16, 6      -- 16 lignes : assez pour un message de 255 caracteres + canal + pseudo
 local INSET = 12
 local NCELLS = COLS * ROWS
 local MAGIC = { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 }, { 1, 1, 1 } }
@@ -29,7 +29,19 @@ local KIND = {
   CHAT_MSG_GUILD = "guild", CHAT_MSG_OFFICER = "officer",
   CHAT_MSG_WHISPER = "whisper", CHAT_MSG_BN_WHISPER = "whisper",
   CHAT_MSG_CHANNEL = "channel", CHAT_MSG_COMMUNITIES_CHANNEL = "channel",
+  -- options (Reglages ChatFR, decochees par defaut) : affiches par le traducteur sans traduction
+  CHAT_MSG_MONSTER_SAY = "npc", CHAT_MSG_MONSTER_YELL = "npc", CHAT_MSG_MONSTER_WHISPER = "npc",
+  CHAT_MSG_MONSTER_EMOTE = "npc", CHAT_MSG_MONSTER_PARTY = "npc",
+  CHAT_MSG_RAID_BOSS_EMOTE = "npc", CHAT_MSG_RAID_BOSS_WHISPER = "npc",
+  CHAT_MSG_SYSTEM = "system", CHAT_MSG_TEXT_EMOTE = "system", CHAT_MSG_COMBAT_FACTION_CHANGE = "faction",
+  CHAT_MSG_COMBAT_XP_GAIN = "system", CHAT_MSG_COMBAT_HONOR_GAIN = "system", CHAT_MSG_SKILL = "system",
+  CHAT_MSG_AFK = "system", CHAT_MSG_DND = "system",
+  CHAT_MSG_LOOT = "loot", CHAT_MSG_MONEY = "loot", CHAT_MSG_CURRENCY = "loot",
+  CHATFR_SPENT = "spent",
+  -- tes propres chuchotements envoyes ("A [Jonathan] : Yo") : affiches sans traduction
+  CHAT_MSG_WHISPER_INFORM = "whisper_out", CHAT_MSG_BN_WHISPER_INFORM = "whisper_out",          -- pas un evenement du jeu : argent depense chez un marchand (en rouge)
 }
+ns.BRIDGE_KIND = KIND
 
 -- CRC-16/XMODEM (identique a binascii.crc_hqx(data, 0) cote Python)
 local function crc16(s)
@@ -144,6 +156,7 @@ function ns.BridgePush(event, msg, author, chan)
   if not frame or not (ChatFRDB and ChatFRDB.bridge) then return end
   local kind = KIND[event]
   if not kind or type(msg) ~= "string" or type(author) ~= "string" then return end
+  if issecretvalue and (issecretvalue(msg) or issecretvalue(author) or issecretvalue(chan)) then return end
   msg = msg:gsub("[\1-\31]", " ")
   msg = msg:gsub("|c(%x%x%x%x%x%x%x%x)|H([^:|]+):[^|]*|h(.-)|h|r", LinkMark)
   msg = msg:gsub("|cn([%w_]+):|H([^:|]+):[^|]*|h(.-)|h|r", LinkMark)

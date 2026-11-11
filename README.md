@@ -12,12 +12,42 @@ Traduction en direct du tchat de **World of Warcraft: Forever** vers le françai
 
 Le détail de chaque étape est plus bas.
 
+## Ce que ça fait
+
+**Traduction du tchat**
+- Traduit en direct les messages de toutes les langues (anglais, espagnol, allemand, russe…) vers le français, ou vers la langue de ton choix.
+- Tous les canaux : dire, crier, groupe, raid, guilde, chuchotements (en jeu et Battle.net), Général, Commerce, Recherche de groupe…
+- Lexique de joueur : abréviations (gg, ty, lfm, pst, wts, any1…), jargon gardé tel quel (tank, heal, DPS, gank), donjons et zones en français (SFK → Donjon d'Ombrecroc), prix en pièces jamais traduits.
+- Messages longs reçus en entier, liens d'objets et de quêtes colorés comme dans le jeu (liens Questie simplifiés), marqueurs de raid affichés en symboles.
+- Les messages déjà en français ne passent pas par Google.
+
+**Répondre**
+- Écris en français dans « Écrire (FR) », clique sur « Traduire + copier » : la traduction est copiée, tu la colles dans WoW (Entrée, Ctrl+V, Entrée).
+- La langue de réponse se règle seule sur ton interlocuteur.
+- Clique sur un **pseudo** : ta réponse est copiée avec `/w Pseudo` devant, pour lui chuchoter directement.
+- Le traducteur n'envoie jamais rien au jeu lui-même : c'est toujours toi qui colles.
+
+**Remplacer le tchat du jeu (options)**
+- Avec les options de l'addon, tu vois aussi les PNJ, les messages système, la réputation (en bleu), l'expérience, le butin, les ventes au marchand (en vert) et tes dépenses (en rouge), ainsi que tes propres chuchotements envoyés.
+
+**Fenêtre**
+- 13 thèmes (Sombre, Alliance, Horde, Parchemin, Givre, Arcane…), appliqués tout de suite.
+- Cadenas pour verrouiller la position et la taille.
+- Se cache quand WoW n'est pas la fenêtre active (touche Windows, Alt+Tab, WoW réduit) et revient avec lui.
+- Se ferme toute seule quand WoW se ferme, prévient quand une nouvelle version est disponible.
+- Alertes sur ton pseudo ou des mots choisis, filtre de canaux, opacité, taille du texte.
+
+**Addon ChatFR en jeu**
+- Fenêtre de traduction hors ligne dans le jeu (dictionnaire de plus de 6 000 mots), facultative.
+- Bande de cases colorées en haut à gauche, lue par le traducteur.
+- Annonce en jeu des nouvelles versions du traducteur.
+
 ## Téléchargement
 
 Va sur la page [Releases](https://github.com/puenteur/Wow-traducteur/releases/latest) et télécharge **les deux fichiers** :
 
-- `ChatFR-<version>.zip` (ex. `ChatFR-1.4.2.zip`) : l'addon, à décompresser
-- `WoW-Traducteur-<version>.zip` (ex. `WoW-Traducteur-1.4.zip`) : le traducteur, à décompresser (il contient le dossier `Traducteur`)
+- `ChatFR-<version>.zip` (ex. `ChatFR-1.6.zip`) : l'addon, à décompresser
+- `WoW-Traducteur-<version>.zip` (ex. `WoW-Traducteur-1.6.zip`) : le traducteur, à décompresser (il contient le dossier `Traducteur`)
 
 Évite le bouton vert « Code → Download ZIP » : il mélange tout dans un seul dossier et ne contient pas de dossier `Traducteur`. Si tu l'utilises quand même, garde `translator.py` et `Lancer le traducteur.bat` **ensemble dans le même dossier**.
 
@@ -83,6 +113,24 @@ Le bouton **Réglages** de la fenêtre permet de :
 - **Être alerté** : renseigne « Ton pseudo » et des « Mots surveillés » (séparés par des virgules) ; la ligne est surlignée et un son est joué quand l'un d'eux apparaît.
 - **Ne voir que les messages étrangers** : décoche « Afficher aussi les messages déjà en français ».
 - Régler l'opacité et la taille du texte, garder la fenêtre au premier plan, couper le son, désactiver la fermeture automatique avec WoW.
+- Choisir un thème pour la fenêtre : Sombre, Alliance, Horde, Parchemin, Ombre, Forge, Druide, Arcane, Sables, Marais, Clair de lune, Aube dorée (clair) ou Givre (appliqué tout de suite).
+- **Se cacher quand WoW n'est pas la fenêtre active** (activé par défaut) : la fenêtre disparaît quand tu passes sur une autre application et revient quand tu retournes dans WoW.
+
+Dans la barre du haut, le **cadenas** verrouille la fenêtre : un clic et elle ne peut plus être déplacée ni redimensionnée, un autre clic la libère.
+
+Pour **chuchoter une réponse**, clique sur le pseudo d'un joueur dans la fenêtre : « Écrire (FR) » devient « À Pseudo (FR) », et « Traduire + copier » copie `/w Pseudo ta réponse`. La croix à côté du pseudo revient à une réponse normale. Pour un ami Battle.net, la touche **R** de WoW reste plus fiable.
+
+### Options de l'addon pour le traducteur
+
+Dans les réglages de ChatFR en jeu (roue dentée de la fenêtre ChatFR), trois cases décochées par défaut ajoutent d'autres messages dans WoW Traducteur, affichés tels quels sans traduction (ils sont déjà en français) :
+
+- **Traducteur : PNJ** : ce que disent, crient et font les PNJ et les boss.
+- **Traducteur : messages système** : absent, invitations, réputation (en bleu), expérience, émotes…
+- **Traducteur : butin et argent** : butin ramassé, pièces gagnées, ventes au marchand (en vert) et dépenses (en rouge).
+
+Tes chuchotements envoyés (« À Pseudo : … ») s'affichent toujours, sans option.
+
+Avec toutes ces cases cochées, tu peux placer WoW Traducteur par-dessus le tchat du jeu. En combat ou en ville, beaucoup de messages arrivent en même temps et peuvent avoir un léger retard.
 
 ### Commandes utiles de l'addon
 

@@ -33,7 +33,7 @@ try:
 except ImportError:  # pas sous Windows
     winsound = None
 
-VERSION = "1.4"
+VERSION = "1.6"
 # Verification de mise a jour : le fichier version.txt du depot contient le numero de la derniere version.
 VERSION_URL = "https://raw.githubusercontent.com/puenteur/Wow-traducteur/main/version.txt"
 RELEASE_URL = "https://github.com/puenteur/Wow-traducteur/releases/latest"
@@ -55,7 +55,11 @@ DEFAULTS = {
     "font_size": 11,
     "show_french": True,            # afficher aussi les messages deja en francais
     "autoclose": True,              # se fermer quand WoW se ferme
+    "follow_wow": True,             # se cacher quand WoW n'est pas la fenetre active (reduit, Alt+Tab...)
     "auto_reply_lang": True,        # langue de reponse = langue du dernier message etranger
+    "theme": "Sombre",              # theme de la fenetre (voir THEMES)
+    "locked": False,                # cadenas : fenetre verrouillee (ni deplacement ni redimensionnement)
+    "help_seen": False,             # fenetre d'aide deja montree une fois (premier lancement)
 }
 
 BG = "#101418"
@@ -64,10 +68,164 @@ COLORS = {
     "say": "#ffffff", "yell": "#ff5555", "party": "#7fb2ff", "raid": "#ff9a3c",
     "guild": "#5fe05f", "officer": "#40c040", "whisper": "#ff8bd8",
     "channel": "#c8c8c8", "lfg": "#ffe066", "other": "#c8c8c8",
+    "npc": "#fffb9f", "system": "#ffff00", "loot": "#00c000",     # options de ChatFR (sans traduction)
+    "spent": "#ff5050",                                           # argent depense chez un marchand
+    "whisper_out": "#ff8bd8",                                     # tes chuchotements envoyes
+    "faction": "#8080ff",                                         # reputation (bleu, comme dans WoW)
 }
+NO_TRANSLATE = ("npc", "system", "loot", "spent", "whisper_out", "faction")
+
+
+def wow_grammar(text):
+    """Codes de grammaire du client WoW : "|2 Stormwind" = "de Stormwind" / "d'Orgrimmar"."""
+    if "|2" not in text:
+        return text
+    text = re.sub(r"\|2\s*(?=[AEIOUYHaeiouyh\u00c0-\u00c6\u00c8-\u00cf\u00d2-\u00d6\u00d9-\u00dc\u00e0-\u00e6\u00e8-\u00ef\u00f2-\u00f6\u00f9-\u00fc])", "d'", text)
+    return re.sub(r"\|2\s*", "de ", text)
 TRANS_COLOR = "#6fd3ff"
 NAME_COLOR = "#e8b964"      # pseudo des autres joueurs
 ALERT_BG = "#5a4a00"
+
+# Themes de la fenetre (Reglages -> Theme, applique tout de suite).
+# bg/fg : fond et texte du tchat ; bar : barre du haut ; btn : boutons ; accent : bouton principal ;
+# border : cadre de la fenetre ; panel/entry : zone "Ecrire" ; trans : traductions ; name : pseudos ;
+# emblem : petit dessin dans la barre ("shield", "banner" ou None) ; label : texte a cote de l'emblème.
+_SOMBRE = dict(bg="#101418", fg="#e6e6e6", bar="#0b0e11", btn="#1b232c", btn_act="#2a343f", btn_fg="#e6e6e6",
+               accent="#1f6f9f", accent_act="#2a86bd", accent_fg="white", border="#2a343f", border_w=1,
+               icon="#9aa7b4", status="#6f7c8a", panel="#171d24", entry="#0b0e11", muted="#8a97a6",
+               trans="#6fd3ff", name="#e8b964", badge="#9aa7b4", scroll="#2a343f", scroll_act="#3b4856",
+               emblem=None, label="", label_fg="#e6e6e6",
+               me="#ffd479", err="#ff7070", ok="#7ee787", alert_bg="#5a4a00",
+               colors=None, links=None)    # None = couleurs normales des canaux et des liens
+THEMES = {
+    "Sombre": _SOMBRE,
+    "Alliance": dict(_SOMBRE, bg="#0e1a2f", fg="#e8eef8", bar="#081120", btn="#16284a", btn_act="#21386a",
+                     btn_fg="#f1e3b3", accent="#c9a227", accent_act="#dcb53a", accent_fg="#081120",
+                     border="#c9a227", border_w=2, icon="#c9a227", status="#8fa3c4", panel="#081120",
+                     entry="#16284a", muted="#8fa3c4", trans="#7fc4ff", name="#f0c75e", badge="#8fa3c4",
+                     scroll="#2c4470", scroll_act="#3d5a8f", emblem="shield", label="ALLIANCE",
+                     label_fg="#e0b84a"),
+    "Horde": dict(_SOMBRE, bg="#1c0c0a", fg="#f2e6dc", bar="#110605", btn="#3a1410", btn_act="#55201a",
+                  btn_fg="#f0d2b0", accent="#9c2a1e", accent_act="#b83526", accent_fg="#f7e6d0",
+                  border="#9c2a1e", border_w=2, icon="#d1843a", status="#a88672", panel="#110605",
+                  entry="#2a0f0c", muted="#a88672", trans="#f0b070", name="#e8a24a", badge="#a88672",
+                  scroll="#4a1a14", scroll_act="#6a261d", emblem="banner", label="HORDE", label_fg="#d1843a"),
+    "Parchemin": dict(_SOMBRE, bg="#2b2116", fg="#f3e6c4", bar="#1f170e", btn="#3d2f1e", btn_act="#54412a",
+                      btn_fg="#e6d3a8", accent="#7a5320", accent_act="#946628", accent_fg="#f3e6c4",
+                      border="#a8823e", border_w=2, icon="#e6d3a8", status="#b39a6e", panel="#1f170e",
+                      entry="#3d2f1e", muted="#b39a6e", trans="#f0c878", name="#ffb84d", badge="#b39a6e",
+                      scroll="#54412a", scroll_act="#6b5436"),
+    "Ombre": dict(_SOMBRE, bg="#0b0b0e", fg="#d8d8e0", bar="#060608", btn="#18181e", btn_act="#26262e",
+                  btn_fg="#b7b7c4", accent="#2e2e3a", accent_act="#3c3c4a", accent_fg="#d8d8e0",
+                  border="#26262e", icon="#7a7a8a", status="#5c5c6a", panel="#121216", entry="#060608",
+                  muted="#7a7a8a", trans="#9a9ab0", name="#ffffff", badge="#6a6a7a",
+                  scroll="#26262e", scroll_act="#34343e"),
+    "Forge": dict(_SOMBRE, bg="#1a1310", fg="#f2e0d0", bar="#110c0a", btn="#2e211b", btn_act="#432f26",
+                  btn_fg="#ffcf9a", accent="#8a3510", accent_act="#a54214", accent_fg="#ffe6cc",
+                  border="#c45a1a", border_w=2, icon="#ffb366", status="#a88a72", panel="#110c0a",
+                  entry="#2e211b", muted="#a88a72", trans="#ffa04a", name="#ffb366", badge="#a88a72",
+                  scroll="#432f26", scroll_act="#5c4134"),
+    "Druide": dict(_SOMBRE, bg="#0f1a10", fg="#e8f2dc", bar="#0a120b", btn="#1c2e1d", btn_act="#284229",
+                   btn_fg="#c9e6a0", accent="#3f6b1c", accent_act="#4f8424", accent_fg="#eaf6d8",
+                   border="#5c8a2e", border_w=2, icon="#c9e6a0", status="#86a06e", panel="#0a120b",
+                   entry="#1c2e1d", muted="#86a06e", trans="#a7e07a", name="#f0c860", badge="#86a06e",
+                   scroll="#284229", scroll_act="#375a38"),
+    "Arcane": dict(_SOMBRE, bg="#170f26", fg="#ece2ff", bar="#0f0a1a", btn="#28193f", btn_act="#382458",
+                   btn_fg="#d6b8ff", accent="#5a32a8", accent_act="#6c40c4", accent_fg="#f3ecff",
+                   border="#7a4fd1", border_w=2, icon="#d6b8ff", status="#9a88bf", panel="#0f0a1a",
+                   entry="#28193f", muted="#9a88bf", trans="#c49bff", name="#ffd37a", badge="#9a88bf",
+                   scroll="#382458", scroll_act="#4a3172"),
+    "Sables": dict(_SOMBRE, bg="#241a0e", fg="#f7ecd2", bar="#19120a", btn="#3a2b17", btn_act="#523d21",
+                   btn_fg="#f2d28a", accent="#8a6420", accent_act="#a57828", accent_fg="#fff3d6",
+                   border="#c4943a", border_w=2, icon="#f2d28a", status="#b39a6e", panel="#19120a",
+                   entry="#3a2b17", muted="#b39a6e", trans="#f0c060", name="#ffa64d", badge="#b39a6e",
+                   scroll="#523d21", scroll_act="#6b502c"),
+    "Marais": dict(_SOMBRE, bg="#121a16", fg="#dfe8da", bar="#0c120f", btn="#1e2b24", btn_act="#2a3d33",
+                   btn_fg="#a9c9a0", accent="#355a3c", accent_act="#426f4a", accent_fg="#e6f2e2",
+                   border="#4f6b4a", border_w=2, icon="#a9c9a0", status="#7f9a86", panel="#0c120f",
+                   entry="#1e2b24", muted="#7f9a86", trans="#8ed4a8", name="#f0c860", badge="#7f9a86",
+                   scroll="#2a3d33", scroll_act="#385244"),
+    "Clair de lune": dict(_SOMBRE, bg="#101626", fg="#e6ecfa", bar="#0a0f1a", btn="#1c2540", btn_act="#283458",
+                          btn_fg="#c8d4f0", accent="#3e5290", accent_act="#4c64ab", accent_fg="#eef2ff",
+                          border="#6a7fb8", border_w=2, icon="#c8d4f0", status="#8894b4", panel="#0a0f1a",
+                          entry="#1c2540", muted="#8894b4", trans="#b0c4ff", name="#ffd37a", badge="#8894b4",
+                          scroll="#283458", scroll_act="#364574"),
+    # theme clair : les couleurs des canaux et des liens sont foncees pour rester lisibles
+    "Aube dorée": dict(_SOMBRE, bg="#fbf6ea", fg="#2b2416", bar="#efe4c8", btn="#e4d6b0", btn_act="#d8c79a",
+                       btn_fg="#3d3218", accent="#c9a227", accent_act="#b89220", accent_fg="#2b2416",
+                       border="#c9a227", border_w=2, icon="#7a5a10", status="#7a6a48", panel="#efe4c8",
+                       entry="#ffffff", muted="#7a6a48", trans="#8a5a00", name="#7a5a10", badge="#8a7a58",
+                       scroll="#d8c79a", scroll_act="#c4b07a", me="#8a5a00", err="#c0261f", ok="#2a7a1e",
+                       alert_bg="#f2dc8a",
+                       colors={"say": "#2b2416", "yell": "#c0261f", "party": "#1f5fae", "raid": "#b5530e",
+                               "guild": "#2a7a1e", "officer": "#1f6016", "whisper": "#a8327e",
+                               "channel": "#4a3f2a", "lfg": "#8a6a00", "other": "#4a3f2a",
+                               "npc": "#6a5a00", "system": "#7a6a00", "loot": "#1d7a00", "spent": "#c0261f",
+                               "whisper_out": "#a8327e", "faction": "#3a3ab0"},
+                       links={"q": "#8a6a00", "i0": "#6e6e6e", "i1": "#2b2416", "i2": "#1d7a00", "i3": "#0058b0",
+                              "i4": "#7a2fc0", "i5": "#b85a00", "i6": "#8a7440", "i7": "#0080a8", "i8": "#0080a8",
+                              "s": "#0070a8", "e": "#8a6a00", "a": "#8a7a00", "o": "#8a6a00"}),
+    "Givre": dict(_SOMBRE, bg="#0f1d26", fg="#eaf8ff", bar="#09141b", btn="#173040", btn_act="#204257",
+                  btn_fg="#cfeefc", accent="#2f7fa8", accent_act="#3a93c0", accent_fg="white",
+                  border="#5fb6d9", border_w=2, icon="#9fd8f0", status="#7fa9bf", panel="#09141b",
+                  entry="#173040", muted="#7fa9bf", trans="#9fe3ff", name="#ffd37a", badge="#7fa9bf",
+                  scroll="#204257", scroll_act="#2c5873"),
+}
+
+
+# Fenetre "?" : ce que font le traducteur et l'addon. "# " = titre, "- " = puce.
+HELP_TEXT = """# Comment ça marche
+- Deux morceaux travaillent ensemble : l'addon ChatFR dans le jeu, et ce traducteur sur Windows.
+- Un addon WoW n'a pas accès à Internet. ChatFR écrit donc chaque message du tchat sous forme d'une petite bande de cases colorées, en haut à gauche de l'écran.
+- Le traducteur fait une capture de cette bande plusieurs fois par seconde, la décode, envoie le texte à Google Traduction, puis affiche le message et sa traduction ici.
+- La barre du haut indique l'état : « Pont image : OK (N messages reçus) » veut dire que tout fonctionne. Un autre message veut dire que la bande n'est pas visible (WoW réduit, fenêtre par-dessus, mode plein écran exclusif).
+- Rien n'est envoyé au jeu : le traducteur lit l'écran, il ne touche ni au jeu ni au clavier.
+# Pour commencer
+- Lance WoW en mode Fenêtré ou Plein écran (fenêtré), puis le traducteur avec « Lancer le traducteur.bat ».
+- Attends « Pont image : OK » : les messages arrivent traduits en 1 à 2 secondes, avec la langue d'origine entre crochets ([EN], [DE]...).
+- Ne recouvre pas la bande de cases colorées : sans elle, le traducteur ne reçoit plus rien.
+# Traduction du tchat
+- Traduit en direct les messages de toutes les langues (anglais, espagnol, allemand, russe...) vers le français, ou vers la langue choisie dans les Réglages.
+- Tous les canaux : dire, crier, groupe, raid, guilde, chuchotements (en jeu et Battle.net), Général, Commerce, Recherche de groupe...
+- Lexique de joueur : abréviations (gg, ty, lfm, pst, wts, any1...), jargon gardé tel quel (tank, heal, DPS, gank), donjons et zones en français (SFK -> Donjon d'Ombrecroc), prix en pièces jamais traduits.
+- Liens d'objets et de quêtes colorés comme dans le jeu, marqueurs de raid affichés en symboles.
+- Les messages déjà en français ne passent pas par Google.
+# Répondre
+- Écris en français dans « Écrire (FR) » puis clique sur « Traduire + copier » : la traduction est copiée. Dans WoW : Entrée, Ctrl+V, Entrée.
+- Clique sur un message : la langue de réponse se règle sur celle du joueur.
+- Clique sur un pseudo : ta réponse est copiée avec /w Pseudo devant, pour lui chuchoter. La croix à côté du pseudo annule.
+- Le traducteur n'envoie jamais rien au jeu : c'est toujours toi qui colles.
+# Remplacer le tchat du jeu
+- Dans les réglages de ChatFR en jeu (roue dentée), coche « Traducteur : PNJ », « messages système » et « butin et argent » pour voir aussi les PNJ, le système, la réputation (bleu), l'expérience, le butin, les ventes (vert) et les dépenses (rouge).
+- Tes chuchotements envoyés (« À Pseudo ») s'affichent toujours.
+# Fenêtre
+- Réglages : thème (13 au choix), opacité, taille du texte, canaux masqués, alertes sur ton pseudo ou des mots.
+- Cadenas (en haut à droite) : verrouille la position et la taille de la fenêtre.
+- Se cache quand WoW n'est pas la fenêtre active et revient avec lui (option dans les Réglages).
+- Se ferme toute seule quand WoW se ferme. Un bouton apparaît quand une nouvelle version est disponible.
+# Addon ChatFR
+- La bande de cases colorées en haut à gauche de l'écran transmet le tchat au traducteur : ne la recouvre pas.
+- /cfr pont : affiche ou masque la bande. /cfr : liste des commandes.
+- Fenêtre de traduction hors ligne dans le jeu, facultative (/cfr show, /cfr hide).
+"""
+
+
+def draw_emblem(cv, kind):
+    """Petit emblème original dessine dans un Canvas de 18x21 (coordonnees d'origine 84x96)."""
+    k = 18 / 84.0
+
+    def pts(seq):
+        return [v * k for v in seq]
+    if kind == "shield":
+        cv.create_polygon(pts([8, 8, 76, 8, 76, 44, 72, 62, 60, 77, 42, 90, 24, 77, 12, 62, 8, 44]), fill="#c9a227", outline="")
+        cv.create_polygon(pts([14, 14, 70, 14, 70, 44, 66, 60, 56, 72, 42, 83, 28, 72, 18, 60, 14, 44]), fill="#1d3a6e", outline="")
+        cv.create_polygon(pts([42, 30, 46.5, 42.5, 59, 44, 49, 52, 52.5, 64.5, 42, 57, 31.5, 64.5, 35, 52, 25, 44, 37.5, 42.5]),
+                          fill="#e8c55a", outline="")
+    elif kind == "banner":
+        cv.create_polygon(pts([16, 6, 68, 6, 68, 90, 42, 74, 16, 90]), fill="#b0702e", outline="")
+        cv.create_polygon(pts([21, 11, 63, 11, 63, 81, 42, 68, 21, 81]), fill="#8e2219", outline="")
+        cv.create_polygon(pts([42, 24, 50, 34, 53, 44, 51, 54, 46, 60, 42, 62, 38, 60, 33, 54, 32, 46, 35, 40, 38, 36,
+                               40, 43, 42, 46, 41, 36]), fill="#e2913f", outline="", smooth=True)
 
 # Liens du tchat (envoyes par l'addon sous la forme \x02 code \x03 [Nom] \x04) :
 # couleurs comme dans le tchat officiel de WoW.
@@ -100,6 +258,15 @@ _MARK_RE = re.compile(r"\{(" + "|".join(sorted(RAID_MARKS, key=len, reverse=True
 
 def replace_raid_marks(text):
     return _MARK_RE.sub(lambda m: RAID_MARKS[m.group(1).lower()], text)
+
+
+# Liens de quete Questie : "[[18] Collecting Memories (168)]" (niveau + numero) -> "[Collecting Memories]",
+# colore comme une quete. Le niveau et le numero encombraient la ligne et la traduction.
+_QUESTIE_RE = re.compile(r"(?:\x02\w+\x03)?\[\[\d+[+]?\]\s*([^\[\]]+?)\s*\(\d+\)\](?:\x04)?")
+
+
+def clean_questie(text):
+    return _QUESTIE_RE.sub(lambda m: "\x02q\x03[%s]\x04" % m.group(1), text)
 
 
 def split_links(text):
@@ -435,7 +602,8 @@ LEX_PLACES = {
 # traduise pas ("need heal" -> "besoin de heal", pas "besoin de soins").
 LEX_KEEP = {"tank": "tank", "tanks": "tanks", "heal": "heal", "heals": "heals",
             "healer": "healer", "healers": "healers", "dps": "DPS",
-            "gank": "gank", "ganked": "ganké", "ganking": "gank", "ganks": "gank"}
+            "gank": "gank", "ganked": "ganké", "ganking": "gank", "ganks": "gank",
+            "boss": "boss", "bosses": "boss", "full": "full"}   # "full for boss" -> "full pour le boss"
 # "dm me" / "dm pls" = message prive, pas les Mortemines.
 _PLACE_NOT_BEFORE = {"dm": r"(?!\s*(?:me|him|her|them|u|you|pls|plz)\b)"}
 
@@ -487,9 +655,9 @@ def has_protected_name(text, target="fr"):
 
 # --------------------------------------------------------------------------
 # Pont image : l'addon dessine une bande de cases colorees en haut a gauche de
-# l'ecran de WoW (64 x 12 cases de 6 px, 3 bits par case). On la lit par capture d'ecran.
+# l'ecran de WoW (64 x 16 cases de 6 px, 3 bits par case). On la lit par capture d'ecran.
 # --------------------------------------------------------------------------
-B_COLS, B_ROWS, B_CELL = 64, 12, 6
+B_COLS, B_ROWS, B_CELL = 64, 16, 6   # 16 lignes depuis ChatFR 1.5 (12 avant : les longs messages etaient coupes)
 B_W, B_H = B_COLS * B_CELL, B_ROWS * B_CELL
 B_MAGIC = [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 1)]
 B_SEARCH = 48     # decalage maximal cherche (pixels) : la bande est a ~12 px du coin
@@ -690,6 +858,33 @@ def wow_window_exists():
         return None
 
 
+def wow_in_front():
+    """True si WoW (ou le traducteur lui-meme) est la fenetre active, False si c'est une autre
+    application (WoW reduit, Alt+Tab, touche Windows...), None si WoW est introuvable."""
+    if os.name != "nt":
+        return None
+    try:
+        _gdi_setup()
+        u = ctypes.windll.user32
+        wow = u.FindWindowW("GxWindowClass", None) or u.FindWindowW(None, "World of Warcraft")
+        if not wow:
+            return None
+        u.GetForegroundWindow.restype = ctypes.c_void_p
+        u.GetWindowThreadProcessId.argtypes = [ctypes.c_void_p, ctypes.POINTER(wintypes.DWORD)]
+        u.IsIconic.argtypes = [ctypes.c_void_p]
+        if u.IsIconic(wow):
+            return False
+        fg = u.GetForegroundWindow()
+        if not fg:
+            return None                      # pas de fenetre active (verrouillage...) : ne rien changer
+        pid_fg, pid_wow = wintypes.DWORD(), wintypes.DWORD()
+        u.GetWindowThreadProcessId(fg, ctypes.byref(pid_fg))
+        u.GetWindowThreadProcessId(wow, ctypes.byref(pid_wow))
+        return pid_fg.value in (pid_wow.value, os.getpid())
+    except Exception:  # noqa
+        return None
+
+
 def wow_running():
     """True si un processus WoW (wow*.exe) tourne. None si on ne peut pas savoir."""
     if os.name != "nt":
@@ -818,6 +1013,7 @@ LEX_FULL = {
     "pt": "on se groupe", "party": "on se groupe", "grp": "on se groupe", "group": "on se groupe",
     "inv pt": "invite-moi dans le groupe", "join": "tu rejoins", "tank": "un tank", "heal": "un soigneur",
     "healer": "un soigneur", "dps": "des DPS", "duo": "on se met en duo", "full": "groupe complet",
+    "los": "ligne de vue (los)",
 }
 
 # 2) Abreviations remplacees par l'anglais complet AVANT Google (le reste de la phrase
@@ -839,6 +1035,7 @@ LEX_EXPAND = {
     "pt": "group", "grp": "group",
     "any1": "anyone", "some1": "someone", "every1": "everyone",
     "mats": "materials", "mat": "material",
+    "los": "line of sight",          # seulement pour l'anglais (en espagnol, "los" = "les")
 }
 
 # Expressions entieres (regex, remplacement) appliquees avant les mots seuls : "LFM Hogger" ne doit pas
@@ -850,7 +1047,13 @@ LEX_PHRASES = [
      "whisper me for an invite"),
     (r"\bfor\s+inv\b", "for an invite"),
     # question qui commence par "any" ("any group for SFK?") : Google traduit "tout groupe".
-    (r"^\s*any\s+(?!(?:one|body|1|more|way|ways|time|how)\b)", "is there any "),
+    (r"(^|\]\s*)any\s+(?!(?:one|body|1|more|way|ways|time|how)\b)", r"\1is there any "),
+    # "anyone need X" sans point d'interrogation : Google traduisait "tout le monde a besoin de X".
+    (r"(^|\]\s*)any(?:one|body|1)\s+(need|want|know|sell)s?\b", r"\1does anyone \2"),
+    (r"(^|\]\s*)any(?:one|body|1)\s+(?:have|has|got)\b", r"\1does anyone have"),
+    (r"(^|\]\s*)any(?:one|body|1)\s+(selling|going|up|around|online|here)\b", r"\1is anyone \2"),
+    (r"(^|\]\s*)any(?:one|body|1)\s+(?:seen|saw)\b", r"\1has anyone seen"),
+    (r"(^|\]\s*)any(?:one|body|1)\s+can\b", r"\1can anyone"),
 ]
 
 # 3) Francais qui contient du jargon anglais ("un last tank et on part") : Google le prend pour de
@@ -927,15 +1130,18 @@ def worth_translating(text):
 class App:
     def __init__(self):
         self.cfg = load_config()
+        self.T = THEMES.get(str(self.cfg.get("theme", "")), _SOMBRE)
         self.root = tk.Tk()
         self.root.title("WoW Traducteur")
-        self.root.configure(bg=BG)
+        self.root.configure(bg=self.T["bg"])
         self.root.overrideredirect(True)      # pas de barre de titre Windows : on a la notre
         geo = str(self.cfg.get("geometry", ""))
-        if not re.match(r"^\d+x\d+\+-?\d+\+-?\d+$", geo):
-            geo = "560x520+40+80"
+        if not re.match(r"^\d+x\d+\+-?\d+\+-?\d+$", geo):     # premier lancement : centree a l'ecran
+            sw, sh = self.root.winfo_screenwidth(), self.root.winfo_screenheight()
+            geo = "560x520+%d+%d" % (max(0, (sw - 560) // 2), max(0, (sh - 520) // 2))
         self.root.geometry(geo)
-        self.root.configure(highlightthickness=1, highlightbackground="#2a343f", highlightcolor="#2a343f")
+        self.root.configure(highlightthickness=self.T["border_w"], highlightbackground=self.T["border"],
+                            highlightcolor=self.T["border"])
         self.root.minsize(380, 300)
         self.inq = queue.Queue()
         self.outq = queue.Queue()
@@ -950,6 +1156,9 @@ class App:
         threading.Thread(target=self.bridge_reader, daemon=True).start()
         threading.Thread(target=self.worker, daemon=True).start()
         threading.Thread(target=self.watch_wow, daemon=True).start()
+        threading.Thread(target=self.watch_front, daemon=True).start()
+        if not self.cfg.get("help_seen"):            # premier lancement : on montre l'aide une fois
+            self.root.after(800, self._first_help)
         threading.Thread(target=self.check_update, daemon=True).start()
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.root.after(100, self.poll)
@@ -964,83 +1173,120 @@ class App:
 
     def build_ui(self):
         r = self.root
-        BAR = "#0b0e11"
+        T = self.T
+        BAR = T["bar"]
         bar = tk.Frame(r, bg=BAR)
         bar.pack(fill="x")
-        btn = dict(bg="#1b232c", fg=FG, relief="flat", bd=0, padx=8, pady=2, activebackground="#2a343f",
-                   activeforeground=FG, cursor="hand2", font=("Segoe UI", 9), highlightthickness=0)
+        if T["border_w"] > 1:       # liseré sous la barre, couleur du cadre
+            tk.Frame(r, bg=T["border"], height=1).pack(fill="x")
+        btn = dict(bg=T["btn"], fg=T["btn_fg"], relief="flat", bd=0, padx=8, pady=2, activebackground=T["btn_act"],
+                   activeforeground=T["btn_fg"], cursor="hand2", font=("Segoe UI", 9), highlightthickness=0)
+        drag = [bar]
+        if T["emblem"]:
+            cv = tk.Canvas(bar, width=18, height=21, bg=BAR, highlightthickness=0, bd=0)
+            draw_emblem(cv, T["emblem"])
+            cv.pack(side="left", padx=(6, 2), pady=3)
+            drag.append(cv)
+        if T["label"]:
+            lab = tk.Label(bar, text=T["label"], bg=BAR, fg=T["label_fg"], font=("Segoe UI", 9, "bold"))
+            lab.pack(side="left", padx=(2, 2))
+            drag.append(lab)
         tk.Button(bar, text="\u2699 R\u00e9glages", command=self.open_settings, **btn).pack(side="left", padx=(6, 3), pady=4)
         self._clear_btn = tk.Button(bar, text="Effacer", command=self.clear, **btn)
         self._clear_btn.pack(side="left", padx=3, pady=4)
+        tk.Button(bar, text="?", command=self.open_help, **dict(btn, padx=7)).pack(side="left", padx=3, pady=4)
         # bouton cache, affiche seulement si une nouvelle version existe sur GitHub
         self.update_btn = tk.Button(bar, text="", command=lambda: webbrowser.open(RELEASE_URL),
-                                    **dict(btn, bg="#1f6f9f", fg="white", activebackground="#2a86bd"))
-        closeb = tk.Button(bar, text="\u2715", command=self.on_close, bg=BAR, fg="#9aa7b4", relief="flat", bd=0,
+                                    **dict(btn, bg=T["accent"], fg=T["accent_fg"], activebackground=T["accent_act"]))
+        closeb = tk.Button(bar, text="\u2715", command=self.on_close, bg=BAR, fg=T["icon"], relief="flat", bd=0,
                            padx=10, pady=2, activebackground="#c0392b", activeforeground="white",
                            cursor="hand2", font=("Segoe UI", 10), highlightthickness=0)
         closeb.pack(side="right", padx=(0, 4), pady=4)
-        minb = tk.Button(bar, text="\u2014", command=self.minimize, bg=BAR, fg="#9aa7b4", relief="flat", bd=0,
-                         padx=10, pady=2, activebackground="#2a343f", activeforeground="white",
+        minb = tk.Button(bar, text="\u2014", command=self.minimize, bg=BAR, fg=T["icon"], relief="flat", bd=0,
+                         padx=10, pady=2, activebackground=T["btn_act"], activeforeground="white",
                          cursor="hand2", font=("Segoe UI", 10), highlightthickness=0)
         minb.pack(side="right", pady=4)
+        # cadenas : dessine (pas d'emoji, mal affiche par tkinter sous Windows)
+        self.lock_cv = tk.Canvas(bar, width=22, height=22, bg=BAR, highlightthickness=0, bd=0, cursor="hand2")
+        self.lock_cv.pack(side="right", padx=(0, 2), pady=3)
+        self.lock_cv.bind("<Button-1>", lambda e: self.toggle_lock())
+        self.draw_lock()
         self._minimized = False
         r.bind("<Map>", self._on_map)
-        stat = tk.Label(bar, textvariable=self.status, bg=BAR, fg="#6f7c8a", anchor="e", font=("Segoe UI", 8))
+        stat = tk.Label(bar, textvariable=self.status, bg=BAR, fg=T["status"], anchor="e", font=("Segoe UI", 8))
         stat.pack(side="right", fill="x", expand=True, padx=6)
         # glisser la barre pour deplacer la fenetre
-        for w in (bar, stat):
+        for w in drag + [stat]:
             w.bind("<ButtonPress-1>", self._drag_start)
             w.bind("<B1-Motion>", self._drag_move)
             w.bind("<ButtonRelease-1>", lambda e: self._save_geometry())
 
-        mid = tk.Frame(r, bg=BG)
+        mid = tk.Frame(r, bg=T["bg"])
         mid.pack(fill="both", expand=True, padx=8, pady=(2, 4))
-        self.text = tk.Text(mid, bg=BG, fg=FG, wrap="word", relief="flat", state="disabled",
+        self.text = tk.Text(mid, bg=T["bg"], fg=T["fg"], wrap="word", relief="flat", state="disabled",
                             font=("Segoe UI", int(self.cfg["font_size"])), cursor="arrow",
-                            insertbackground=FG, spacing1=3, padx=2, height=4, highlightthickness=0, bd=0)
+                            insertbackground=T["fg"], spacing1=3, padx=2, height=4, highlightthickness=0, bd=0)
         style = ttk.Style()
         try:
             style.theme_use("clam")
         except tk.TclError:
             pass
-        style.configure("Dark.Vertical.TScrollbar", background="#2a343f", troughcolor=BG, bordercolor=BG,
-                        lightcolor="#2a343f", darkcolor="#2a343f", gripcount=0, width=7)
-        style.map("Dark.Vertical.TScrollbar", background=[("active", "#3b4856")])
+        style.configure("Dark.Vertical.TScrollbar", background=T["scroll"], troughcolor=T["bg"], bordercolor=T["bg"],
+                        lightcolor=T["scroll"], darkcolor=T["scroll"], gripcount=0, width=7)
+        style.map("Dark.Vertical.TScrollbar", background=[("active", T["scroll_act"])])
         style.layout("Dark.Vertical.TScrollbar", [("Vertical.Scrollbar.trough", {"sticky": "ns", "children": [
             ("Vertical.Scrollbar.thumb", {"expand": "1", "sticky": "nswe"})]})])
         sb = ttk.Scrollbar(mid, command=self.text.yview, style="Dark.Vertical.TScrollbar")
         self.text.configure(yscrollcommand=sb.set)
         sb.pack(side="right", fill="y")
         self.text.pack(side="left", fill="both", expand=True)
-        for k, c in COLORS.items():
+        for k, c in (T["colors"] or COLORS).items():
             self.text.tag_configure(k, foreground=c)
-        self.text.tag_configure("trans", foreground=TRANS_COLOR, lmargin1=18, lmargin2=18)
-        self.text.tag_configure("alert", background=ALERT_BG)
-        self.text.tag_configure("badge", foreground="#9aa7b4")
-        self.text.tag_configure("err", foreground="#ff7070")
-        self.text.tag_configure("me", foreground="#ffd479")
-        self.text.tag_configure("name", foreground=NAME_COLOR)   # apres les canaux : la couleur du pseudo prime
-        for code, c in LINK_COLORS.items():     # en dernier : la couleur du lien prime
+        self.text.tag_configure("trans", foreground=T["trans"], lmargin1=18, lmargin2=18)
+        self.text.tag_configure("alert", background=T["alert_bg"])
+        self.text.tag_configure("badge", foreground=T["badge"])
+        self.text.tag_configure("err", foreground=T["err"])
+        self.text.tag_configure("me", foreground=T["me"])
+        self.text.tag_configure("name", foreground=T["name"],    # apres les canaux : la couleur du pseudo prime
+                                font=("Segoe UI", int(self.cfg["font_size"]), "bold"))
+        for code, c in (T["links"] or LINK_COLORS).items():     # en dernier : la couleur du lien prime
             self.text.tag_configure("link_" + code, foreground=c)
         self.text.bind("<Button-1>", self.on_click)
 
-        out = tk.Frame(r, bg="#171d24")
+        P = T["panel"]
+        out = tk.Frame(r, bg=P)
         out.pack(side="bottom", fill="x", padx=8, pady=(0, 8), before=mid)
-        tk.Label(out, text="Ecrire (FR) \u2192", bg="#171d24", fg=FG).grid(row=0, column=0, padx=4, pady=3)
-        self.out_entry = tk.Entry(out, bg="#0b0e11", fg=FG, insertbackground=FG, relief="flat", highlightthickness=0)
-        self.out_entry.grid(row=0, column=1, sticky="ew", padx=2)
+        lf = tk.Frame(out, bg=P)
+        lf.grid(row=0, column=0, padx=4, pady=3)
+        # destinataire du chuchotement (clic sur un pseudo) : "A Nom (FR) ->" + croix pour annuler
+        self.reply_lbl = tk.Label(lf, text="Ecrire (FR) \u2192", bg=P, fg=T["fg"])
+        self.reply_lbl.pack(side="left")
+        self.reply_x = tk.Button(lf, text="\u2715", command=lambda: self.set_reply_to(None), bg=P, fg=T["muted"],
+                                 activebackground=P, activeforeground=T["fg"], relief="flat", bd=0,
+                                 highlightthickness=0, padx=2, pady=0, cursor="hand2", font=("Segoe UI", 8))
+        self.out_entry = tk.Entry(out, bg=T["entry"], fg=T["fg"], insertbackground=T["fg"], relief="flat",
+                                  highlightthickness=0)
+        self.out_entry.grid(row=0, column=1, sticky="ew", padx=(2, 0))
+        # croix : efface vite le texte a traduire et le dernier resultat (touche Echap aussi)
+        tk.Button(out, text="\u2715", command=self.clear_out, bg=T["entry"], fg=T["err"],
+                  activebackground=T["btn_act"], activeforeground=T["err"], relief="flat", bd=0,
+                  highlightthickness=0, padx=6, pady=0, cursor="hand2",
+                  font=("Segoe UI", 10, "bold")).grid(row=0, column=2, sticky="ns", padx=(0, 2))
         self.out_lang = tk.StringVar(value=self.cfg["out_lang"])
-        tk.Entry(out, textvariable=self.out_lang, width=4, bg="#0b0e11", fg=FG,
-                 insertbackground=FG, relief="flat", justify="center", highlightthickness=0).grid(row=0, column=2, padx=3)
-        tk.Button(out, text="Traduire + copier", command=self.send_out, bg="#1f6f9f", fg="white",
-                  relief="flat", highlightthickness=0, bd=0, padx=8).grid(row=0, column=3, padx=3)
+        tk.Entry(out, textvariable=self.out_lang, width=4, bg=T["entry"], fg=T["fg"],
+                 insertbackground=T["fg"], relief="flat", justify="center", highlightthickness=0).grid(row=0, column=3, padx=3)
+        tk.Button(out, text="Traduire + copier", command=self.send_out, bg=T["accent"], fg=T["accent_fg"],
+                  activebackground=T["accent_act"], activeforeground=T["accent_fg"],
+                  relief="flat", highlightthickness=0, bd=0, padx=8).grid(row=0, column=4, padx=3)
         out.columnconfigure(1, weight=1)
         self.out_result = tk.Label(out, text="Clique sur un message pour repondre dans sa langue.",
-                                   bg="#171d24", fg="#8a97a6", anchor="w", justify="left", wraplength=520)
-        self.out_result.grid(row=1, column=0, columnspan=4, sticky="ew", padx=4, pady=(0, 3))
+                                   bg=P, fg=T["muted"], anchor="w", justify="left", wraplength=520)
+        self.out_result.grid(row=1, column=0, columnspan=5, sticky="ew", padx=4, pady=(0, 3))
         self.out_entry.bind("<Return>", lambda e: self.send_out())
+        self.out_entry.bind("<Escape>", lambda e: self.clear_out())
+        self.set_reply_to(getattr(self, "reply_to", None), quiet=True)
 
-        grip = tk.Label(r, text="\u25e2", bg=BG, fg="#3b4856", font=("Segoe UI", 9))
+        grip = tk.Label(r, text="\u25e2", bg=T["bg"], fg=T["scroll_act"], font=("Segoe UI", 9))
         try:
             grip.configure(cursor="size_nw_se")
         except tk.TclError:
@@ -1067,14 +1313,68 @@ class App:
             t.configure(state="disabled")
             self.line_lang = {}
 
+    def apply_theme(self, name):
+        """Change de theme tout de suite : reconstruit la fenetre en gardant le tchat affiche."""
+        self.T = THEMES.get(name, _SOMBRE)
+        dump = self.text.dump("1.0", "end-1c", text=True, tag=True)
+        out_lang = self.out_lang.get()
+        out_msg = self.out_result.cget("text")
+        upd = self.update_btn.cget("text") if self.update_btn.winfo_manager() else ""
+        for wdg in self.root.winfo_children():
+            if not isinstance(wdg, tk.Toplevel):
+                wdg.destroy()
+        self.root.configure(bg=self.T["bg"], highlightthickness=self.T["border_w"],
+                            highlightbackground=self.T["border"], highlightcolor=self.T["border"])
+        self.build_ui()
+        self.text.configure(state="normal")
+        tags = []
+        for kind, val, _idx in dump:
+            if kind == "tagon":
+                tags.append(val)
+            elif kind == "tagoff":
+                if val in tags:
+                    tags.remove(val)
+            elif kind == "text":
+                self.text.insert("end", val, tuple(tags))
+        self.text.configure(state="disabled")
+        self.text.see("end")
+        self.out_lang.set(out_lang)
+        self.out_result.config(text=out_msg)
+        if upd:
+            self.update_btn.config(text=upd)
+            self.update_btn.pack(side="left", padx=3, pady=4, after=self._clear_btn)
+
     def clear(self):
         self.text.configure(state="normal")
         self.text.delete("1.0", "end")
         self.text.configure(state="disabled")
         self.line_lang = {}
 
+    def set_reply_to(self, name, quiet=False):
+        """Destinataire des reponses : "Traduire + copier" copiera "/w Nom texte"."""
+        self.reply_to = name or None
+        if self.reply_to:
+            self.reply_lbl.config(text="\u00c0 %s (FR) \u2192" % self.reply_to, fg=self.T["name"])
+            self.reply_x.pack(side="left", padx=(3, 0))
+            if not quiet:
+                self.out_result.config(text="Chuchotement \u00e0 %s : ta reponse sera copiee avec /w %s"
+                                       % (self.reply_to, self.reply_to), fg=self.T["muted"])
+                self.out_entry.focus_set()
+        else:
+            self.reply_lbl.config(text="Ecrire (FR) \u2192", fg=self.T["fg"])
+            self.reply_x.pack_forget()
+            if not quiet:
+                self.out_result.config(text="Reponse normale (sans /w).", fg=self.T["muted"])
+
     def on_click(self, event):
-        ln = int(self.text.index("@%d,%d" % (event.x, event.y)).split(".")[0])
+        idx = self.text.index("@%d,%d" % (event.x, event.y))
+        if "name" in self.text.tag_names(idx):         # clic sur un pseudo : on lui repondra en chuchotement
+            rng = self.text.tag_prevrange("name", idx + "+1c")
+            if rng:
+                who = self.text.get(*rng).strip()      # sur Forever les pseudos ont souvent 2 mots
+                if who:
+                    self.set_reply_to(who)
+        ln = int(idx.split(".")[0])
         for k in (ln, ln - 1):
             if k in self.line_lang:
                 lang = self.line_lang[k]
@@ -1083,11 +1383,61 @@ class App:
                     self.out_result.config(text="Langue de reponse : %s" % lang)
                 return
 
+    # ---- aide ("?") --------------------------------------------------------
+    def _first_help(self):
+        self.cfg["help_seen"] = True
+        save_config(self.cfg)
+        self.open_help()
+
+    def open_help(self):
+        old = getattr(self, "_help_win", None)
+        if old is not None and old.winfo_exists():
+            old.deiconify()
+            old.lift()
+            return
+        T = self.T
+        w = tk.Toplevel(self.root)
+        self._help_win = w
+        w.title("WoW Traducteur %s - ce qu'il sait faire" % VERSION)
+        w.configure(bg=T["panel"])
+        w.attributes("-topmost", True)
+        sw, sh = w.winfo_screenwidth(), w.winfo_screenheight()         # centree a l'ecran
+        w.geometry("560x520+%d+%d" % (max(0, (sw - 560) // 2), max(0, (sh - 520) // 2)))
+        fs = int(self.cfg["font_size"])
+        t = tk.Text(w, bg=T["bg"], fg=T["fg"], wrap="word", relief="flat", padx=12, pady=10,
+                    font=("Segoe UI", fs), highlightthickness=0, bd=0, spacing1=2, spacing3=2, cursor="arrow")
+        tk.Button(w, text="Fermer", command=w.destroy, bg=T["accent"], fg=T["accent_fg"],
+                  activebackground=T["accent_act"], activeforeground=T["accent_fg"],
+                  relief="flat", bd=0, padx=12, pady=3).pack(side="bottom", pady=8)
+        sb = ttk.Scrollbar(w, orient="vertical", command=t.yview, style="Dark.Vertical.TScrollbar")
+        t.configure(yscrollcommand=sb.set)
+        sb.pack(side="right", fill="y")
+        t.pack(fill="both", expand=True)
+        t.tag_configure("h", font=("Segoe UI", fs + 2, "bold"), foreground=T["name"], spacing1=10, spacing3=4)
+        t.tag_configure("li", lmargin1=8, lmargin2=22)
+        for line in HELP_TEXT.strip().splitlines():
+            if line.startswith("# "):
+                t.insert("end", line[2:] + "\n", "h")
+            elif line.startswith("- "):
+                t.insert("end", "\u2022  " + line[2:] + "\n", "li")
+            else:
+                t.insert("end", line + "\n")
+        t.configure(state="disabled")
+
     # ---- reglages --------------------------------------------------------
     def open_settings(self):
+        old = getattr(self, "_settings_win", None)
+        if old is not None and old.winfo_exists():     # deja ouverte : on la ramene devant
+            old.deiconify()
+            old.lift()
+            old.focus_force()
+            return
         w = tk.Toplevel(self.root)
+        self._settings_win = w
         w.title("Reglages")
-        w.configure(bg="#171d24")
+        T = self.T
+        P = T["panel"]
+        w.configure(bg=P)
         w.attributes("-topmost", True)
         fields = [
             ("Source (pont ou log)", "source", 8),
@@ -1099,33 +1449,42 @@ class App:
         ]
         vars_ = {}
         for i, (lab, key, wd) in enumerate(fields):
-            tk.Label(w, text=lab, bg="#171d24", fg=FG).grid(row=i, column=0, sticky="w", padx=6, pady=3)
+            tk.Label(w, text=lab, bg=P, fg=T["fg"]).grid(row=i, column=0, sticky="w", padx=6, pady=3)
             v = tk.StringVar(value=str(self.cfg[key]))
             vars_[key] = v
-            tk.Entry(w, textvariable=v, width=wd, bg="#0b0e11", fg=FG,
-                     insertbackground=FG, relief="flat").grid(row=i, column=1, sticky="w", padx=6)
+            tk.Entry(w, textvariable=v, width=wd, bg=T["entry"], fg=T["fg"],
+                     insertbackground=T["fg"], relief="flat").grid(row=i, column=1, sticky="w", padx=6)
         bools = [("Son pour les alertes", "sound"), ("Toujours au premier plan", "topmost"),
                  ("Afficher aussi les messages deja en francais", "show_french"),
                  ("Se fermer quand WoW se ferme", "autoclose"),
+                 ("Se cacher quand WoW n'est pas la fenetre active", "follow_wow"),
                  ("Langue de reponse automatique (dernier message etranger)", "auto_reply_lang")]
         bv = {}
         row = len(fields)
         for lab, key in bools:
             v = tk.BooleanVar(value=bool(self.cfg.get(key, True)))
             bv[key] = v
-            tk.Checkbutton(w, text=lab, variable=v, bg="#171d24", fg=FG, selectcolor="#0b0e11",
-                           activebackground="#171d24", activeforeground=FG, highlightthickness=0).grid(
+            tk.Checkbutton(w, text=lab, variable=v, bg=P, fg=T["fg"], selectcolor=T["entry"],
+                           activebackground=P, activeforeground=T["fg"], highlightthickness=0).grid(
                 row=row, column=0, columnspan=2, sticky="w", padx=6)
             row += 1
         av = tk.DoubleVar(value=float(self.cfg["alpha"]))
-        tk.Label(w, text="Opacite", bg="#171d24", fg=FG).grid(row=row, column=0, sticky="w", padx=6)
+        tk.Label(w, text="Opacite", bg=P, fg=T["fg"]).grid(row=row, column=0, sticky="w", padx=6)
         tk.Scale(w, from_=0.3, to=1.0, resolution=0.05, orient="horizontal", variable=av, length=200,
-                 bg="#171d24", fg=FG, highlightthickness=0).grid(row=row, column=1, sticky="w")
+                 bg=P, fg=T["fg"], highlightthickness=0).grid(row=row, column=1, sticky="w")
         row += 1
         fv = tk.IntVar(value=int(self.cfg["font_size"]))
-        tk.Label(w, text="Taille du texte", bg="#171d24", fg=FG).grid(row=row, column=0, sticky="w", padx=6)
+        tk.Label(w, text="Taille du texte", bg=P, fg=T["fg"]).grid(row=row, column=0, sticky="w", padx=6)
         tk.Scale(w, from_=8, to=20, orient="horizontal", variable=fv, length=200,
-                 bg="#171d24", fg=FG, highlightthickness=0).grid(row=row, column=1, sticky="w")
+                 bg=P, fg=T["fg"], highlightthickness=0).grid(row=row, column=1, sticky="w")
+        row += 1
+        tv = tk.StringVar(value=str(self.cfg.get("theme", "Sombre")) if self.cfg.get("theme") in THEMES else "Sombre")
+        tk.Label(w, text="Theme", bg=P, fg=T["fg"]).grid(row=row, column=0, sticky="w", padx=6, pady=3)
+        om = tk.OptionMenu(w, tv, *THEMES.keys())
+        om.configure(bg=T["entry"], fg=T["fg"], activebackground=T["btn_act"], activeforeground=T["fg"],
+                     relief="flat", highlightthickness=0, bd=0)
+        om["menu"].configure(bg=T["entry"], fg=T["fg"], activebackground=T["btn_act"], activeforeground=T["fg"])
+        om.grid(row=row, column=1, sticky="w", padx=6)
         row += 1
 
         def ok():
@@ -1136,12 +1495,18 @@ class App:
             self.cfg["alpha"] = float(av.get())
             self.cfg["font_size"] = int(fv.get())
             self.cfg["target"] = self.cfg["target"] or "fr"
+            new_theme = tv.get() != self.cfg.get("theme", "Sombre")
+            self.cfg["theme"] = tv.get()
             self.text.configure(font=("Segoe UI", self.cfg["font_size"]))
+            self.text.tag_configure("name", font=("Segoe UI", self.cfg["font_size"], "bold"))
             self.apply_window_cfg()
             save_config(self.cfg)
             w.destroy()
+            if new_theme:
+                self.apply_theme(self.cfg["theme"])
 
-        tk.Button(w, text="Enregistrer", command=ok, bg="#1f6f9f", fg="white",
+        tk.Button(w, text="Enregistrer", command=ok, bg=T["accent"], fg=T["accent_fg"],
+                  activebackground=T["accent_act"], activeforeground=T["accent_fg"],
                   relief="flat").grid(row=row, column=0, columnspan=2, pady=8)
 
     # ---- lecture du log (thread) ------------------------------------------
@@ -1261,6 +1626,24 @@ class App:
                 off = None
                 time.sleep(2)
 
+    # ---- se cacher quand WoW n'est pas la fenetre active ---------------------
+    def watch_front(self):
+        last, same = None, 0
+        while not self.stop:
+            time.sleep(0.4)
+            if not self.cfg.get("follow_wow", True):
+                if last is False:
+                    self.outq.put(("wowfront", True))   # option coupee : on se remontre
+                last = None
+                continue
+            f = wow_in_front()
+            if f is None:
+                continue
+            same = same + 1 if f == last else 1
+            if same == 2 or (f and same == 1 and last is False):   # 2 lectures pour cacher, 1 pour revenir
+                self.outq.put(("wowfront", f))
+            last = f
+
     # ---- fermeture automatique quand WoW se ferme ---------------------------
     def watch_wow(self):
         seen, missing = False, 0
@@ -1288,11 +1671,15 @@ class App:
             except queue.Empty:
                 continue
             cfg = self.cfg
-            raw = replace_raid_marks(text)
+            raw = clean_questie(replace_raid_marks(wow_grammar(text)))
             text, _spans = split_links(raw)
             low_chan = chan.lower()
             hidden = [h.strip().lower() for h in cfg["hidden"].split(",") if h.strip()]
             if any(h in low_chan for h in hidden):
+                continue
+            if kind in NO_TRANSLATE:
+                # PNJ, systeme, butin : texte du jeu, deja dans sa langue -> affiche tel quel
+                self.outq.put(("msg", hhmm, kind, chan, author, text, None, "?", False, False, raw))
                 continue
             me = cfg["my_name"].strip().lower()
             mine = bool(me) and author.lower() == me
@@ -1369,6 +1756,8 @@ class App:
                     return
                 elif item[0] == "out":
                     self.show_out(*item[1:])
+                elif item[0] == "wowfront":
+                    self.follow_wow(item[1])
                 elif item[0] == "update":
                     self.update_btn.config(text="Mise \u00e0 jour %s dispo" % item[1])
                     self.update_btn.pack(side="left", padx=3, pady=4, after=self._clear_btn)
@@ -1391,8 +1780,9 @@ class App:
         if tail:
             parts.append(("(%s) " % tail, "badge"))
         marks = (tag, "alert") if alert else (tag,)
-        parts.append((author, *marks) if mine else (author, *marks, "name"))
-        parts.append((": ", *marks))
+        if author:          # messages systeme / butin : pas d'auteur
+            parts.append((author, *marks) if mine or kind in NO_TRANSLATE else (author, *marks, "name"))
+            parts.append((": ", *marks))
         _plain, spans = split_links(raw if raw is not None else text)
         for seg, code in spans:
             parts.append((seg, *marks, "link_" + code) if code else (seg, *marks))
@@ -1425,7 +1815,7 @@ class App:
         lang = lang.lower()
         if self.out_lang.get().strip().lower() != lang:
             self.out_lang.set(lang)
-            self.out_result.config(text="Langue de reponse : %s (auto, d'apres %s)" % (lang, author), fg="#8a97a6")
+            self.out_result.config(text="Langue de reponse : %s (auto, d'apres %s)" % (lang, author), fg=self.T["muted"])
 
     def beep(self):
         if not self.cfg["sound"]:
@@ -1439,12 +1829,17 @@ class App:
             pass
 
     # ---- ce que tu ecris --------------------------------------------------
+    def clear_out(self):
+        self.out_entry.delete(0, "end")
+        self.out_result.config(text="", fg=self.T["muted"])
+        self.out_entry.focus_set()
+
     def send_out(self):
         txt = self.out_entry.get().strip()
         lang = (self.out_lang.get() or "en").strip().lower()
         if not txt:
             return
-        self.out_result.config(text="Traduction en cours...", fg="#8a97a6")
+        self.out_result.config(text="Traduction en cours...", fg=self.T["muted"])
 
         def run():
             try:
@@ -1452,6 +1847,11 @@ class App:
                 res, _ = google_translate(txt, lang, source="fr")
                 if res.strip().lower() == txt.strip().lower():
                     res, _ = google_translate(txt, lang)   # pas du francais finalement : detection auto
+                # un service de secours renvoie parfois tout en MAJUSCULES ("Merci" -> "THANKS")
+                if res.isupper() and not txt.isupper():
+                    res = res.lower()
+                    if txt[:1].isupper():
+                        res = res[:1].upper() + res[1:]
                 self.outq.put(("out", txt, res, lang, None))
             except Exception as e:  # noqa
                 self.outq.put(("out", txt, "", lang, str(e)))
@@ -1460,18 +1860,34 @@ class App:
 
     def show_out(self, src, res, lang, err):
         if err:
-            self.out_result.config(text="Erreur : %s" % err, fg="#ff7070")
+            self.out_result.config(text="Erreur : %s" % err, fg=self.T["err"])
             return
+        to = getattr(self, "reply_to", None)
+        copy = "/w %s %s" % (to, res) if to else res
         self.root.clipboard_clear()
-        self.root.clipboard_append(res)
+        self.root.clipboard_append(copy)
         self.root.update()
-        self.out_result.config(text="Copie ! (Ctrl+V dans WoW)  [%s] %s" % (lang.upper(), res), fg="#7ee787")
-        self.add(("Vous \u2192 [%s] " % lang.upper(), "me"), (src + "\n", "me"), ("\u2192 " + res + "\n", "trans"))
+        self.out_result.config(text="Copie ! (Entree, Ctrl+V, Entree dans WoW)  %s" % copy, fg=self.T["ok"])
+        who = "Vous \u2192 %s " % to if to else "Vous \u2192 "
+        self.add((who + "[%s] " % lang.upper(), "me"), (src + "\n", "me"), ("\u2192 " + res + "\n", "trans"))
         self.out_entry.delete(0, "end")
         self.cfg["out_lang"] = lang
         save_config(self.cfg)
 
     # ---- fenetre sans cadre : deplacement / redimensionnement -------------
+    def follow_wow(self, front):
+        """WoW plus au premier plan -> on se cache ; WoW revient -> on revient (sauf si tu avais
+        reduit le traducteur toi-meme avec son bouton)."""
+        if not front:
+            if not self._minimized and not getattr(self, "_auto_hidden", False):
+                self._save_geometry()
+                self._auto_hidden = True
+                self.root.withdraw()
+        elif getattr(self, "_auto_hidden", False):
+            self._auto_hidden = False
+            self.root.deiconify()
+            self.apply_window_cfg()
+
     def minimize(self):
         """Reduit dans la barre des taches (une fenetre sans cadre ne peut pas l'etre :
         on remet le cadre le temps de la reduction, puis on le retire au retour)."""
@@ -1487,10 +1903,34 @@ class App:
             self.root.overrideredirect(True)
             self.apply_window_cfg()
 
+    def draw_lock(self):
+        """Cadenas ferme (couleur d'accent) ou ouvert (gris)."""
+        cv, locked = self.lock_cv, bool(self.cfg.get("locked"))
+        cv.delete("all")
+        col = self.T["label_fg"] if self.T["emblem"] else self.T["icon"]
+        col = col if locked else self.T["status"]
+        cv.create_rectangle(6, 10, 17, 19, fill=col, outline=col)            # corps
+        if locked:
+            cv.create_arc(7, 3, 16, 14, start=0, extent=180, style="arc", outline=col, width=2)
+            cv.create_line(8, 8, 8, 11, fill=col, width=2)
+            cv.create_line(15, 8, 15, 11, fill=col, width=2)
+        else:                                                                 # anse levee et decalee
+            cv.create_arc(10, 1, 19, 12, start=0, extent=180, style="arc", outline=col, width=2)
+            cv.create_line(18, 6, 18, 9, fill=col, width=2)
+        cv.create_rectangle(11, 13, 12, 16, fill=self.T["bar"], outline=self.T["bar"])   # trou de serrure
+
+    def toggle_lock(self):
+        self.cfg["locked"] = not self.cfg.get("locked")
+        save_config(self.cfg)
+        self.draw_lock()
+        self.status.set("Fenetre verrouillee" if self.cfg["locked"] else "Fenetre deverrouillee")
+
     def _drag_start(self, e):
         self._dx, self._dy = e.x_root - self.root.winfo_x(), e.y_root - self.root.winfo_y()
 
     def _drag_move(self, e):
+        if self.cfg.get("locked"):
+            return
         self.root.geometry("+%d+%d" % (e.x_root - self._dx, e.y_root - self._dy))
 
     def _resize_start(self, e):
@@ -1498,6 +1938,8 @@ class App:
         self._rw, self._rh = self.root.winfo_width(), self.root.winfo_height()
 
     def _resize_move(self, e):
+        if self.cfg.get("locked"):
+            return
         w = max(380, self._rw + e.x_root - self._rx)
         h = max(300, self._rh + e.y_root - self._ry)
         self.root.geometry("%dx%d" % (w, h))

@@ -309,7 +309,7 @@ local function BuildSettings(title, close)
   gear:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square")
 
   settingsPanel = CreateFrame("Frame", "ChatFRSettings", UIParent, "BackdropTemplate")
-  settingsPanel:SetSize(230, 424)
+  settingsPanel:SetSize(230, 502)
   settingsPanel:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
   settingsPanel:SetFrameStrata("DIALOG")
   settingsPanel:SetClampedToScreen(true)
@@ -362,7 +362,18 @@ local function BuildSettings(title, close)
     function() return ChatFRDB.autohide end,
     function(v) ChatFRDB.autohide = v end)
 
-  MakeSlider(settingsPanel, -220, "Opacité du fond", "%.2f", 0.2, 1, 0.05,
+  -- envoyes en plus au traducteur externe (affiches sans traduction)
+  MakeCheck(settingsPanel, -212, "Traducteur : PNJ",
+    function() return ChatFRDB.brNpc end,
+    function(v) ChatFRDB.brNpc = v end)
+  MakeCheck(settingsPanel, -238, "Traducteur : messages système",
+    function() return ChatFRDB.brSystem end,
+    function(v) ChatFRDB.brSystem = v end)
+  MakeCheck(settingsPanel, -264, "Traducteur : butin et argent",
+    function() return ChatFRDB.brLoot end,
+    function(v) ChatFRDB.brLoot = v end)
+
+  MakeSlider(settingsPanel, -298, "Opacité du fond", "%.2f", 0.2, 1, 0.05,
     function() return ChatFRDB.alpha or 0.92 end,
     function(v)
       ChatFRDB.alpha = v
@@ -373,19 +384,19 @@ local function BuildSettings(title, close)
     local _, sz = ChatFontNormal:GetFont()
     if sz then defSize = sz end
   end
-  MakeSlider(settingsPanel, -266, "Taille du texte", "%d", 9, 20, 1,
+  MakeSlider(settingsPanel, -344, "Taille du texte", "%d", 9, 20, 1,
     function() return ChatFRDB.fontsize or defSize end,
     function(v)
       ChatFRDB.fontsize = math.floor(v + 0.5)
       ApplyFont()
     end)
 
-  MakeSlider(settingsPanel, -312, "Confiance minimale", "%d%%", 0, 100, 5,
+  MakeSlider(settingsPanel, -390, "Confiance minimale", "%d%%", 0, 100, 5,
     function() return math.floor((ChatFRDB.minconf or 0.75) * 100 + 0.5) end,
     function(v) ChatFRDB.minconf = math.floor(v + 0.5) / 100 end)
 
-  MakeButton(settingsPanel, -360, "Vider la fenêtre", function() msgs:Clear() end)
-  MakeButton(settingsPanel, -388, "Position par défaut", function() ResetPos(); SavePos() end)
+  MakeButton(settingsPanel, -438, "Vider la fenêtre", function() msgs:Clear() end)
+  MakeButton(settingsPanel, -466, "Position par défaut", function() ResetPos(); SavePos() end)
 
   gear:SetScript("OnClick", function()
     if settingsPanel:IsShown() then settingsPanel:Hide() else settingsPanel:Show() end
@@ -700,7 +711,7 @@ for _, ev in ipairs(EVENTS) do
   f:RegisterEvent(ev)
 end
 -- Fenetre d'annonce "nouvelle version du traducteur" (voir PLAYER_LOGIN).
-local TRAD_NOTICE = "1.4"
+local TRAD_NOTICE = "1.6"
 local TRAD_URL = "github.com/puenteur/Wow-traducteur"
 local noticeFrame
 
@@ -774,8 +785,88 @@ local function BNetName(bnID)
   return nil
 end
 
+-- Messages en option pour le traducteur (PNJ, systeme, butin) : deja en francais, ils vont
+-- seulement au pont image, pas dans la fenetre ChatFR. Desactives par defaut (Reglages ChatFR).
+local EXTRA_OPT = { npc = "brNpc", system = "brSystem", loot = "brLoot", spent = "brLoot", faction = "brSystem" }
+for ev, kind in pairs(ns.BRIDGE_KIND or {}) do
+  if EXTRA_OPT[kind] then pcall(f.RegisterEvent, f, ev) end   -- pcall : evenement absent de ce client
+end
+
+local function PushExtra(event, kind, text, author)
+  if not ChatFRDB or not ChatFRDB[EXTRA_OPT[kind]] or not ns.BridgePush then return end
+  -- en donjon / combat, le jeu rend certains textes "secrets" (illisibles pour les addons)
+  if issecretvalue and (issecretvalue(text) or issecretvalue(author)) then return end
+  if type(text) ~= "string" or text == "" then return end
+  author = type(author) == "string" and author or ""
+  if event == "CHAT_MSG_MONSTER_EMOTE" or event == "CHAT_MSG_RAID_BOSS_EMOTE" then
+    text = text:gsub("%%s", (author:gsub("%%", "%%%%")))      -- "%s attaque !" -> "Hogger attaque !"
+    author = ""
+  elseif kind ~= "npc" then
+    author = ""                                                -- le texte est deja une phrase complete
+  end
+  pcall(ns.BridgePush, event, text, author, nil)
+end
+
+-- Vente a un marchand : le jeu ecrit "Vous avez obtenu : 18 pc" directement dans le tchat, sans
+-- evenement CHAT_MSG pour les addons. On le reconstruit a partir de l'argent gagne chez le marchand.
+local lastMoney, atMerchant = nil, false
+for _, ev in ipairs({ "PLAYER_MONEY", "MERCHANT_SHOW", "MERCHANT_CLOSED", "PLAYER_ENTERING_WORLD" }) do
+  pcall(f.RegisterEvent, f, ev)
+end
+
+local function MoneyText(c)
+  local g, s, cu = math.floor(c / 10000), math.floor(c / 100) % 100, c % 100
+  local t = {}
+  if g > 0 then t[#t + 1] = g .. " po" end
+  if s > 0 then t[#t + 1] = s .. " pa" end
+  if cu > 0 or #t == 0 then t[#t + 1] = cu .. " pc" end
+  return table.concat(t, " ")
+end
+
+local function OnMoney(event)
+  if event == "MERCHANT_SHOW" then atMerchant = true
+  elseif event == "MERCHANT_CLOSED" then atMerchant = false end
+  local m = GetMoney and GetMoney()
+  if not m then return end
+  -- MerchantFrame : marchand deja ouvert au moment d'un /reload (MERCHANT_SHOW deja passe)
+  local merchant = atMerchant or (MerchantFrame and MerchantFrame:IsShown())
+  if event == "PLAYER_MONEY" and merchant and lastMoney and m ~= lastMoney then
+    if m > lastMoney then
+      PushExtra("CHAT_MSG_MONEY", "loot", "Vous avez obtenu : " .. MoneyText(m - lastMoney), "")
+    else                                     -- achat, rachat, reparation
+      PushExtra("CHATFR_SPENT", "spent", "Vous avez dépensé : " .. MoneyText(lastMoney - m), "")
+    end
+  end
+  lastMoney = m
+end
+
+for _, ev in ipairs({ "CHAT_MSG_WHISPER_INFORM", "CHAT_MSG_BN_WHISPER_INFORM" }) do
+  pcall(f.RegisterEvent, f, ev)
+end
+
 f:SetScript("OnEvent", function(_, event, name, author, a3, a4, a5, a6, a7, a8, a9, ...)
-  if event:sub(1, 9) == "CHAT_MSG_" then
+  local xkind = ns.BRIDGE_KIND and ns.BRIDGE_KIND[event]
+  if event == "CHAT_MSG_WHISPER_INFORM" or event == "CHAT_MSG_BN_WHISPER_INFORM" then
+    -- chuchotement envoye : seulement vers le traducteur, avec "A <destinataire>" comme auteur
+    if event == "CHAT_MSG_BN_WHISPER_INFORM" then
+      local okN, bn = pcall(BNetName, (select(4, ...)))
+      if okN and bn then author = bn end
+    end
+    if issecretvalue and (issecretvalue(name) or issecretvalue(author)) then return end
+    if ns.BridgePush and type(name) == "string" and name ~= "" then
+      local to = type(author) == "string" and author:gsub("%-.*$", "") or ""
+      pcall(ns.BridgePush, event, name, "\195\128 " .. to, nil)     -- "A " avec accent
+    end
+    return
+  end
+  if event == "PLAYER_MONEY" or event == "MERCHANT_SHOW" or event == "MERCHANT_CLOSED"
+      or event == "PLAYER_ENTERING_WORLD" then
+    pcall(OnMoney, event)
+    if event ~= "PLAYER_ENTERING_WORLD" then return end
+  end
+  if xkind and EXTRA_OPT[xkind] then
+    pcall(PushExtra, event, xkind, name, author)
+  elseif event:sub(1, 9) == "CHAT_MSG_" then
     if event == "CHAT_MSG_BN_WHISPER" then
       local okN, bn = pcall(BNetName, (select(4, ...)))   -- 13e argument : bnSenderID
       if okN and bn then author = bn end
