@@ -33,9 +33,10 @@ try:
 except ImportError:  # pas sous Windows
     winsound = None
 
-VERSION = "1.7"
+VERSION = "1.8"
 # Verification de mise a jour : le fichier version.txt du depot contient le numero de la derniere version.
 VERSION_URL = "https://raw.githubusercontent.com/puenteur/Wow-traducteur/main/version.txt"
+KOFI_URL = "https://ko-fi.com/puenteur"
 # Fiche d'un objet / d'une quete cliques dans la fenetre (recherche par nom, en francais).
 WOWHEAD_SEARCH = "https://www.wowhead.com/classic/fr/search?q="
 RELEASE_URL = "https://github.com/puenteur/Wow-traducteur/releases/latest"
@@ -75,8 +76,14 @@ COLORS = {
     "spent": "#ff5050",                                           # argent depense chez un marchand
     "whisper_out": "#ff8bd8",                                     # tes chuchotements envoyes
     "faction": "#8080ff",                                         # reputation (bleu, comme dans WoW)
+    "ping": "#7fb2ff",                                            # pings du groupe (couleur du groupe)
 }
-NO_TRANSLATE = ("npc", "system", "loot", "spent", "whisper_out", "faction")
+NO_TRANSLATE = ("npc", "system", "loot", "spent", "whisper_out", "faction", "ping")   # ping : texte du jeu
+# Pieces dans les messages du jeu ("11 pa 32 pc") : petite icone ronde a la place de po / pa / pc.
+# Seulement pour les messages du jeu : dans le tchat des joueurs, "2pc" veut souvent dire "2 pieces".
+COIN_KINDS = ("loot", "spent", "system")
+COIN_RE = re.compile(r"(?<=\d)(\s?)(po|pa|pc)(?![A-Za-z\u00c0-\u024f])")
+COIN_COLORS = {"po": ("#f2c94c", "#9c7412"), "pa": ("#d6dae2", "#7f8590"), "pc": ("#d0874e", "#7d4520")}
 
 
 def wow_grammar(text):
@@ -164,8 +171,8 @@ THEMES = {
                                "guild": "#2a7a1e", "officer": "#1f6016", "whisper": "#a8327e",
                                "channel": "#4a3f2a", "lfg": "#8a6a00", "other": "#4a3f2a",
                                "npc": "#6a5a00", "system": "#7a6a00", "loot": "#1d7a00", "spent": "#c0261f",
-                               "whisper_out": "#a8327e", "faction": "#3a3ab0"},
-                       links={"q": "#8a6a00", "i0": "#6e6e6e", "i1": "#2b2416", "i2": "#1d7a00", "i3": "#0058b0",
+                               "whisper_out": "#a8327e", "faction": "#3a3ab0", "ping": "#1f5fae"},
+                       links={"q": "#8a6a00", "q0": "#6e6e6e", "q1": "#1d7a00", "q2": "#8a6a00", "q3": "#b5530e", "q4": "#c0261f", "i0": "#6e6e6e", "i1": "#2b2416", "i2": "#1d7a00", "i3": "#0058b0",
                               "i4": "#7a2fc0", "i5": "#b85a00", "i6": "#8a7440", "i7": "#0080a8", "i8": "#0080a8",
                               "s": "#0070a8", "e": "#8a6a00", "a": "#8a7a00", "o": "#8a6a00"}),
     "Givre": dict(_SOMBRE, bg="#0f1d26", fg="#eaf8ff", bar="#09141b", btn="#173040", btn_act="#204257",
@@ -211,6 +218,9 @@ HELP_TEXT = """# Comment ça marche
 - La bande de cases colorées en haut à gauche de l'écran transmet le tchat au traducteur : ne la recouvre pas.
 - /cfr pont : affiche ou masque la bande. /cfr : liste des commandes.
 - Fenêtre de traduction hors ligne dans le jeu, facultative (/cfr show, /cfr hide).
+# Soutenir le projet
+- WoW Traducteur et ChatFR sont et resteront gratuits, sans fonction réservée aux donateurs.
+- Si ces outils te rendent service et que tu veux me soutenir : https://ko-fi.com/puenteur
 """
 
 
@@ -234,7 +244,8 @@ def draw_emblem(cv, kind):
 # Liens du tchat (envoyes par l'addon sous la forme \x02 code \x03 [Nom] \x04) :
 # couleurs comme dans le tchat officiel de WoW.
 LINK_COLORS = {
-    "q": "#ffd100",                                   # quete
+    "q": "#ffd100",                                   # quete (niveau inconnu)
+    "q0": "#808080", "q1": "#40c040", "q2": "#ffff00", "q3": "#ff8040", "q4": "#ff1a1a",  # quete selon ton niveau
     "i0": "#9d9d9d", "i1": "#ffffff", "i2": "#1eff00", "i3": "#0070dd",   # objets par qualite
     "i4": "#a335ee", "i5": "#ff8000", "i6": "#e6cc80", "i7": "#00ccff", "i8": "#00ccff",
     "s": "#71d5ff",                                   # sort, talent
@@ -607,7 +618,11 @@ LEX_PLACES = {
 LEX_KEEP = {"tank": "tank", "tanks": "tanks", "heal": "heal", "heals": "heals",
             "healer": "healer", "healers": "healers", "dps": "DPS",
             "gank": "gank", "ganked": "ganké", "ganking": "gank", "ganks": "gank",
-            "boss": "boss", "bosses": "boss", "full": "full"}   # "full for boss" -> "full pour le boss"
+            "boss": "boss", "bosses": "boss", "full": "full",
+            "proc": "proc", "procs": "procs",   # "procs" -> "procédures" sinon
+            "hunt": "hunt", "hunts": "hunts"}   # chasseur, pas "chasse"   # "full for boss" -> "full pour le boss"
+# Classes que Google traduit mal ("rogue" -> "voyou", "warlock" -> "sorcier") : nom francais du jeu.
+LEX_CLASSES = {"rogue": "voleur", "rogues": "voleurs", "warlock": "démoniste", "warlocks": "démonistes"}
 # "dm me" / "dm pls" = message prive, pas les Mortemines.
 _PLACE_NOT_BEFORE = {"dm": r"(?!\s*(?:me|him|her|them|u|you|pls|plz)\b)"}
 
@@ -623,6 +638,7 @@ def _protected(target):
     if (target or "").lower() == "fr":
         d.update(LEX_PLACES)
         d.update(LEX_KEEP)
+        d.update(LEX_CLASSES)
     return dict(sorted(d.items(), key=lambda kv: len(kv[0]), reverse=True))
 
 
@@ -930,7 +946,7 @@ SURE_FR = set("je j tu il elle nous vous ils elles est suis sont es ai as avons 
               "pourquoi combien ou oui ouais merci salut bonjour bonsoir svp stp cherche cherchons recrute "
               "vend vends achete achète groupe guilde donjon quelqu quelqu'un personne besoin veux veut peux "
               "peut faut faire avoir etre être connait connais sais quelqun qqn aller viens venir ici ça ca c qu d l m n s t y bien très tres trop aussi encore "
-              "deja déjà alors voila voilà fait mort mdr ptdr bonne bon nuit".split())
+              "deja déjà alors voila voilà fait mort mdr ptdr bonne bon nuit dispo dispos".split())
 # Mots d'une autre langue : s'il y en a un, on laisse Google decider (message mixte ou etranger).
 NOT_FR = set("the an is are was be been i you he she we they it my your his her our their this that "
              "these those and or but to of in at for with from by as if so not no yes any some anyone "
@@ -1149,9 +1165,10 @@ class App:
         self.root.configure(bg=self.T["bg"])
         self.root.overrideredirect(True)      # pas de barre de titre Windows : on a la notre
         geo = str(self.cfg.get("geometry", ""))
-        if not re.match(r"^\d+x\d+\+-?\d+\+-?\d+$", geo):     # premier lancement : centree a l'ecran
+        if not re.match(r"^\d+x\d+\+-?\d+\+-?\d+$", geo):     # premier lancement : sur le tchat de WoW
             sw, sh = self.root.winfo_screenwidth(), self.root.winfo_screenheight()
-            geo = "560x520+%d+%d" % (max(0, (sw - 560) // 2), max(0, (sh - 520) // 2))
+            gw, gh = min(540, sw), min(300, sh)                      # en bas a gauche, au-dessus des barres
+            geo = "%dx%d+%d+%d" % (gw, gh, int(sw * 0.016), max(0, int(sh * 0.885) - gh))
         self.root.geometry(geo)
         self.root.configure(highlightthickness=self.T["border_w"], highlightbackground=self.T["border"],
                             highlightcolor=self.T["border"])
@@ -1261,11 +1278,15 @@ class App:
         self.text.tag_configure("alert", background=T["alert_bg"])
         self.text.tag_configure("badge", foreground=T["badge"])
         self.text.tag_configure("err", foreground=T["err"])
+        for unit in COIN_COLORS:                 # texte "po" / "pa" / "pc" cache derriere son icone
+            self.text.tag_configure("coin_" + unit, elide=True)
         self.text.tag_configure("me", foreground=T["me"])
         self.text.tag_configure("name", foreground=T["name"],    # apres les canaux : la couleur du pseudo prime
                                 font=("Segoe UI", int(self.cfg["font_size"]), "bold"))
         for code, c in (T["links"] or LINK_COLORS).items():     # en dernier : la couleur du lien prime
             self.text.tag_configure("link_" + code, foreground=c)
+            if code == "o":                                      # lien sans fiche : pas de main au survol
+                continue
             # main au survol : un clic ouvre la fiche sur Wowhead (voir on_click)
             self.text.tag_bind("link_" + code, "<Enter>", lambda e: self.text.config(cursor="hand2"))
             self.text.tag_bind("link_" + code, "<Leave>", lambda e: self.text.config(cursor=""))
@@ -1314,13 +1335,61 @@ class App:
         grip.bind("<B1-Motion>", self._resize_move)
         grip.bind("<ButtonRelease-1>", lambda e: self._save_geometry())
 
+    def _coin_image(self, unit):
+        """Petite piece ronde dessinee (or, argent, cuivre), a la taille du texte."""
+        cache = self.__dict__.setdefault("_coin_imgs", {})
+        size = max(9, int(int(self.cfg["font_size"]) * 1.1))
+        key = (unit, size)
+        if key not in cache:
+            fill, edge = COIN_COLORS[unit]
+            img = tk.PhotoImage(width=size, height=size)
+            c, r = (size - 1) / 2.0, size / 2.0 - 0.5
+            for y in range(size):
+                row = []
+                for x in range(size):
+                    d = ((x - c) ** 2 + (y - c) ** 2) ** 0.5
+                    if d > r:
+                        row.append(None)
+                    elif d > r - 1.2:
+                        row.append(edge)
+                    elif x + y < size * 0.7 and d < r * 0.55:
+                        row.append("#ffffff" if unit != "pc" else "#f0c09a")   # reflet
+                    else:
+                        row.append(fill)
+                for x, col in enumerate(row):
+                    if col:
+                        img.put(col, (x, y))
+            cache[key] = img
+        return cache[key]
+
+    def _insert_with_coins(self, text, tags):
+        """Insere du texte ; dans les messages du jeu, po / pa / pc deviennent une icone de piece.
+        Le texte reste la (cache) : il revient au copier-coller et au changement de theme."""
+        t = self.text
+        tags = tuple(tags)
+        unit_tag = next((g for g in tags if g.startswith("coin_")), None)
+        if unit_tag:                             # restauration (changement de theme) : remettre l'icone
+            t.image_create("end", image=self._coin_image(unit_tag[5:]), padx=1, align="baseline")
+            t.insert("end", text, tags)
+            return
+        if "coins" not in tags:
+            t.insert("end", text, tags)
+            return
+        pos = 0
+        for m in COIN_RE.finditer(text):
+            t.insert("end", text[pos:m.start()] + m.group(1), tags)
+            t.image_create("end", image=self._coin_image(m.group(2)), padx=1, align="baseline")
+            t.insert("end", m.group(2), tags + ("coin_" + m.group(2),))
+            pos = m.end()
+        t.insert("end", text[pos:], tags)
+
     def add(self, *parts):
         """parts: (texte, tag...)"""
         t = self.text
         at_end = t.yview()[1] >= 0.98
         t.configure(state="normal")
         for p in parts:
-            t.insert("end", p[0], p[1:])
+            self._insert_with_coins(p[0], p[1:])
         t.configure(state="disabled")
         if at_end:
             t.see("end")
@@ -1353,7 +1422,7 @@ class App:
                 if val in tags:
                     tags.remove(val)
             elif kind == "text":
-                self.text.insert("end", val, tuple(tags))
+                self._insert_with_coins(val, tuple(tags))
         self.text.configure(state="disabled")
         self.text.see("end")
         self.out_lang.set(out_lang)
@@ -1398,6 +1467,9 @@ class App:
         tk.Label(f, text=name, bg="#0a0d1c", fg=color, font=("Segoe UI", fs + 1, "bold"),
                  anchor="w", justify="left", wraplength=340).pack(fill="x")
         for ln in lines:
+            ln = re.sub(r"\s*\|n\s*", " ", ln).strip()   # "|n" = retour a la ligne de WoW ("Composants : |nRouleau...")
+            if not ln:
+                continue
             low = ln.lower()
             if low.startswith(("utiliser", "équipé", "chances quand", "use:", "equip:")):
                 c = "#1eff00"
@@ -1467,7 +1539,7 @@ class App:
     def link_at(self, idx):
         """(tag, nom) du lien d'objet / de quete sous l'index, ou (None, "")."""
         link = next((t for t in self.text.tag_names(idx) if t.startswith("link_")), None)
-        if not link:
+        if not link or link == "link_o":         # autre lien du jeu ([Vous avez succombe.]...) : pas de fiche
             return None, ""
         rng = self.text.tag_prevrange(link, idx + "+1c")
         if not rng:
@@ -1484,7 +1556,13 @@ class App:
         lines = self.tips.get(name.lower())
         col = self.text.tag_cget(link, "foreground") or self.T["fg"]
         if not lines:                            # pas recue (lien d'avant la mise a jour...)
-            lines = ["(fiche pas encore reçue du jeu : elle arrivera au prochain lien de cet objet)"]
+            if link == "link_a":                 # haut fait : le jeu n'envoie pas de fiche
+                lines = ["(haut fait : le détail est sur Wowhead)"]
+            elif link.startswith("link_q"):        # quete inconnue du jeu (pas dans ton journal) : jamais recue
+                lines = ["(le jeu ne donne pas la fiche de cette quête, souvent tant qu'elle n'est pas "
+                         "dans ton journal : vois-la sur Wowhead)"]
+            else:
+                lines = ["(fiche pas encore reçue du jeu : elle arrivera au prochain lien de cet objet)"]
         self.show_tip(name, lines, col, x, y)
         self._tip_name = name
 
@@ -1581,9 +1659,18 @@ class App:
         t.pack(fill="both", expand=True)
         t.tag_configure("h", font=("Segoe UI", fs + 2, "bold"), foreground=T["name"], spacing1=10, spacing3=4)
         t.tag_configure("li", lmargin1=8, lmargin2=22)
+        t.tag_configure("url", foreground="#6fa8ff", underline=True)
+        t.tag_bind("url", "<Button-1>", lambda e: webbrowser.open(KOFI_URL))
+        t.tag_bind("url", "<Enter>", lambda e: t.configure(cursor="hand2"))
+        t.tag_bind("url", "<Leave>", lambda e: t.configure(cursor="arrow"))
         for line in HELP_TEXT.strip().splitlines():
             if line.startswith("# "):
                 t.insert("end", line[2:] + "\n", "h")
+            elif line.startswith("- ") and KOFI_URL in line:
+                head = line[2:].split(KOFI_URL)[0]
+                t.insert("end", "\u2022  " + head, "li")
+                t.insert("end", KOFI_URL, ("li", "url"))
+                t.insert("end", "\n", "li")
             elif line.startswith("- "):
                 t.insert("end", "\u2022  " + line[2:] + "\n", "li")
             else:
@@ -1861,38 +1948,58 @@ class App:
                     if kw and kw in low:
                         alert = True
             trans, lang = None, "?"
+            # Liens ([Quete], [Objet]) : leur nom est deja dans la langue du jeu. On juge la langue et on
+            # traduit SANS eux ("[Controler la population des raptors] lfm" n'est pas du francais) :
+            # chaque lien devient un jeton remis tel quel apres Google.
+            has_links = any(c for _, c in _spans)
+            outside_links = "".join(seg for seg, code in _spans if not code)
+            judge = outside_links if has_links else text
+            link_segs = [seg for seg, code in _spans if code]
+            gtext = "".join(seg if not code else "Zl%dx" % link_segs.index(seg) for seg, code in _spans) \
+                if has_links else text
+
+            def relink(t):
+                if not t or not has_links:
+                    return t
+                for i, seg in enumerate(link_segs):
+                    t = re.sub(r"Zl%dx" % i, lambda _m, sg=seg: sg, t, flags=re.I)
+                return t
             lex = None
             if not mine and cfg["target"].lower() == "fr":
-                lex = lexicon_full(text)
-            outside_links = "".join(seg for seg, code in _spans if not code)
+                lex = lexicon_full(judge.strip())
+                outs = [seg for seg, code in _spans if not code and seg.strip()]
+                if lex and has_links:
+                    # "[Quete] lfm" -> "[Quete] cherche du monde" (un seul morceau de texte hors liens)
+                    lex = relink(gtext.replace(outs[0].strip(), lex, 1)) if len(outs) == 1 else None
             if is_coin_only(text):
                 pass                                   # "100 po" : affiche tel quel, sans traduction
-            elif _spans and any(c for _, c in _spans) and not worth_translating(outside_links):
+            elif has_links and not worth_translating(outside_links):
                 pass                                   # seulement des liens ("[Quete] ?") : rien a traduire
             elif lex:
                 trans, lang = lex, "en"           # lexique : pas d'appel a Google
-            elif not mine and cfg["target"].lower() == "fr" and sure_french(text):
+            elif not mine and cfg["target"].lower() == "fr" and sure_french(judge):
                 lang = "fr"                            # deja en francais : pas d'appel a Google
-            elif not mine and worth_translating(text):
+            elif not mine and worth_translating(judge):
                 try:
-                    trans, lang = google_translate(fr_mix_fix(text), cfg["target"])
+                    trans, lang = google_translate(fr_mix_fix(gtext), cfg["target"])
                     if lang == "en" and cfg["target"].lower() == "fr":
-                        exp = lexicon_expand(text)
-                        if exp != text or has_protected_name(text, cfg["target"]):
+                        exp = lexicon_expand(gtext)
+                        if exp != gtext or has_protected_name(gtext, cfg["target"]):
                             # abreviations / noms propres : on retraduit la phrase developpee
                             trans, _ = google_translate_safe(exp, cfg["target"], source="en")
-                    elif lang not in ("?", "") and has_protected_name(text, cfg["target"]):
-                        trans, _ = google_translate_safe(text, cfg["target"], source=lang)
-                    if unreliable_detection(text, lang):
+                    elif lang not in ("?", "") and has_protected_name(gtext, cfg["target"]):
+                        trans, _ = google_translate_safe(gtext, cfg["target"], source=lang)
+                    if unreliable_detection(judge, lang):
                         # 2-3 mots, langue improbable (ex. "more for hogger" -> norvegien) :
                         # francais mal ecrit, sinon on reessaie en supposant de l'anglais
                         trans, lang = None, "?"
-                        if looks_french(text):
+                        if looks_french(judge):
                             lang = "fr"
                         else:
-                            t2, _ = google_translate_safe(lexicon_expand(text), cfg["target"], source="en")
-                            if t2 and t2.strip().lower() != text.strip().lower():
+                            t2, _ = google_translate_safe(lexicon_expand(gtext), cfg["target"], source="en")
+                            if t2 and t2.strip().lower() != gtext.strip().lower():
                                 trans, lang = t2, "en"
+                    trans = relink(trans)
                 except Exception as e:  # noqa
                     # affiche l'erreur sous le message (la barre d'etat est vite ecrasee par le pont)
                     trans, lang = "\u26a0 traduction impossible : %s" % e, "?"
@@ -1961,8 +2068,9 @@ class App:
             parts.append((author, *marks) if mine or kind in NO_TRANSLATE else (author, *marks, "name"))
             parts.append((": ", *marks))
         _plain, spans = split_links(raw if raw is not None else text)
+        coin = ("coins",) if kind in COIN_KINDS else ()
         for seg, code in spans:
-            parts.append((seg, *marks, "link_" + code) if code else (seg, *marks))
+            parts.append((seg, *marks, "link_" + code) if code else (seg, *marks, *coin))
         parts.append(("\n", *marks))
         if trans and not same and trans.strip().lower() != text.strip().lower():
             tmarks = ("trans", "alert") if alert else ("trans",)
@@ -2020,22 +2128,38 @@ class App:
 
         def run():
             try:
+                # "coucou" seul : Google donne "cuckoo" (l'oiseau)
+                m = re.fullmatch(r"(?i)\s*coucou+\s*([!.?]*)\s*", txt)
+                if m and lang == "en":
+                    res = ("Hi" if txt.strip()[:1].isupper() else "hi") + m.group(1)
+                    self.outq.put(("out", txt, res, lang, None))
+                    return
                 # tu ecris en francais : on le dit a Google (sinon "bonjour" seul est pris pour de l'anglais)
                 res, _ = google_translate(txt, lang, source="fr")
+                check = None
                 if res.strip().lower() == txt.strip().lower():
                     res, _ = google_translate(txt, lang)   # pas du francais finalement : detection auto
+                    if res.strip().lower() == txt.strip().lower() and lang != "fr":
+                        # deja ecrit dans la langue cible ("you speak english") : on montre le sens
+                        # en francais pour verifier, mais c'est bien ton texte qui est copie
+                        try:
+                            check, _ = google_translate(txt, "fr", source=lang)
+                            if check.strip().lower() == txt.strip().lower():
+                                check = None
+                        except Exception:  # noqa
+                            check = None
                 # un service de secours renvoie parfois tout en MAJUSCULES ("Merci" -> "THANKS")
                 if res.isupper() and not txt.isupper():
                     res = res.lower()
                     if txt[:1].isupper():
                         res = res[:1].upper() + res[1:]
-                self.outq.put(("out", txt, res, lang, None))
+                self.outq.put(("out", txt, res, lang, None, check))
             except Exception as e:  # noqa
                 self.outq.put(("out", txt, "", lang, str(e)))
 
         threading.Thread(target=run, daemon=True).start()
 
-    def show_out(self, src, res, lang, err):
+    def show_out(self, src, res, lang, err, check=None):
         if err:
             self.out_result.config(text="Erreur : %s" % err, fg=self.T["err"])
             return
@@ -2046,7 +2170,11 @@ class App:
         self.root.update()
         self.out_result.config(text="Copie ! (Entree, Ctrl+V, Entree dans WoW)  %s" % copy, fg=self.T["ok"])
         who = "Vous \u2192 %s " % to if to else "Vous \u2192 "
-        self.add((who + "[%s] " % lang.upper(), "me"), (src + "\n", "me"), ("\u2192 " + res + "\n", "trans"))
+        if check:
+            self.add((who + "[%s] " % lang.upper(), "me"), (src + "\n", "me"),
+                     ("\u2192 (en fran\u00e7ais : " + check + ")\n", "trans"))
+        else:
+            self.add((who + "[%s] " % lang.upper(), "me"), (src + "\n", "me"), ("\u2192 " + res + "\n", "trans"))
         self.out_entry.delete(0, "end")
         self.cfg["out_lang"] = lang
         save_config(self.cfg)

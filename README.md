@@ -123,7 +123,7 @@ Pour **chuchoter une réponse**, clique sur le pseudo d'un joueur dans la fenêt
 
 ### Options de l'addon pour le traducteur
 
-Dans les réglages de ChatFR en jeu (roue dentée de la fenêtre ChatFR), trois cases décochées par défaut ajoutent d'autres messages dans WoW Traducteur, affichés tels quels sans traduction (ils sont déjà en français) :
+Dans les réglages de ChatFR en jeu (clic sur l'icône ChatFR de la minicarte), trois cases décochées par défaut ajoutent d'autres messages dans WoW Traducteur, affichés tels quels sans traduction (ils sont déjà en français) :
 
 - **Traducteur : PNJ** : ce que disent, crient et font les PNJ et les boss.
 - **Traducteur : messages système** : absent, invitations, réputation (en bleu), expérience, émotes…
@@ -165,3 +165,7 @@ Alt+Z (masquer l'interface) cache aussi la bande : le traducteur ne reçoit plus
 ## Désinstallation
 
 Supprime `_forever_\Interface\AddOns\ChatFR` et le dossier `Traducteur`.
+
+## Soutenir le projet
+
+WoW Traducteur et ChatFR sont et resteront gratuits, sans fonction réservée aux donateurs. Si ces outils te rendent service et que tu veux me soutenir : [ko-fi.com/puenteur](https://ko-fi.com/puenteur)

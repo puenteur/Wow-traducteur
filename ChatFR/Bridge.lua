@@ -23,7 +23,7 @@ local nextAt = 0
 
 local KIND = {
   CHAT_MSG_SAY = "say", CHAT_MSG_EMOTE = "say", CHAT_MSG_YELL = "yell",
-  CHAT_MSG_PARTY = "party", CHAT_MSG_PARTY_LEADER = "party",
+  CHAT_MSG_PARTY = "party", CHAT_MSG_PARTY_LEADER = "party", CHAT_MSG_PING = "ping",   -- pings ("Par ici"...) : texte du jeu, sans traduction
   CHAT_MSG_INSTANCE_CHAT = "party", CHAT_MSG_INSTANCE_CHAT_LEADER = "party",
   CHAT_MSG_RAID = "raid", CHAT_MSG_RAID_LEADER = "raid", CHAT_MSG_RAID_WARNING = "raid",
   CHAT_MSG_GUILD = "guild", CHAT_MSG_OFFICER = "officer",
@@ -142,12 +142,73 @@ local QUALITY = { ["9d9d9d"] = "0", ["ffffff"] = "1", ["1eff00"] = "2", ["0070dd
 local LTYPE = { item = "i", quest = "q", spell = "s", talent = "s", enchant = "e",
                 trade = "e", achievement = "a" }
 
-local function LinkMark(color, ltype, name)
+-- Quete : couleur selon son niveau et le tien, comme dans le tchat du jeu (q0 gris, q1 vert, q2 jaune,
+-- q3 orange, q4 rouge). Lien "|Hquest:ID:niveau...|h". Niveau inconnu ou adaptatif : "q" (couleur par defaut).
+local QDIFF = { trivial = "q0", standard = "q1", difficult = "q2", verydifficult = "q3", impossible = "q4" }
+
+-- Couleurs de difficulte du jeu (repli si QuestDifficultyColors est absent)
+local QHEX = { q0 = { 0.5, 0.5, 0.5 }, q1 = { 0.25, 0.75, 0.25 }, q2 = { 1, 1, 0 },
+               q3 = { 1, 0.5, 0.25 }, q4 = { 1, 0.1, 0.1 } }
+
+local function CodeFromRGB(r, g, b)
+  local best, bestD = nil, 0.12                        -- tolerance : couleur tres proche seulement
+  for key, code in pairs(QDIFF) do
+    local q = type(QuestDifficultyColors) == "table" and QuestDifficultyColors[key]
+    local qr, qg, qb
+    if q and q.r then qr, qg, qb = q.r, q.g, q.b else qr, qg, qb = unpack(QHEX[code]) end
+    local d = math.abs(qr - r) + math.abs(qg - g) + math.abs(qb - b)
+    if d < bestD then best, bestD = code, d end
+  end
+  return best
+end
+
+local function QuestCode(data, color)
+  local id, lvl = (data or ""):match("^:(%-?%d+):(%-?%d+)")
+  lvl, id = tonumber(lvl), tonumber(id)
+  -- Forever : niveau 0 dans le lien ("quest:202:0") -> on demande le niveau au jeu
+  if (not lvl or lvl <= 0) and id and C_QuestLog and C_QuestLog.GetQuestDifficultyLevel then
+    local ok, l = pcall(C_QuestLog.GetQuestDifficultyLevel, id)
+    if ok and type(l) == "number" and l > 0 then lvl = l end
+  end
+  local me = UnitLevel and UnitLevel("player")
+  if not lvl or lvl <= 0 or not me or me <= 0 then
+    -- dernier recours : la couleur que le jeu a mise sur le lien (|cffff1a1a...)
+    local hex = type(color) == "string" and color:match("^%x%x(%x%x%x%x%x%x)$")
+    if hex then
+      local code = CodeFromRGB(tonumber(hex:sub(1, 2), 16) / 255, tonumber(hex:sub(3, 4), 16) / 255,
+                               tonumber(hex:sub(5, 6), 16) / 255)
+      if code then return code end
+    end
+    return "q"
+  end
+  -- d'abord les couleurs du jeu lui-meme (memes regles que son tchat)
+  local okC, c = pcall(GetQuestDifficultyColor, lvl)
+  if okC and type(c) == "table" and c.r then
+    local code = CodeFromRGB(c.r, c.g, c.b)
+    if code then return code end
+  end
+  -- sinon : regles classiques
+  local d = lvl - me
+  if d >= 5 then return "q4" elseif d >= 3 then return "q3" elseif d >= -2 then return "q2" end
+  local okG, green = pcall(function()
+    return (GetQuestGreenRange and GetQuestGreenRange("player"))
+        or (UnitQuestTrivialLevelRange and UnitQuestTrivialLevelRange("player"))
+  end)
+  if not okG or type(green) ~= "number" then
+    green = me <= 5 and 5 or me <= 39 and (5 + math.floor(me / 10)) or me <= 59 and (1 + math.floor(me / 5)) or 9
+  end
+  return (-d <= green) and "q1" or "q0"
+end
+
+local function LinkMark(color, ltype, data, name)
   local code = LTYPE[ltype] or "o"
   if code == "i" then
     -- couleur en hexa (|cffa335ee) ou par nom (|cnIQ4: = qualite 4)
     local q = color and (color:match("^IQ(%d)$") or QUALITY[color:lower():sub(3)])
     code = "i" .. (q or "1")
+  elseif code == "q" then
+    local ok, qc = pcall(QuestCode, data, color)
+    code = ok and qc or "q"
   end
   return "\2" .. code .. "\3" .. name .. "\4"
 end
@@ -197,11 +258,25 @@ local function PushTip(hlink, name, tries)
   local now = GetTime and GetTime() or 0
   if (tipSent[name] and now - tipSent[name] < 120) or not frame then return end
   local lines = TipLines(hlink)
-  if #lines == 0 then                                      -- objet pas encore connu du jeu : on reessaie
+  -- objectif de quete dont le nom n'est pas encore charge par le jeu ("- 1 x") : on reessaie
+  local partial = false
+  for _, t in ipairs(lines) do
+    if t:match("^%s*%-?%s*%d+%s*x%s*$") then partial = true; break end
+  end
+  if #lines == 0 or partial then                           -- pas encore connu du jeu : on reessaie
     if (tries or 0) < 3 and C_Timer and C_Timer.After then
       C_Timer.After(1, function() pcall(PushTip, hlink, name, (tries or 0) + 1) end)
+      return
     end
-    return
+    if #lines == 0 then return end
+    -- toujours incomplet : on retire les objectifs vides (et le titre "Conditions :" s'il reste seul)
+    local kept = {}
+    for _, t in ipairs(lines) do
+      if not t:match("^%s*%-?%s*%d+%s*x%s*$") then kept[#kept + 1] = t end
+    end
+    if #kept > 0 and kept[#kept]:match(":%s*$") then kept[#kept] = nil end
+    lines = kept
+    if #lines == 0 then return end
   end
   local body, nm = "", name:gsub("[\1-\31]", " ")
   for _, t in ipairs(lines) do
@@ -221,12 +296,13 @@ function ns.BridgePush(event, msg, author, chan)
   if issecretvalue and (issecretvalue(msg) or issecretvalue(author) or issecretvalue(chan)) then return end
   local raw = msg                                     -- liens d'origine, pour les infobulles
   msg = msg:gsub("[\1-\31]", " ")
-  msg = msg:gsub("|c(%x%x%x%x%x%x%x%x)|H([^:|]+):[^|]*|h(.-)|h|r", LinkMark)
-  msg = msg:gsub("|cn([%w_]+):|H([^:|]+):[^|]*|h(.-)|h|r", LinkMark)
-  msg = msg:gsub("|H([^:|]+):[^|]*|h(.-)|h", function(t, n) return LinkMark(nil, t, n) end)
+  msg = msg:gsub("|c(%x%x%x%x%x%x%x%x)|H([^:|]+)([^|]*)|h(.-)|h|r", LinkMark)
+  msg = msg:gsub("|cn([%w_]+):|H([^:|]+)([^|]*)|h(.-)|h|r", LinkMark)
+  msg = msg:gsub("|H([^:|]+)([^|]*)|h(.-)|h", function(t, d, n) return LinkMark(nil, t, d, n) end)
   msg = CleanCodes(msg)
   chan = (type(chan) == "string") and chan:gsub("^%d+%.%s*", ""):gsub("[\1-\31]", " ") or ""
-  author = author:gsub("[\1-\31]", " ")
+  -- pings : l'auteur arrive en lien "|Hplayer:Nom|h[Nom]|h" -> "Nom"
+  author = CleanCodes(author:gsub("|H[^|]*|h(.-)|h", "%1")):gsub("^%[(.*)%]$", "%1"):gsub("[\1-\31]", " ")
   local rec = kind .. "\31" .. chan .. "\31" .. author .. "\31" .. msg
   if #rec > MAXREC then
     local cut = MAXREC

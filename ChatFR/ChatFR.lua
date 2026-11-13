@@ -309,7 +309,7 @@ local function BuildSettings(title, close)
   gear:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square")
 
   settingsPanel = CreateFrame("Frame", "ChatFRSettings", UIParent, "BackdropTemplate")
-  settingsPanel:SetSize(230, 502)
+  settingsPanel:SetSize(230, 528)
   settingsPanel:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
   settingsPanel:SetFrameStrata("DIALOG")
   settingsPanel:SetClampedToScreen(true)
@@ -338,42 +338,48 @@ local function BuildSettings(title, close)
   MakeCheck(settingsPanel, -30, "Addon actif",
     function() return ChatFRDB.enabled end,
     function(v) ChatFRDB.enabled = v end)
-  MakeCheck(settingsPanel, -56, "Ligne traduite (->)",
+  MakeCheck(settingsPanel, -56, "Fenêtre mot à mot",
+    function() return win and win:IsShown() end,
+    function(v)
+      ChatFRDB.hidden = not v
+      if win then if v then win:Show() else win:Hide() end end
+    end)
+  MakeCheck(settingsPanel, -82, "Ligne traduite (->)",
     function() return ChatFRDB.showfr end,
     function(v) ChatFRDB.showfr = v end)
-  MakeCheck(settingsPanel, -82, "Annoter les petits mots",
+  MakeCheck(settingsPanel, -108, "Annoter les petits mots",
     function() return ChatFRDB.common end,
     function(v) ChatFRDB.common = v end)
-  MakeCheck(settingsPanel, -108, "Annotations dans le tchat",
+  MakeCheck(settingsPanel, -134, "Annotations dans le tchat",
     function() return ChatFRDB.chatnotes end,
     function(v) ChatFRDB.chatnotes = v end)
-  MakeCheck(settingsPanel, -134, "Enregistrer le tchat (log)",
+  MakeCheck(settingsPanel, -160, "Enregistrer le tchat (log)",
     function() return LoggingChat and LoggingChat() end,
     function(v)
       ChatFRDB.autolog = v
       if LoggingChat then LoggingChat(v) end
     end)
 
-  MakeCheck(settingsPanel, -160, "Alertes (pseudo / mots)",
+  MakeCheck(settingsPanel, -186, "Alertes (pseudo / mots)",
     function() return ChatFRDB.alert end,
     function(v) ChatFRDB.alert = v end)
 
-  MakeCheck(settingsPanel, -186, "Masquer si une fenêtre est ouverte",
+  MakeCheck(settingsPanel, -212, "Masquer si une fenêtre est ouverte",
     function() return ChatFRDB.autohide end,
     function(v) ChatFRDB.autohide = v end)
 
   -- envoyes en plus au traducteur externe (affiches sans traduction)
-  MakeCheck(settingsPanel, -212, "Traducteur : PNJ",
+  MakeCheck(settingsPanel, -238, "Traducteur : PNJ",
     function() return ChatFRDB.brNpc end,
     function(v) ChatFRDB.brNpc = v end)
-  MakeCheck(settingsPanel, -238, "Traducteur : messages système",
+  MakeCheck(settingsPanel, -264, "Traducteur : messages système",
     function() return ChatFRDB.brSystem end,
     function(v) ChatFRDB.brSystem = v end)
-  MakeCheck(settingsPanel, -264, "Traducteur : butin et argent",
+  MakeCheck(settingsPanel, -290, "Traducteur : butin et argent",
     function() return ChatFRDB.brLoot end,
     function(v) ChatFRDB.brLoot = v end)
 
-  MakeSlider(settingsPanel, -298, "Opacité du fond", "%.2f", 0.2, 1, 0.05,
+  MakeSlider(settingsPanel, -324, "Opacité du fond", "%.2f", 0.2, 1, 0.05,
     function() return ChatFRDB.alpha or 0.92 end,
     function(v)
       ChatFRDB.alpha = v
@@ -384,19 +390,19 @@ local function BuildSettings(title, close)
     local _, sz = ChatFontNormal:GetFont()
     if sz then defSize = sz end
   end
-  MakeSlider(settingsPanel, -344, "Taille du texte", "%d", 9, 20, 1,
+  MakeSlider(settingsPanel, -370, "Taille du texte", "%d", 9, 20, 1,
     function() return ChatFRDB.fontsize or defSize end,
     function(v)
       ChatFRDB.fontsize = math.floor(v + 0.5)
       ApplyFont()
     end)
 
-  MakeSlider(settingsPanel, -390, "Confiance minimale", "%d%%", 0, 100, 5,
+  MakeSlider(settingsPanel, -416, "Confiance minimale", "%d%%", 0, 100, 5,
     function() return math.floor((ChatFRDB.minconf or 0.75) * 100 + 0.5) end,
     function(v) ChatFRDB.minconf = math.floor(v + 0.5) / 100 end)
 
-  MakeButton(settingsPanel, -438, "Vider la fenêtre", function() msgs:Clear() end)
-  MakeButton(settingsPanel, -466, "Position par défaut", function() ResetPos(); SavePos() end)
+  MakeButton(settingsPanel, -464, "Vider la fenêtre", function() msgs:Clear() end)
+  MakeButton(settingsPanel, -492, "Position par défaut", function() ResetPos(); SavePos() end)
 
   gear:SetScript("OnClick", function()
     if settingsPanel:IsShown() then settingsPanel:Hide() else settingsPanel:Show() end
@@ -514,12 +520,9 @@ local function CreateMinimapButton()
   mmBtn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
   mmBtn:RegisterForDrag("LeftButton")
   mmBtn:SetScript("OnClick", function(_, button)
-    if button == "RightButton" then
-      if settingsPanel then
-        if settingsPanel:IsShown() then settingsPanel:Hide() else settingsPanel:Show() end
-      end
-    else
-      ToggleWindow()
+    -- Clic = reglages (la fenetre mot a mot se rouvre depuis les reglages ou /cfr show)
+    if settingsPanel then
+      if settingsPanel:IsShown() then settingsPanel:Hide() else settingsPanel:Show() end
     end
   end)
   mmBtn:SetScript("OnDragStart", function(self)
@@ -535,8 +538,8 @@ local function CreateMinimapButton()
   mmBtn:SetScript("OnEnter", function(self)
     GameTooltip:SetOwner(self, "ANCHOR_LEFT")
     GameTooltip:SetText("ChatFR")
-    GameTooltip:AddLine("Clic gauche : afficher / masquer la fenêtre", 1, 1, 1)
-    GameTooltip:AddLine("Clic droit : réglages", 1, 1, 1)
+    GameTooltip:AddLine("Complément de WoW Traducteur (programme à télécharger)", 1, 1, 1)
+    GameTooltip:AddLine("Clic : réglages", 1, 1, 1)
     GameTooltip:AddLine("Glisser : déplacer le bouton", 1, 1, 1)
     GameTooltip:Show()
   end)
@@ -710,8 +713,9 @@ f:RegisterEvent("PLAYER_LOGIN")
 for _, ev in ipairs(EVENTS) do
   f:RegisterEvent(ev)
 end
+pcall(f.RegisterEvent, f, "CHAT_MSG_PING")   -- pings du groupe ("Par ici"...) ; pcall : absent sur certains clients
 -- Fenetre d'annonce "nouvelle version du traducteur" (voir PLAYER_LOGIN).
-local TRAD_NOTICE = "1.7"
+local TRAD_NOTICE = "1.8"
 local TRAD_URL = "github.com/puenteur/Wow-traducteur"
 local noticeFrame
 
@@ -734,14 +738,14 @@ local function ShowTradNotice()
 
     local title = p:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOP", 0, -14)
-    title:SetText("ChatFR : mise à jour du traducteur")
+    title:SetText("ChatFR fonctionne avec WoW Traducteur")
 
     local body = p:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     body:SetPoint("TOP", title, "BOTTOM", 0, -12)
     body:SetWidth(400)
     body:SetJustifyH("CENTER")
-    body:SetText("La version " .. TRAD_NOTICE .. " de WoW Traducteur est disponible.\n" ..
-                 "Télécharge le zip WoW-Traducteur dans les Releases de :")
+    body:SetText("La traduction se fait dans WoW Traducteur (version " .. TRAD_NOTICE .. "), un petit programme gratuit\n" ..
+                 "à lancer à côté du jeu. Télécharge le zip WoW-Traducteur dans les Releases de :")
 
     -- Adresse dans une zone de texte : clic dedans puis Ctrl+C pour la copier.
     local eb = CreateFrame("EditBox", nil, p, "InputBoxTemplate")
@@ -823,9 +827,28 @@ local function MoneyText(c)
   return table.concat(t, " ")
 end
 
+-- Totaux de la visite chez le marchand, affiches a la fermeture de sa fenetre
+local visit = { gain = 0, nGain = 0, spent = 0, nSpent = 0 }
+
+local function VisitTotals()
+  -- un total seulement s'il y a eu au moins 2 operations du meme genre (sinon il repete la ligne)
+  if visit.nGain >= 2 then
+    PushExtra("CHAT_MSG_MONEY", "loot", "Total des ventes : " .. MoneyText(visit.gain), "")
+  end
+  if visit.nSpent >= 2 then
+    PushExtra("CHATFR_SPENT", "spent", "Total des dépenses : " .. MoneyText(visit.spent), "")
+  end
+  visit.gain, visit.nGain, visit.spent, visit.nSpent = 0, 0, 0, 0   -- MERCHANT_CLOSED arrive parfois 2 fois
+end
+
 local function OnMoney(event)
-  if event == "MERCHANT_SHOW" then atMerchant = true
-  elseif event == "MERCHANT_CLOSED" then atMerchant = false end
+  if event == "MERCHANT_SHOW" then
+    atMerchant = true
+    visit.gain, visit.nGain, visit.spent, visit.nSpent = 0, 0, 0, 0
+  elseif event == "MERCHANT_CLOSED" then
+    atMerchant = false
+    VisitTotals()
+  end
   local m = GetMoney and GetMoney()
   if not m then return end
   -- MerchantFrame : marchand deja ouvert au moment d'un /reload (MERCHANT_SHOW deja passe)
@@ -833,8 +856,10 @@ local function OnMoney(event)
   if event == "PLAYER_MONEY" and merchant and lastMoney and m ~= lastMoney then
     if m > lastMoney then
       PushExtra("CHAT_MSG_MONEY", "loot", "Vous avez obtenu : " .. MoneyText(m - lastMoney), "")
+      visit.gain, visit.nGain = visit.gain + (m - lastMoney), visit.nGain + 1
     else                                     -- achat, rachat, reparation
       PushExtra("CHATFR_SPENT", "spent", "Vous avez dépensé : " .. MoneyText(lastMoney - m), "")
+      visit.spent, visit.nSpent = visit.spent + (lastMoney - m), visit.nSpent + 1
     end
   end
   lastMoney = m
@@ -886,6 +911,8 @@ f:SetScript("OnEvent", function(_, event, name, author, a3, a4, a5, a6, a7, a8, 
     if ChatFRDB.alert == nil then ChatFRDB.alert = true end
     if ChatFRDB.autohide == nil then ChatFRDB.autohide = true end
     if ChatFRDB.bridge == nil then ChatFRDB.bridge = true end
+    -- 1.8 : la fenetre mot a mot est masquee par defaut (une seule fois, chacun peut la rouvrir)
+    if not ChatFRDB.v18 then ChatFRDB.hidden = true; ChatFRDB.v18 = true end
     ChatFRDB.custom = ChatFRDB.custom or {}
     ChatFRDB.keywords = ChatFRDB.keywords or {}
     ChatFRDB.missing = ChatFRDB.missing or {}
@@ -902,7 +929,7 @@ f:SetScript("OnEvent", function(_, event, name, author, a3, a4, a5, a6, a7, a8, 
     -- Changer TRAD_NOTICE (plus haut) a chaque nouvelle version du traducteur a annoncer.
     if ChatFRDB.tradNotice ~= TRAD_NOTICE then
       local function notice()
-        Say("|cffffd100NOUVELLE VERSION DU TRADUCTEUR (" .. TRAD_NOTICE .. ")|r : a telecharger sur " .. TRAD_URL .. " (Releases).")
+        Say("|cffffd100ChatFR fonctionne avec WoW Traducteur (" .. TRAD_NOTICE .. ")|r : a telecharger sur " .. TRAD_URL .. " (Releases).")
         local okN, errN = pcall(ShowTradNotice)
         if not okN then Say("annonce indisponible : " .. tostring(errN)) end
       end
