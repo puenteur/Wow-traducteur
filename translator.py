@@ -10,7 +10,9 @@ Traducteur de tchat WoW  (v2)
   le resultat : il ne reste qu'a faire Ctrl+V dans WoW.
 Aucune installation supplementaire : Python seul suffit.
 """
+import base64
 import binascii
+import difflib
 import ctypes
 import json
 import os
@@ -23,6 +25,8 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import zlib
+import struct
 import webbrowser
 from ctypes import wintypes
 import tkinter as tk
@@ -33,7 +37,7 @@ try:
 except ImportError:  # pas sous Windows
     winsound = None
 
-VERSION = "1.8"
+VERSION = "1.9"
 # Verification de mise a jour : le fichier version.txt du depot contient le numero de la derniere version.
 VERSION_URL = "https://raw.githubusercontent.com/puenteur/Wow-traducteur/main/version.txt"
 KOFI_URL = "https://ko-fi.com/puenteur"
@@ -42,6 +46,22 @@ WOWHEAD_SEARCH = "https://www.wowhead.com/classic/fr/search?q="
 RELEASE_URL = "https://github.com/puenteur/Wow-traducteur/releases/latest"
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+
+# Nouveautes affichees une fois dans la fenetre apres une mise a jour (pas au premier lancement).
+NEWS = {
+    "fr": ["WoW Traducteur %s : maintenant aussi en anglais !" % VERSION,
+           "- La grande nouveaut\u00e9 : tout le traducteur existe en anglais. Au premier lancement, on choisit Fran\u00e7ais ou English ; en anglais, le tchat est traduit vers l'anglais. Pratique pour tes amis anglophones ! (changeable dans les R\u00e9glages)",
+           "- Pi\u00e8ces d'or, d'argent et de cuivre en ic\u00f4nes bien visibles, m\u00eame quand le jeu \u00e9crit \u00ab 25 Cuivre \u00bb.",
+           "- Langue de r\u00e9ponse : une liste qui s'ouvre vers le haut (EN, DE, ES, puis Autre langue\u2026).",
+           "- Fen\u00eatre des nouveaut\u00e9s apr\u00e8s chaque mise \u00e0 jour (celle-ci !).",
+           "- Meilleures traductions : lfg/lfm, wts/wtb, Deadmines, jargon russe (\u041b\u0424\u0413), mots coll\u00e9s aux liens, petits messages en espagnol ou en letton, moins d'appels inutiles \u00e0 Google."],
+    "en": ["WoW Traducteur %s: now in English!" % VERSION,
+           "- The big one: the whole translator is now available in English. Choose Fran\u00e7ais or English at first launch; in English, the chat is translated into English (can be changed in Settings).",
+           "- Gold, silver and copper coins shown as clear icons, even when the game writes \"25 Copper\".",
+           "- Reply language: a list that opens upwards (FR, DE, ES, then Other language\u2026).",
+           "- A window like this one after each update.",
+           "- Better translations: French gamer slang (pex, slt, tlm, \"du monde ?\"), Russian jargon, lfg/lfm, words stuck to links, and fewer useless calls to Google."],
+}
 CONFIG_PATH = os.path.join(HERE, "translator_config.json")
 TIPS_PATH = os.path.join(HERE, "infobulles.json")     # infobulles d'objets gardees entre deux lancements
 
@@ -64,6 +84,7 @@ DEFAULTS = {
     "theme": "Sombre",              # theme de la fenetre (voir THEMES)
     "locked": False,                # cadenas : fenetre verrouillee (ni deplacement ni redimensionnement)
     "help_seen": False,             # fenetre d'aide deja montree une fois (premier lancement)
+    "ui_lang": "",                  # langue de l'interface : "fr" ou "en" (choisie au premier lancement)
 }
 
 BG = "#101418"
@@ -83,7 +104,172 @@ NO_TRANSLATE = ("npc", "system", "loot", "spent", "whisper_out", "faction", "pin
 # Seulement pour les messages du jeu : dans le tchat des joueurs, "2pc" veut souvent dire "2 pieces".
 COIN_KINDS = ("loot", "spent", "system")
 COIN_RE = re.compile(r"(?<=\d)(\s?)(po|pa|pc)(?![A-Za-z\u00c0-\u024f])")
+# Le jeu ecrit parfois le nom de la piece ("Votre part du butin est de 25 Cuivre.") : -> "25 pc"
+COIN_WORDS_RE = re.compile(r"(?<=\d)\s?(?:pi\u00e8ces?\s+(?:d'|de\s+))?(or|argent|cuivre|gold|silver|copper)s?(?![A-Za-z\u00c0-\u024f])", re.I)
+COIN_WORDS = {"or": "po", "gold": "po", "argent": "pa", "silver": "pa", "cuivre": "pc", "copper": "pc"}
 COIN_COLORS = {"po": ("#f2c94c", "#9c7412"), "pa": ("#d6dae2", "#7f8590"), "pc": ("#d0874e", "#7d4520")}
+# ---------------------------------------------------------------------------
+# Langue de l'interface (francais / anglais). Les textes sont ecrits en francais dans le code ;
+# _("...") renvoie la version anglaise quand l'interface est en anglais.
+UI = "fr"
+
+EN = {
+    "Demarrage...": "Starting...",
+    "⚙ Réglages": "⚙ Settings",
+    "Effacer": "Clear",
+    "Clique sur un message pour repondre dans sa langue.": "Click a message to reply in its language.",
+    "Autre langue…": "Other language…",
+    "À %s (%s) →": "To %s (%s) →",
+    "Ecrire (%s) →": "Write (%s) →",
+    "Chuchotement à %s : ta reponse sera copiee avec /w %s": "Whisper to %s: your reply will be copied with /w %s",
+    "Reponse normale (sans /w).": "Normal reply (no /w).",
+    "(haut fait : le détail est sur Wowhead)": "(achievement: details are on Wowhead)",
+    "(le jeu ne donne pas la fiche de cette quête, souvent tant qu'elle n'est pas dans ton journal : vois-la sur Wowhead)":
+        "(the game doesn't send this quest's details, usually until it is in your quest log: see it on Wowhead)",
+    "(fiche pas encore reçue du jeu : elle arrivera au prochain lien de cet objet)":
+        "(details not received from the game yet: they will come with the next link of this item)",
+    "Langue de reponse : %s": "Reply language: %s",
+    "WoW Traducteur %s - ce qu'il sait faire": "WoW Traducteur %s - what it can do",
+    "Fermer": "Close",
+    "Reglages": "Settings",
+    "Source (pont ou log)": "Source (pont or log)",
+    "Fichier de log (si source=log)": "Log file (if source=log)",
+    "Traduire vers (fr, en...)": "Translate into (en, fr...)",
+    "Ton pseudo (alerte)": "Your character name (alert)",
+    "Mots surveilles (virgules)": "Watched words (commas)",
+    "Son pour les alertes": "Sound for alerts",
+    "Toujours au premier plan": "Always on top",
+    "Afficher aussi les messages deja dans ta langue": "Also show messages already in your language",
+    "Se fermer quand WoW se ferme": "Close when WoW closes",
+    "Se cacher quand WoW n'est pas la fenetre active": "Hide when WoW is not the active window",
+    "Langue de reponse automatique (dernier message etranger)": "Automatic reply language (last foreign message)",
+    "Opacite": "Opacity",
+    "Taille du texte": "Text size",
+    "Theme": "Theme",
+    "Langue de l'interface": "Interface language",
+    "Enregistrer": "Save",
+    "Log introuvable : %s (tape /chatlog dans WoW)": "Log not found: %s (type /chatlog in WoW)",
+    "En ecoute...": "Listening...",
+    "En ecoute... (%d lignes lues, %d messages)": "Listening... (%d lines read, %d messages)",
+    "En ecoute... %d lignes, %d msg | log %d Ko, ecrit il y a %ds": "Listening... %d lines, %d msg | log %d KB, written %ds ago",
+    "Erreur lecture : %s": "Read error: %s",
+    "Pont image : fenetre WoW introuvable": "Image bridge: WoW window not found",
+    "Pont image : signal absent | WoW en (%d,%d) | capture %d%% non noire, moy %s | voir debug_pont.bmp":
+        "Image bridge: no signal | WoW at (%d,%d) | capture %d%% non-black, avg %s | see debug_pont.bmp",
+    "Pont image : OK (%d messages recus)": "Image bridge: OK (%d messages received)",
+    "Pont image : erreur %s": "Image bridge: error %s",
+    "⚠ traduction impossible : %s": "⚠ translation failed: %s",
+    "Mise à jour %s dispo": "Update %s available",
+    "Erreur : %s": "Error: %s",
+    "Copie ! (Entree, Ctrl+V, Entree dans WoW)  %s": "Copied! (Enter, Ctrl+V, Enter in WoW)  %s",
+    "Vous → ": "You → ",
+    "Vous → %s ": "You → %s ",
+    "→ (en français : %s)": "→ (in English: %s)",
+    "Fenetre verrouillee": "Window locked",
+    "Fenetre deverrouillee": "Window unlocked",
+    "Traduire + copier": "Translate + copy",
+    "Voir sur Wowhead \u2197": "See on Wowhead \u2197",
+    "Langue de reponse : %s (auto, d'apres %s)": "Reply language: %s (auto, from %s)",
+    "Traduction en cours...": "Translating...",
+    "Tout ce qu'il sait faire (?)": "Everything it can do (?)",
+    "Canaux masques (virgules)": "Hidden channels (commas)",
+    # themes (le nom francais reste la cle enregistree dans la config)
+    "Sombre": "Dark", "Parchemin": "Parchment", "Ombre": "Shadow", "Druide": "Druid", "Sables": "Sands",
+    "Marais": "Swamp", "Clair de lune": "Moonlight", "Aube dorée": "Golden dawn", "Givre": "Frost",
+}
+
+
+ERR_EN = [("Google en pause (trop de requetes), reprise dans", "Google paused (too many requests), resuming in"),
+          ("Google limite les requetes (429), pause de", "Google is limiting requests (429), pausing for"),
+          ("Google ne repond pas", "Google is not responding"), ("quota du jour atteint", "daily quota reached"),
+          ("MyMemory a refuse la requete", "MyMemory refused the request"),
+          ("aucun serveur ne repond", "no server responds"), ("serveurs en pause", "servers paused"),
+          ("reponse vide", "empty response")]
+
+
+def err_text(e):
+    """Message d'erreur des services de traduction, en anglais si l'interface est en anglais."""
+    t = str(e)
+    if UI == "en":
+        for fr, en in ERR_EN:
+            t = t.replace(fr, en)
+    return t
+
+
+def _(s):
+    return EN.get(s, s) if UI == "en" else s
+
+
+# Noms des langues de reponse, selon la langue de l'interface
+LANG_NAMES = {
+    "fr": {"en": "Anglais", "de": "Allemand", "es": "Espagnol", "ru": "Russe", "pl": "Polonais", "it": "Italien",
+           "pt": "Portugais", "nl": "Néerlandais", "sv": "Suédois", "da": "Danois", "no": "Norvégien",
+           "fi": "Finnois", "cs": "Tchèque", "ro": "Roumain", "hu": "Hongrois", "tr": "Turc", "el": "Grec",
+           "uk": "Ukrainien", "fr": "Français"},
+    "en": {"en": "English", "de": "German", "es": "Spanish", "ru": "Russian", "pl": "Polish", "it": "Italian",
+           "pt": "Portuguese", "nl": "Dutch", "sv": "Swedish", "da": "Danish", "no": "Norwegian", "fi": "Finnish",
+           "cs": "Czech", "ro": "Romanian", "hu": "Hungarian", "tr": "Turkish", "el": "Greek", "uk": "Ukrainian",
+           "fr": "French"},
+}
+LANGS_ORDER = ["ru", "pl", "it", "pt", "nl", "sv", "da", "no", "fi", "cs", "ro", "hu", "tr", "el", "uk"]
+
+
+def lang_lists():
+    """(rapides, autres) en paires (nom, code) dans la langue de l'interface."""
+    names = LANG_NAMES[UI]
+    quick = ["en", "de", "es"] if UI == "fr" else ["fr", "de", "es"]
+    others = [c for c in LANGS_ORDER] + (["fr"] if UI == "fr" else ["en"])
+    return [(names[c], c) for c in quick], [(names[c], c) for c in others]
+# Pile de pieces (or, argent, cuivre) : clair, moyen, fonce, contour.
+COIN_PAL = {
+    "po": ((255, 243, 168), (245, 197, 24), (184, 134, 11), (92, 61, 0)),
+    "pa": ((255, 255, 255), (217, 222, 230), (143, 151, 163), (60, 65, 74)),
+    "pc": ((255, 210, 174), (217, 120, 58), (154, 74, 28), (74, 31, 8)),
+}
+
+
+def _coin_mix(a, b, t):
+    t = max(0.0, min(1.0, t))
+    return tuple(a[i] + (b[i] - a[i]) * t for i in range(3))
+
+
+def _coin_pile(unit, u, v):
+    """Couleur d'un point (u, v dans -1..1) d'une pile de 3 pieces vue de profil, ou None."""
+    hi, mid, lo, out = COIN_PAL[unit]
+    ry, th = 0.38, 0.36
+    res = None
+    for k in range(3):                       # de bas en haut : la piece du dessus recouvre
+        top = 1 - ry - (k + 1) * th + 0.02
+        e_top = u * u + ((v - top) / ry) ** 2
+        e_bot = u * u + ((v - top - th) / ry) ** 2
+        if abs(u) <= 1 and (top <= v <= top + th or e_bot <= 1):
+            edge = abs(u) > 0.9 or (e_bot > 0.75 and v > top + th)
+            res = out if edge else _coin_mix(mid, lo, 0.5 + 0.4 * u)
+        if e_top <= 1:
+            shine = (u + 0.35) ** 2 / 0.12 + ((v - top + 0.08) / ry) ** 2 / 0.25 < 1
+            res = out if e_top > 0.72 else (hi if shine else mid)
+    return res
+
+
+def coin_png(unit, size, ss=4):
+    """PNG (octets) d'une pile de pieces size x size, bords lisses (ss x ss echantillons par pixel)."""
+    raw = bytearray()
+    for y in range(size):
+        raw.append(0)
+        for x in range(size):
+            r = g = b = n = 0
+            for sy in range(ss):
+                for sx in range(ss):
+                    c = _coin_pile(unit, ((x + (sx + 0.5) / ss) / size * 2 - 1) * 1.02,
+                                   ((y + (sy + 0.5) / ss) / size * 2 - 1) * 1.02)
+                    if c is not None:
+                        r += c[0]; g += c[1]; b += c[2]; n += 1
+            raw += bytes((round(r / n), round(g / n), round(b / n), round(255 * n / (ss * ss)))) if n else b"\0\0\0\0"
+
+    def chunk(t, d):
+        return struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xffffffff)
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", size, size, 8, 6, 0, 0, 0))
+            + chunk(b"IDAT", zlib.compress(bytes(raw), 9)) + chunk(b"IEND", b""))
 
 
 def wow_grammar(text):
@@ -221,6 +407,43 @@ HELP_TEXT = """# Comment ça marche
 # Soutenir le projet
 - WoW Traducteur et ChatFR sont et resteront gratuits, sans fonction réservée aux donateurs.
 - Si ces outils te rendent service et que tu veux me soutenir : https://ko-fi.com/puenteur
+"""
+
+HELP_TEXT_EN = """# How it works
+- Two parts work together: the ChatFR addon in the game, and this translator on Windows.
+- A WoW addon has no Internet access. So ChatFR writes each chat message as a small strip of colored squares at the top left of the screen.
+- The translator captures that strip several times per second, decodes it, sends the text to Google Translate, then shows the message and its translation here.
+- The top bar shows the status: "Image bridge: OK (N messages received)" means everything works. Any other message means the strip is not visible (WoW minimized, a window on top, exclusive fullscreen).
+- Nothing is sent to the game: the translator only reads the screen, it never touches the game or the keyboard.
+# Getting started
+- Run WoW in Windowed or Fullscreen (windowed) mode, then start the translator with "Lancer le traducteur.bat".
+- Wait for "Image bridge: OK": messages arrive translated within 1 to 2 seconds, with the original language in brackets ([DE], [FR]...).
+- Don't cover the strip of colored squares: without it, the translator receives nothing.
+# Chat translation
+- Translates messages from any language (French, Spanish, German, Russian...) into English live, or into the language chosen in Settings.
+- All channels: say, yell, party, raid, guild, whispers (in game and Battle.net), General, Trade, Looking for Group...
+- Item and quest links colored like in the game, raid markers shown as symbols.
+- Hover an item or quest link: its details show up (stats, level, price), like in WoW.
+- Messages already in your language are not sent to Google.
+# Replying
+- Write in English in "Write (EN)" then click "Translate + copy": the translation is copied. In WoW: Enter, Ctrl+V, Enter.
+- Click a message: the reply language switches to that player's language. You can also pick it in the list next to the button.
+- Click a name: your reply is copied with /w Name in front, to whisper them. The cross next to the name cancels.
+- The translator never sends anything to the game: you always paste yourself.
+# Replacing the game chat
+- In ChatFR's settings in game (gear icon), tick "Traducteur : PNJ", "messages système" and "butin et argent" to also see NPCs, system messages, reputation, experience, loot, sales and spending.
+- Your sent whispers ("To Name") are always shown.
+# Window
+- Settings: theme (13 to choose from), opacity, text size, hidden channels, alerts on your name or chosen words, interface language.
+- Padlock (top right): locks the window position and size.
+- Hides when WoW is not the active window and comes back with it (option in Settings).
+- Closes by itself when WoW closes. A button appears when a new version is available.
+# ChatFR addon
+- The strip of colored squares at the top left of the screen sends the chat to the translator: don't cover it.
+- /cfr pont: shows or hides the strip. /cfr: list of commands.
+# Support the project
+- WoW Traducteur and ChatFR are and will stay free, with no donor-only features.
+- If these tools help you and you'd like to support me: https://ko-fi.com/puenteur
 """
 
 
@@ -533,7 +756,7 @@ LEX_NAMES = ["Hogger"]
 LEX_PLACES = {
     'rfc': 'Gouffre de Ragefeu', 'ragefire chasm': 'Gouffre de Ragefeu', 'wc': 'Cavernes des lamentations',
     'wailing caverns': 'Cavernes des lamentations', 'vc': 'Mortemines',
-    'dm': 'Mortemines (ou Hache-tripes)', 'deadmines': 'Mortemines', 'sfk': "Donjon d'Ombrecroc",
+    'dm': 'Mortemines (ou Hache-tripes)', 'deadmines': 'Mortemines', 'deadmine': 'Mortemines', 'sfk': "Donjon d'Ombrecroc",
     'shadowfang keep': "Donjon d'Ombrecroc", 'bfd': 'Profondeurs de Brassenoire',
     'blackfathom deeps': 'Profondeurs de Brassenoire', 'stockades': 'Les Cachots', 'stocks': 'Les Cachots',
     'the stockade': 'Les Cachots', 'stockade': 'Les Cachots', 'gnomer': 'Gnomeregan',
@@ -620,11 +843,25 @@ LEX_KEEP = {"tank": "tank", "tanks": "tanks", "heal": "heal", "heals": "heals",
             "gank": "gank", "ganked": "ganké", "ganking": "gank", "ganks": "gank",
             "boss": "boss", "bosses": "boss", "full": "full",
             "proc": "proc", "procs": "procs",   # "procs" -> "procédures" sinon
-            "hunt": "hunt", "hunts": "hunts"}   # chasseur, pas "chasse"   # "full for boss" -> "full pour le boss"
+            "hunt": "hunt", "hunts": "hunts",
+            "mob": "mob", "mobs": "mobs", "pull": "pull", "pulls": "pulls", "pulled": "pull"}   # chasseur, pas "chasse"   # "full for boss" -> "full pour le boss"
 # Classes que Google traduit mal ("rogue" -> "voyou", "warlock" -> "sorcier") : nom francais du jeu.
 LEX_CLASSES = {"rogue": "voleur", "rogues": "voleurs", "warlock": "démoniste", "warlocks": "démonistes"}
 # "dm me" / "dm pls" = message prive, pas les Mortemines.
 _PLACE_NOT_BEFORE = {"dm": r"(?!\s*(?:me|him|her|them|u|you|pls|plz)\b)"}
+
+
+LEX_PLACES_FOREIGN = {
+    # noms allemands et espagnols ("TODESMINE" = Mortemines)
+    'todesminen': 'Mortemines', 'todesmine': 'Mortemines', 'burg schattenfang': "Donjon d'Ombrecroc",
+    'das verlies': 'Les Cachots', 'verlies': 'Les Cachots', 'h\u00f6hlen des wehklagens': 'Cavernes des lamentations',
+    'tiefschwarze grotte': 'Profondeurs de Brassenoire', 'scharlachrotes kloster': 'Monast\u00e8re \u00e9carlate',
+    'flammenschlund': 'Gouffre de Ragefeu', 'minas de la muerte': 'Mortemines',
+    'castillo de colmillo oscuro': "Donjon d'Ombrecroc", 'las mazmorras': 'Les Cachots',
+    'cuevas de los lamentos': 'Cavernes des lamentations', 'monasterio escarlata': 'Monast\u00e8re \u00e9carlate',
+}
+LEX_PLACES_EN = dict(LEX_PLACES)        # cles anglaises seulement (pour la table francais -> anglais)
+LEX_PLACES.update(LEX_PLACES_FOREIGN)
 
 
 def _name_re(name):
@@ -665,6 +902,91 @@ def google_translate_safe(text, target, source="auto", timeout=8):
     out, lang = google_translate(text, target, source, timeout)
     for key, name in found.items():
         out = re.sub(re.escape(key), lambda _m, n=name: n, out, flags=re.I)
+    return out, lang
+
+
+# Quand TU ecris en francais : on garde le jargon (tank, heal...) et on remplace les donjons par leur
+# nom anglais, connu de tous ("Mortemines" -> "Deadmines" et pas "mina de muerte").
+OUT_JARGON = ["tank", "tanks", "heal", "heals", "healer", "healers", "dps", "pull", "mob", "mobs", "boss",
+              "full", "proc", "procs", "hunt", "gank", "lfg", "lfm", "wts", "wtb", "pst", "gg", "afk", "brb"]
+
+
+def _fr_to_en_places():
+    best = {}
+    for k, v in LEX_PLACES_EN.items():
+        if "(" in v or len(k) < 5 or not re.fullmatch(r"[a-z' ]+", k) or max(len(w) for w in k.split()) < 4 \
+                or k.startswith(("sm ", "dm ")):
+            continue
+        if len(k) > len(best.get(v.lower(), "")):
+            best[v.lower()] = k
+    def nice(en):          # "swamp of sorrows" -> "Swamp of Sorrows", "blade's edge" -> "Blade's Edge"
+        out = []
+        for i, w in enumerate(en.split()):
+            if i and w in ("of", "the"):
+                out.append(w)
+                continue
+            parts = w.split("'")
+            out.append("'".join([parts[0][:1].upper() + parts[0][1:]] +
+                                [q if q == "s" else q[:1].upper() + q[1:] for q in parts[1:]]))
+        return " ".join(out)
+    return {fr: nice(en) for fr, en in best.items()}
+
+
+OUT_PLACES = _fr_to_en_places()
+# Noms des donjons dans le jeu espagnol / allemand (sinon : nom anglais, compris partout)
+OUT_PLACES_LANG = {
+    "es": {"Deadmines": "Minas de la Muerte", "The Stockade": "Las Mazmorras",
+           "Shadowfang Keep": "Castillo de Colmillo Oscuro", "Wailing Caverns": "Cuevas de los Lamentos",
+           "Scarlet Monastery": "Monasterio Escarlata", "Ragefire Chasm": "Sima \u00cdgnea",
+           "Dire Maul": "La Masacre", "Blackfathom Deeps": "Cavernas de Brazanegra"},
+    "de": {"Deadmines": "Die Todesminen", "The Stockade": "Das Verlies", "Shadowfang Keep": "Burg Schattenfang",
+           "Wailing Caverns": "Die H\u00f6hlen des Wehklagens", "Scarlet Monastery": "Das Scharlachrote Kloster",
+           "Ragefire Chasm": "Der Flammenschlund", "Dire Maul": "D\u00fcsterbruch",
+           "Blackfathom Deeps": "Die Tiefschwarze Grotte"},
+}
+_ACC = {"e": "[e\u00e9\u00e8\u00ea\u00eb]", "a": "[a\u00e0\u00e2]", "o": "[o\u00f4]", "u": "[u\u00f9\u00fb]",
+        "i": "[i\u00ee\u00ef]", "c": "[c\u00e7]"}
+_ACC_BASE = str.maketrans("\u00e9\u00e8\u00ea\u00eb\u00e0\u00e2\u00f4\u00f9\u00fb\u00ee\u00ef\u00e7", "eeeeaaouuiic")
+
+
+def _loose(name):
+    """'Hache-tripes' -> motif qui accepte 'hache tripe', 'hachetripes', 'Hache-Tripes'..."""
+    words = re.split(r"[\s\-]+", name.lower().translate(_ACC_BASE))
+    out = []
+    for w in words:
+        w = w[:-1] if len(w) > 3 and w.endswith("s") else w
+        out.append("".join(_ACC.get(ch, re.escape(ch)) for ch in w) + ("s?" if len(w) > 2 else ""))
+    return r"[\s\-]*".join(out)
+
+
+def _out_key(w):
+    """Retrouve le nom francais de la table a partir de ce que tu as tape."""
+    k = re.sub(r"[\s\-]+", " ", w.lower().translate(_ACC_BASE))
+    for fr in OUT_PLACES:
+        if re.fullmatch(_loose(fr), w, re.I):
+            return fr
+    return None
+
+
+_OUT_RE = re.compile(r"(?<![\w'])(" + "|".join(_loose(n) for n in sorted(list(OUT_PLACES) + OUT_JARGON, key=len, reverse=True))
+                     + r")(?![\w'])", re.I)
+
+
+def translate_out(text, target, source):
+    """Traduit ce que tu ecris, sans abimer le jargon de jeu ni les noms de donjons."""
+    found = {}
+
+    def mask(m):
+        w = m.group(0)
+        key = "Zq%dx" % len(found)
+        fr = _out_key(w)
+        en = OUT_PLACES.get(fr) if fr else None
+        found[key] = OUT_PLACES_LANG.get(target, {}).get(en, en) if en else w
+        return key
+    masked = _OUT_RE.sub(mask, text) if source == "fr" else text
+    out, lang = google_translate(masked, target, source)
+    for key, val in found.items():
+        out = re.sub(re.escape(key), lambda _m, v=val: v, out, flags=re.I)
     return out, lang
 
 
@@ -964,6 +1286,9 @@ _FR_ACCENTS = re.compile("[\u00e0\u00e2\u00e7\u00e8\u00e9\u00ea\u00eb\u00ee\u00e
 _SMILEY = re.compile(r"(?<!\w)(?:[:;=8][-'^o]?[dDpPoO)(\]\[/\\|*3sS]+|[xX][dDpP]+)(?!\w)")
 
 
+FR_AMBIG = set("bien es tu un son y ma mais ou ai ne ca c d l m n s t".split())
+
+
 def sure_french(text):
     """True seulement si le message est clairement en francais (sans mot etranger)."""
     t = _SMILEY.sub(" ", text).lower()
@@ -976,12 +1301,46 @@ def sure_french(text):
     if not parts or any(p in NOT_FR for p in parts):
         return False
     hits = sum(1 for p in parts if p in SURE_FR)
+    # mots aussi espagnols / italiens / portugais ("comiste bien" est de l'espagnol) : il faut au moins
+    # un mot vraiment francais pour se passer de Google
+    strong = sum(1 for p in parts if p in SURE_FR and p not in FR_AMBIG)
+    if not strong:
+        return False
     return hits >= 2 or (hits >= 1 and (len(parts) <= 3 or bool(_FR_ACCENTS.search(t))))
 
 
 def is_latin_text(text):
     letters = [c for c in text if c.isalpha()]
     return bool(letters) and all(ord(c) < 0x250 for c in letters)
+
+
+EN_ONLY = set("the is are was were been you he she we they my your his her our their this that these those "
+              "and but to of with from by if not yes any some anyone someone need needs looking want wants "
+              "sell selling buy buying have has can could would will do does please pls plz thanks thx ty "
+              "hi hello hey what where when who why how there here last first just only lf lfm lfg wts wtb "
+              "lol im i'm it's don't can't ok okay guys group dungeon quest a i it in on at for me go get got "
+              "new now good well did doing done eat guild players player tank heal healer dps run inv cheap "
+              "pst whisper come help kill boss".split())
+
+
+def sure_english(text):
+    """True si le message est clairement en anglais (pour ne pas payer un appel a Google en mode anglais)."""
+    t = _SMILEY.sub(" ", text).lower()
+    if not is_latin_text(t) or _FOREIGN_CHARS.search(t) or _FR_ACCENTS.search(t):
+        return False
+    words = re.findall("[a-z']+", t)
+    if not words or any(w in SURE_FR and w not in FR_AMBIG and w not in EN_ONLY for w in words):
+        return False
+    hits = sum(1 for w in words if w in EN_ONLY)
+    return hits >= 2 and hits * 3 >= len(words)
+
+
+def near_same(a, b):
+    """Meme texte a la ponctuation / une lettre pres ("Welp, pack it up boys" -> "Well, pack it up, boys.")."""
+    a, b = re.sub(r"\W+", "", a).lower(), re.sub(r"\W+", "", b).lower()
+    if a == b:
+        return True
+    return len(b) >= 12 and difflib.SequenceMatcher(None, a, b).ratio() >= 0.9
 
 
 def unreliable_detection(text, lang):
@@ -1063,11 +1422,18 @@ LEX_EXPAND = {
 # Expressions entieres (regex, remplacement) appliquees avant les mots seuls : "LFM Hogger" ne doit pas
 # devenir "cherche plus de Hogger", ni "whisp for inv" "fouette pour inviter".
 LEX_PHRASES = [
+    (r"(?<![\w/])w/\s*(?=now\b|for inv)", "whisper "),     # "w/ now for inv" = chuchote-moi, pas "with"
     (r"\blfm(?:\s+for)?\b", "looking for more players for"),
     (r"\blf(\d)m\b", r"looking for \1 more players"),
     (r"\b(?:whisp|wisp|whis|whisper|pst|pm|w/)\s+(?:me\s+)?for\s+(?:an?\s+)?(?:inv|invite|invites)\b",
      "whisper me for an invite"),
     (r"\bfor\s+inv\b", "for an invite"),
+    # enchantement demande : "LF enchant gloves riding skill, i have mats" etait traduit
+    # "je cherche des competences de conduite avec des gants enchanteurs, j'ai du materiel"
+    (r"\b(lf|looking for|wtb|need|want)\s+(?:an?\s+)?(?:enchanter\s+(?:for|to)\s+)?enchant(?:ment)?s?\s+"
+     r"(gloves?|boots?|bracers?|chest|cloak|weapon|2h|shield)\b", r"\1 an enchantment on \2"),
+    (r"\b(gloves?)\s+(?:\+\s*\d+%?\s*)?riding(?:\s+skill)?\b", r"\1 for mount speed"),
+    (r"\b(have|got|has|with|bring)\s+(?:own\s+|my\s+|the\s+)?mats\b", r"\1 the materials"),
     # question qui commence par "any" ("any group for SFK?") : Google traduit "tout groupe".
     (r"(^|\]\s*)any\s+(?!(?:one|body|1|more|way|ways|time|how)\b)", r"\1is there any "),
     # "anyone need X" sans point d'interrogation : Google traduisait "tout le monde a besoin de X".
@@ -1107,6 +1473,39 @@ def _lex_key(text, max_run):
     return re.sub(r"(\w)\1{%d,}" % max_run, r"\1" * max_run, t)
 
 
+# Jargon WoW ecrit en cyrillique ("ЛФГ ТЮРЬМА" = "LFG Prison") : Google le prend pour des mots russes
+RU_SLANG = {"лфг": "LFG", "лфм": "LFM", "втс": "WTS", "втб": "WTB", "гс": "GS", "дд": "DPS", "дпс": "DPS",
+            "хил": "heal", "танк": "tank", "тюрьма": "Stockade", "тюрьму": "Stockade", "тюрьмы": "Stockade",
+            "дедмайны": "Deadmines", "дм": "DM", "вк": "WC", "сфк": "SFK", "ск": "SM"}
+_RU_SLANG_RE = re.compile(r"(?<![\w])(" + "|".join(sorted(RU_SLANG, key=len, reverse=True)) + r")(?![\w])", re.I)
+
+
+def ru_slang(text):
+    if not re.search("[\u0400-\u04ff]", text):
+        return text
+    return _RU_SLANG_RE.sub(lambda m: RU_SLANG[m.group(1).lower()], text)
+
+
+# Argot de joueur francais, remis en mots normaux avant Google quand on traduit DEPUIS le francais
+# (interface anglaise) : "groupe de pexing" -> "groupe de leveling", "slt tlm" -> "salut tout le monde"
+FR_SLANG = {"pex": "leveling", "pexing": "leveling", "pexe": "monte de niveau", "pexer": "monter de niveau",
+            "slt": "salut", "cc": "coucou", "bjr": "bonjour", "bsr": "bonsoir", "stp": "s'il te pla\u00eet",
+            "svp": "s'il vous pla\u00eet", "qqn": "quelqu'un", "qqun": "quelqu'un", "qq1": "quelqu'un",
+            "tlm": "tout le monde", "bcp": "beaucoup", "dsl": "d\u00e9sol\u00e9", "jsp": "je ne sais pas",
+            "pb": "probl\u00e8me", "pr": "pour", "mdr": "lol", "ptdr": "lol", "donj": "donjon", "donjs": "donjons",
+            "grp": "groupe", "jvais": "je vais", "chui": "je suis", "chuis": "je suis", "tkt": "t'inqui\u00e8te",
+            "dispo": "disponible", "dispos": "disponibles"}
+_FR_SLANG_RE = re.compile(r"(?<![\w'])(" + "|".join(sorted(FR_SLANG, key=len, reverse=True)) + r")(?![\w'])", re.I)
+
+
+def fr_slang(text):
+    # "[Quete] du monde ?" = "qui vient ?" (et pas "of the world")
+    text = re.sub(r"(?i)\b(?:y a |il y a )?du monde\s*(?:pour|\?)", lambda m: "quelqu'un pour" if m.group(0).lower().endswith("pour") else "qui vient ?", text)
+    if not looks_french(text) and not sure_french(text) and len(_FR_SLANG_RE.findall(text)) < 2:
+        return text
+    return _FR_SLANG_RE.sub(lambda m: FR_SLANG[m.group(1).lower()], text)
+
+
 def lexicon_full(text):
     """Traduction directe d'un message entier court, ou None."""
     if len(text) > 40:
@@ -1117,6 +1516,11 @@ def lexicon_full(text):
             if "?" in text and not val.endswith("?"):
                 val += " ?"
             return val
+    if "/" in text:                         # "lfg/lfm" -> "cherche groupe / cherche du monde"
+        parts = [p for p in text.split("/") if p.strip()]
+        vals = [lexicon_full(p) for p in parts]
+        if len(parts) > 1 and all(vals):
+            return " / ".join(vals)
     return None
 
 
@@ -1178,10 +1582,21 @@ class App:
         self.stop = False
         self.nlines = 0
         self.nparsed = 0
-        self.status = tk.StringVar(value="Demarrage...")
+        global UI
+        if self.cfg.get("ui_lang") not in ("fr", "en"):
+            if self.cfg.get("help_seen"):
+                # mise a jour depuis une version francaise : on garde le francais sans rien demander
+                self.cfg["ui_lang"] = "fr"
+                save_config(self.cfg)
+            else:
+                self.ask_ui_lang()
+        UI = self.cfg.get("ui_lang") or "fr"
+        self.status = tk.StringVar(value=_("Demarrage..."))
         self.line_lang = {}          # numero de ligne -> langue d'origine
         self.apply_window_cfg()
+        self._first_run = not self.cfg.get("help_seen")
         self.build_ui()
+        self.root.after(1500, self.show_news)
         threading.Thread(target=self.reader, daemon=True).start()
         threading.Thread(target=self.bridge_reader, daemon=True).start()
         threading.Thread(target=self.worker, daemon=True).start()
@@ -1192,6 +1607,45 @@ class App:
         threading.Thread(target=self.check_update, daemon=True).start()
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.root.after(100, self.poll)
+
+    def ask_ui_lang(self):
+        """Premier lancement : Francais (premier choix) ou English. Anglais -> tchat traduit en anglais."""
+        T = self.T
+        self.root.withdraw()
+        w = tk.Toplevel(self.root)
+        w.title("WoW Traducteur")
+        w.configure(bg=T["panel"])
+        w.attributes("-topmost", True)
+        w.resizable(False, False)
+        sw, sh = w.winfo_screenwidth(), w.winfo_screenheight()
+        w.geometry("360x190+%d+%d" % (max(0, (sw - 360) // 2), max(0, (sh - 190) // 2)))
+        tk.Label(w, text="Choisis ta langue\nChoose your language", bg=T["panel"], fg=T["fg"],
+                 font=("Segoe UI", 12, "bold"), justify="center").pack(pady=(18, 14))
+        choice = {"v": "fr"}
+
+        def pick(code):
+            choice["v"] = code
+            w.destroy()
+        for label, code, main in (("Fran\u00e7ais", "fr", True), ("English", "en", False)):
+            tk.Button(w, text=label, command=lambda c=code: pick(c), width=18,
+                      bg=T["accent"] if main else T["btn"], fg=T["accent_fg"] if main else T["btn_fg"],
+                      activebackground=T["accent_act"] if main else T["btn_act"], relief="flat", bd=0,
+                      pady=5, cursor="hand2", font=("Segoe UI", 10, "bold" if main else "normal")).pack(pady=3)
+        w.protocol("WM_DELETE_WINDOW", lambda: pick("fr"))
+        w.grab_set()
+        self.root.wait_window(w)
+        self.set_ui_lang(choice["v"], first=True)
+        self.root.deiconify()
+
+    def set_ui_lang(self, code, first=False):
+        """Change la langue de l'interface ; en passant a l'anglais, le tchat est traduit en anglais (et inversement)."""
+        old = self.cfg.get("ui_lang")
+        self.cfg["ui_lang"] = code
+        if first or (old and old != code and self.cfg.get("target") == old):
+            self.cfg["target"] = code
+            if self.cfg.get("out_lang") == code:
+                self.cfg["out_lang"] = "en" if code == "fr" else "fr"
+        save_config(self.cfg)
 
     # ---- interface -------------------------------------------------------
     def apply_window_cfg(self):
@@ -1221,8 +1675,8 @@ class App:
             lab = tk.Label(bar, text=T["label"], bg=BAR, fg=T["label_fg"], font=("Segoe UI", 9, "bold"))
             lab.pack(side="left", padx=(2, 2))
             drag.append(lab)
-        tk.Button(bar, text="\u2699 R\u00e9glages", command=self.open_settings, **btn).pack(side="left", padx=(6, 3), pady=4)
-        self._clear_btn = tk.Button(bar, text="Effacer", command=self.clear, **btn)
+        tk.Button(bar, text=_("\u2699 R\u00e9glages"), command=self.open_settings, **btn).pack(side="left", padx=(6, 3), pady=4)
+        self._clear_btn = tk.Button(bar, text=_("Effacer"), command=self.clear, **btn)
         self._clear_btn.pack(side="left", padx=3, pady=4)
         tk.Button(bar, text="?", command=self.open_help, **dict(btn, padx=7)).pack(side="left", padx=3, pady=4)
         # bouton cache, affiche seulement si une nouvelle version existe sur GitHub
@@ -1283,6 +1737,7 @@ class App:
         self.text.tag_configure("me", foreground=T["me"])
         self.text.tag_configure("name", foreground=T["name"],    # apres les canaux : la couleur du pseudo prime
                                 font=("Segoe UI", int(self.cfg["font_size"]), "bold"))
+        self.text.tag_configure("news", foreground=T["name"], font=("Segoe UI", int(self.cfg["font_size"]), "bold"))
         for code, c in (T["links"] or LINK_COLORS).items():     # en dernier : la couleur du lien prime
             self.text.tag_configure("link_" + code, foreground=c)
             if code == "o":                                      # lien sans fiche : pas de main au survol
@@ -1298,7 +1753,7 @@ class App:
         lf = tk.Frame(out, bg=P)
         lf.grid(row=0, column=0, padx=4, pady=3)
         # destinataire du chuchotement (clic sur un pseudo) : "A Nom (FR) ->" + croix pour annuler
-        self.reply_lbl = tk.Label(lf, text="Ecrire (FR) \u2192", bg=P, fg=T["fg"])
+        self.reply_lbl = tk.Label(lf, text=_("Ecrire (%s) \u2192") % UI.upper(), bg=P, fg=T["fg"])
         self.reply_lbl.pack(side="left")
         self.reply_x = tk.Button(lf, text="\u2715", command=lambda: self.set_reply_to(None), bg=P, fg=T["muted"],
                                  activebackground=P, activeforeground=T["fg"], relief="flat", bd=0,
@@ -1312,13 +1767,18 @@ class App:
                   highlightthickness=0, padx=6, pady=0, cursor="hand2",
                   font=("Segoe UI", 10, "bold")).grid(row=0, column=2, sticky="ns", padx=(0, 2))
         self.out_lang = tk.StringVar(value=self.cfg["out_lang"])
-        tk.Entry(out, textvariable=self.out_lang, width=4, bg=T["entry"], fg=T["fg"],
-                 insertbackground=T["fg"], relief="flat", justify="center", highlightthickness=0).grid(row=0, column=3, padx=3)
-        tk.Button(out, text="Traduire + copier", command=self.send_out, bg=T["accent"], fg=T["accent_fg"],
+        # langue de reponse : bouton "EN ▴" qui ouvre une liste VERS LE HAUT (la fenetre est souvent en bas)
+        self.out_lang_btn = tk.Button(out, text="", command=self.open_lang_menu, bg=T["entry"], fg=T["fg"],
+                                      activebackground=T["btn_act"], activeforeground=T["fg"], relief="flat", bd=0,
+                                      highlightthickness=0, padx=6, cursor="hand2")
+        self.out_lang_btn.grid(row=0, column=3, padx=3, sticky="ns")
+        self.out_lang.trace_add("write", lambda *a: self._show_lang())
+        self._show_lang()
+        tk.Button(out, text=_("Traduire + copier"), command=self.send_out, bg=T["accent"], fg=T["accent_fg"],
                   activebackground=T["accent_act"], activeforeground=T["accent_fg"],
                   relief="flat", highlightthickness=0, bd=0, padx=8).grid(row=0, column=4, padx=3)
         out.columnconfigure(1, weight=1)
-        self.out_result = tk.Label(out, text="Clique sur un message pour repondre dans sa langue.",
+        self.out_result = tk.Label(out, text=_("Clique sur un message pour repondre dans sa langue."),
                                    bg=P, fg=T["muted"], anchor="w", justify="left", wraplength=520)
         self.out_result.grid(row=1, column=0, columnspan=5, sticky="ew", padx=4, pady=(0, 3))
         self.out_entry.bind("<Return>", lambda e: self.send_out())
@@ -1336,30 +1796,17 @@ class App:
         grip.bind("<ButtonRelease-1>", lambda e: self._save_geometry())
 
     def _coin_image(self, unit):
-        """Petite piece ronde dessinee (or, argent, cuivre), a la taille du texte."""
+        """Petite pile de pieces (or, argent, cuivre) aux bords lisses, a la taille du texte."""
         cache = self.__dict__.setdefault("_coin_imgs", {})
-        size = max(9, int(int(self.cfg["font_size"]) * 1.1))
+        try:
+            px = int(self.cfg["font_size"]) * self.root.winfo_fpixels("1i") / 72.0   # taille du texte en pixels
+        except Exception:  # noqa
+            px = int(self.cfg["font_size"]) * 4 / 3.0
+        size = max(12, int(round(px * 1.05)))     # un peu plus haut que les chiffres
         key = (unit, size)
         if key not in cache:
-            fill, edge = COIN_COLORS[unit]
-            img = tk.PhotoImage(width=size, height=size)
-            c, r = (size - 1) / 2.0, size / 2.0 - 0.5
-            for y in range(size):
-                row = []
-                for x in range(size):
-                    d = ((x - c) ** 2 + (y - c) ** 2) ** 0.5
-                    if d > r:
-                        row.append(None)
-                    elif d > r - 1.2:
-                        row.append(edge)
-                    elif x + y < size * 0.7 and d < r * 0.55:
-                        row.append("#ffffff" if unit != "pc" else "#f0c09a")   # reflet
-                    else:
-                        row.append(fill)
-                for x, col in enumerate(row):
-                    if col:
-                        img.put(col, (x, y))
-            cache[key] = img
+            data = base64.b64encode(coin_png(unit, size)).decode("ascii")
+            cache[key] = tk.PhotoImage(data=data, format="png")
         return cache[key]
 
     def _insert_with_coins(self, text, tags):
@@ -1375,9 +1822,10 @@ class App:
         if "coins" not in tags:
             t.insert("end", text, tags)
             return
+        text = COIN_WORDS_RE.sub(lambda m: " " + COIN_WORDS[m.group(1).lower()], text)
         pos = 0
         for m in COIN_RE.finditer(text):
-            t.insert("end", text[pos:m.start()] + m.group(1), tags)
+            t.insert("end", text[pos:m.start()], tags)     # piece collee au chiffre, comme dans WoW
             t.image_create("end", image=self._coin_image(m.group(2)), padx=1, align="baseline")
             t.insert("end", m.group(2), tags + ("coin_" + m.group(2),))
             pos = m.end()
@@ -1399,6 +1847,35 @@ class App:
             t.delete("1.0", "400.0")
             t.configure(state="disabled")
             self.line_lang = {}
+
+    def _show_lang(self):
+        code = (self.out_lang.get() or "en").strip().lower()
+        try:
+            self.out_lang_btn.config(text="%s \u25b4" % code.upper())
+        except Exception:  # noqa
+            pass
+
+    def open_lang_menu(self):
+        """Liste des langues de reponse : 3 rapides, puis "Autre langue..." ; s'ouvre au-dessus du bouton."""
+        T = self.T
+        kw = dict(tearoff=0, bg=T["entry"], fg=T["fg"], activebackground=T["accent"],
+                  activeforeground=T["accent_fg"], bd=0)
+        m = tk.Menu(self.root, **kw)
+        sub = tk.Menu(m, **kw)
+        quick, others = lang_lists()
+        for name, code in quick:
+            m.add_radiobutton(label="%s (%s)" % (name, code), variable=self.out_lang, value=code)
+        m.add_separator()
+        for name, code in others:
+            sub.add_radiobutton(label="%s (%s)" % (name, code), variable=self.out_lang, value=code)
+        m.add_cascade(label=_("Autre langue\u2026"), menu=sub)
+        m.update_idletasks()
+        b = self.out_lang_btn
+        x, y = b.winfo_rootx(), b.winfo_rooty() - m.winfo_reqheight()
+        try:
+            m.tk_popup(x, max(0, y))
+        finally:
+            m.grab_release()
 
     def apply_theme(self, name):
         """Change de theme tout de suite : reconstruit la fenetre en gardant le tchat affiche."""
@@ -1481,7 +1958,7 @@ class App:
                 c = "#e8e8e8"
             tk.Label(f, text=ln, bg="#0a0d1c", fg=c, font=("Segoe UI", fs), anchor="w",
                      justify="left", wraplength=340).pack(fill="x")
-        more = tk.Label(f, text="Voir sur Wowhead \u2197", bg="#0a0d1c", fg="#6fa8ff", cursor="hand2",
+        more = tk.Label(f, text=_("Voir sur Wowhead \u2197"), bg="#0a0d1c", fg="#6fa8ff", cursor="hand2",
                         font=("Segoe UI", fs - 1, "underline"), anchor="w")
         more.pack(fill="x", pady=(6, 0))
         more.bind("<Button-1>", lambda e: (webbrowser.open(WOWHEAD_SEARCH + urllib.parse.quote(name)),
@@ -1524,17 +2001,17 @@ class App:
         """Destinataire des reponses : "Traduire + copier" copiera "/w Nom texte"."""
         self.reply_to = name or None
         if self.reply_to:
-            self.reply_lbl.config(text="\u00c0 %s (FR) \u2192" % self.reply_to, fg=self.T["name"])
+            self.reply_lbl.config(text=_("\u00c0 %s (%s) \u2192") % (self.reply_to, UI.upper()), fg=self.T["name"])
             self.reply_x.pack(side="left", padx=(3, 0))
             if not quiet:
-                self.out_result.config(text="Chuchotement \u00e0 %s : ta reponse sera copiee avec /w %s"
+                self.out_result.config(text=_("Chuchotement \u00e0 %s : ta reponse sera copiee avec /w %s")
                                        % (self.reply_to, self.reply_to), fg=self.T["muted"])
                 self.out_entry.focus_set()
         else:
-            self.reply_lbl.config(text="Ecrire (FR) \u2192", fg=self.T["fg"])
+            self.reply_lbl.config(text=_("Ecrire (%s) \u2192") % UI.upper(), fg=self.T["fg"])
             self.reply_x.pack_forget()
             if not quiet:
-                self.out_result.config(text="Reponse normale (sans /w).", fg=self.T["muted"])
+                self.out_result.config(text=_("Reponse normale (sans /w)."), fg=self.T["muted"])
 
     def link_at(self, idx):
         """(tag, nom) du lien d'objet / de quete sous l'index, ou (None, "")."""
@@ -1557,12 +2034,12 @@ class App:
         col = self.text.tag_cget(link, "foreground") or self.T["fg"]
         if not lines:                            # pas recue (lien d'avant la mise a jour...)
             if link == "link_a":                 # haut fait : le jeu n'envoie pas de fiche
-                lines = ["(haut fait : le détail est sur Wowhead)"]
+                lines = [_("(haut fait : le détail est sur Wowhead)")]
             elif link.startswith("link_q"):        # quete inconnue du jeu (pas dans ton journal) : jamais recue
-                lines = ["(le jeu ne donne pas la fiche de cette quête, souvent tant qu'elle n'est pas "
-                         "dans ton journal : vois-la sur Wowhead)"]
+                lines = [_("(le jeu ne donne pas la fiche de cette quête, souvent tant qu'elle n'est pas "
+                           "dans ton journal : vois-la sur Wowhead)")]
             else:
-                lines = ["(fiche pas encore reçue du jeu : elle arrivera au prochain lien de cet objet)"]
+                lines = [_("(fiche pas encore reçue du jeu : elle arrivera au prochain lien de cet objet)")]
         self.show_tip(name, lines, col, x, y)
         self._tip_name = name
 
@@ -1624,8 +2101,47 @@ class App:
                 lang = self.line_lang[k]
                 if lang and lang not in ("?", self.cfg["target"]):
                     self.out_lang.set(lang)
-                    self.out_result.config(text="Langue de reponse : %s" % lang)
+                    self.out_result.config(text=_("Langue de reponse : %s") % lang)
                 return
+
+    def show_news(self):
+        """Apres une mise a jour (jamais au premier lancement, qui montre deja l'aide) :
+        une petite fenetre avec les nouveautes, une seule fois."""
+        if self.cfg.get("last_version") == VERSION:
+            return
+        self.cfg["last_version"] = VERSION
+        save_config(self.cfg)
+        if self._first_run:
+            return
+        T = self.T
+        lines = NEWS["en" if UI == "en" else "fr"]
+        w = tk.Toplevel(self.root)
+        w.title(lines[0].rstrip(" :"))
+        w.configure(bg=T["panel"])
+        w.attributes("-topmost", True)
+        sw, sh = w.winfo_screenwidth(), w.winfo_screenheight()
+        w.geometry("560x400+%d+%d" % (max(0, (sw - 560) // 2), max(0, (sh - 400) // 2)))
+        fs = int(self.cfg["font_size"])
+        tk.Label(w, text=lines[0], bg=T["panel"], fg=T["name"], font=("Segoe UI", fs + 2, "bold"),
+                 anchor="w").pack(fill="x", padx=14, pady=(12, 6))
+        bar = tk.Frame(w, bg=T["panel"])
+        bar.pack(side="bottom", pady=10)
+        t = tk.Text(w, bg=T["bg"], fg=T["fg"], wrap="word", relief="flat", padx=12, pady=8,
+                    font=("Segoe UI", fs), highlightthickness=0, bd=0, spacing1=2, spacing3=4, cursor="arrow")
+        t.pack(fill="both", expand=True, padx=12)
+        for ln in lines[1:]:
+            t.insert("end", "\u2022  " + ln.lstrip("- ") + "\n")
+        t.configure(state="disabled")
+
+        def help_():
+            w.destroy()
+            self.open_help()
+        tk.Button(bar, text="OK", command=w.destroy, bg=T["accent"], fg=T["accent_fg"],
+                  activebackground=T["accent_act"], activeforeground=T["accent_fg"], relief="flat", bd=0,
+                  padx=18, pady=3, cursor="hand2").pack(side="left", padx=6)
+        tk.Button(bar, text=_("Tout ce qu'il sait faire (?)"), command=help_, bg=T["btn"], fg=T["btn_fg"],
+                  activebackground=T["btn_act"], activeforeground=T["btn_fg"], relief="flat", bd=0,
+                  padx=12, pady=3, cursor="hand2").pack(side="left", padx=6)
 
     # ---- aide ("?") --------------------------------------------------------
     def _first_help(self):
@@ -1642,7 +2158,7 @@ class App:
         T = self.T
         w = tk.Toplevel(self.root)
         self._help_win = w
-        w.title("WoW Traducteur %s - ce qu'il sait faire" % VERSION)
+        w.title(_("WoW Traducteur %s - ce qu'il sait faire") % VERSION)
         w.configure(bg=T["panel"])
         w.attributes("-topmost", True)
         sw, sh = w.winfo_screenwidth(), w.winfo_screenheight()         # centree a l'ecran
@@ -1650,7 +2166,7 @@ class App:
         fs = int(self.cfg["font_size"])
         t = tk.Text(w, bg=T["bg"], fg=T["fg"], wrap="word", relief="flat", padx=12, pady=10,
                     font=("Segoe UI", fs), highlightthickness=0, bd=0, spacing1=2, spacing3=2, cursor="arrow")
-        tk.Button(w, text="Fermer", command=w.destroy, bg=T["accent"], fg=T["accent_fg"],
+        tk.Button(w, text=_("Fermer"), command=w.destroy, bg=T["accent"], fg=T["accent_fg"],
                   activebackground=T["accent_act"], activeforeground=T["accent_fg"],
                   relief="flat", bd=0, padx=12, pady=3).pack(side="bottom", pady=8)
         sb = ttk.Scrollbar(w, orient="vertical", command=t.yview, style="Dark.Vertical.TScrollbar")
@@ -1663,7 +2179,7 @@ class App:
         t.tag_bind("url", "<Button-1>", lambda e: webbrowser.open(KOFI_URL))
         t.tag_bind("url", "<Enter>", lambda e: t.configure(cursor="hand2"))
         t.tag_bind("url", "<Leave>", lambda e: t.configure(cursor="arrow"))
-        for line in HELP_TEXT.strip().splitlines():
+        for line in (HELP_TEXT_EN if UI == "en" else HELP_TEXT).strip().splitlines():
             if line.startswith("# "):
                 t.insert("end", line[2:] + "\n", "h")
             elif line.startswith("- ") and KOFI_URL in line:
@@ -1687,18 +2203,18 @@ class App:
             return
         w = tk.Toplevel(self.root)
         self._settings_win = w
-        w.title("Reglages")
+        w.title(_("Reglages"))
         T = self.T
         P = T["panel"]
         w.configure(bg=P)
         w.attributes("-topmost", True)
         fields = [
-            ("Source (pont ou log)", "source", 8),
-            ("Fichier de log (si source=log)", "log_path", 52),
-            ("Traduire vers (fr, en...)", "target", 6),
-            ("Ton pseudo (alerte)", "my_name", 20),
-            ("Mots surveilles (virgules)", "keywords", 40),
-            ("Canaux masques (virgules)", "hidden", 40),
+            (_("Source (pont ou log)"), "source", 8),
+            (_("Fichier de log (si source=log)"), "log_path", 52),
+            (_("Traduire vers (fr, en...)"), "target", 6),
+            (_("Ton pseudo (alerte)"), "my_name", 20),
+            (_("Mots surveilles (virgules)"), "keywords", 40),
+            (_("Canaux masques (virgules)"), "hidden", 40),
         ]
         vars_ = {}
         for i, (lab, key, wd) in enumerate(fields):
@@ -1707,11 +2223,11 @@ class App:
             vars_[key] = v
             tk.Entry(w, textvariable=v, width=wd, bg=T["entry"], fg=T["fg"],
                      insertbackground=T["fg"], relief="flat").grid(row=i, column=1, sticky="w", padx=6)
-        bools = [("Son pour les alertes", "sound"), ("Toujours au premier plan", "topmost"),
-                 ("Afficher aussi les messages deja en francais", "show_french"),
-                 ("Se fermer quand WoW se ferme", "autoclose"),
-                 ("Se cacher quand WoW n'est pas la fenetre active", "follow_wow"),
-                 ("Langue de reponse automatique (dernier message etranger)", "auto_reply_lang")]
+        bools = [(_("Son pour les alertes"), "sound"), (_("Toujours au premier plan"), "topmost"),
+                 (_("Afficher aussi les messages deja dans ta langue"), "show_french"),
+                 (_("Se fermer quand WoW se ferme"), "autoclose"),
+                 (_("Se cacher quand WoW n'est pas la fenetre active"), "follow_wow"),
+                 (_("Langue de reponse automatique (dernier message etranger)"), "auto_reply_lang")]
         bv = {}
         row = len(fields)
         for lab, key in bools:
@@ -1722,33 +2238,51 @@ class App:
                 row=row, column=0, columnspan=2, sticky="w", padx=6)
             row += 1
         av = tk.DoubleVar(value=float(self.cfg["alpha"]))
-        tk.Label(w, text="Opacite", bg=P, fg=T["fg"]).grid(row=row, column=0, sticky="w", padx=6)
+        tk.Label(w, text=_("Opacite"), bg=P, fg=T["fg"]).grid(row=row, column=0, sticky="w", padx=6)
         tk.Scale(w, from_=0.3, to=1.0, resolution=0.05, orient="horizontal", variable=av, length=200,
                  bg=P, fg=T["fg"], highlightthickness=0).grid(row=row, column=1, sticky="w")
         row += 1
         fv = tk.IntVar(value=int(self.cfg["font_size"]))
-        tk.Label(w, text="Taille du texte", bg=P, fg=T["fg"]).grid(row=row, column=0, sticky="w", padx=6)
+        tk.Label(w, text=_("Taille du texte"), bg=P, fg=T["fg"]).grid(row=row, column=0, sticky="w", padx=6)
         tk.Scale(w, from_=8, to=20, orient="horizontal", variable=fv, length=200,
                  bg=P, fg=T["fg"], highlightthickness=0).grid(row=row, column=1, sticky="w")
         row += 1
         tv = tk.StringVar(value=str(self.cfg.get("theme", "Sombre")) if self.cfg.get("theme") in THEMES else "Sombre")
-        tk.Label(w, text="Theme", bg=P, fg=T["fg"]).grid(row=row, column=0, sticky="w", padx=6, pady=3)
-        om = tk.OptionMenu(w, tv, *THEMES.keys())
+        tk.Label(w, text=_("Theme"), bg=P, fg=T["fg"]).grid(row=row, column=0, sticky="w", padx=6, pady=3)
+        theme_names = {_(k): k for k in THEMES}
+        tshow = tk.StringVar(value=_(tv.get()))
+        tshow.trace_add("write", lambda *a: tv.set(theme_names.get(tshow.get(), tv.get())))
+        om = tk.OptionMenu(w, tshow, *theme_names.keys())
         om.configure(bg=T["entry"], fg=T["fg"], activebackground=T["btn_act"], activeforeground=T["fg"],
                      relief="flat", highlightthickness=0, bd=0)
         om["menu"].configure(bg=T["entry"], fg=T["fg"], activebackground=T["btn_act"], activeforeground=T["fg"])
         om.grid(row=row, column=1, sticky="w", padx=6)
         row += 1
+        # langue de l'interface
+        uv = tk.StringVar(value="English" if UI == "en" else "Fran\u00e7ais")
+        tk.Label(w, text=_("Langue de l'interface"), bg=P, fg=T["fg"]).grid(row=row, column=0, sticky="w", padx=6, pady=3)
+        um = tk.OptionMenu(w, uv, "Fran\u00e7ais", "English")
+        um.configure(bg=T["entry"], fg=T["fg"], activebackground=T["btn_act"], activeforeground=T["fg"],
+                     relief="flat", highlightthickness=0, bd=0)
+        um["menu"].configure(bg=T["entry"], fg=T["fg"], activebackground=T["btn_act"], activeforeground=T["fg"])
+        um.grid(row=row, column=1, sticky="w", padx=6)
+        row += 1
 
         def ok():
+            global UI
+            new_ui = "en" if uv.get() == "English" else "fr"
+            ui_changed = new_ui != UI
             for k, v in vars_.items():
                 self.cfg[k] = v.get().strip()
             for k, v in bv.items():
                 self.cfg[k] = bool(v.get())
             self.cfg["alpha"] = float(av.get())
             self.cfg["font_size"] = int(fv.get())
-            self.cfg["target"] = self.cfg["target"] or "fr"
-            new_theme = tv.get() != self.cfg.get("theme", "Sombre")
+            self.cfg["target"] = self.cfg["target"] or UI
+            if ui_changed:
+                self.set_ui_lang(new_ui)
+                UI = new_ui
+            new_theme = tv.get() != self.cfg.get("theme", "Sombre") or ui_changed
             self.cfg["theme"] = tv.get()
             self.text.configure(font=("Segoe UI", self.cfg["font_size"]))
             self.text.tag_configure("name", font=("Segoe UI", self.cfg["font_size"], "bold"))
@@ -1758,7 +2292,7 @@ class App:
             if new_theme:
                 self.apply_theme(self.cfg["theme"])
 
-        tk.Button(w, text="Enregistrer", command=ok, bg=T["accent"], fg=T["accent_fg"],
+        tk.Button(w, text=_("Enregistrer"), command=ok, bg=T["accent"], fg=T["accent_fg"],
                   activebackground=T["accent_act"], activeforeground=T["accent_fg"],
                   relief="flat").grid(row=row, column=0, columnspan=2, pady=8)
 
@@ -1782,13 +2316,13 @@ class App:
                         f = None
                     path = want
                     if not os.path.exists(path):
-                        self.outq.put(("status", "Log introuvable : %s (tape /chatlog dans WoW)" % path))
+                        self.outq.put(("status", _("Log introuvable : %s (tape /chatlog dans WoW)") % path))
                         time.sleep(2)
                         continue
                     f = open(path, "r", encoding="utf-8", errors="replace")
                     f.seek(0, os.SEEK_END)
                     buf = ""
-                    self.outq.put(("status", "En ecoute..."))
+                    self.outq.put(("status", _("En ecoute...")))
                 chunk = f.read()
                 if chunk:
                     buf += chunk
@@ -1799,7 +2333,7 @@ class App:
                         if p:
                             self.nparsed += 1
                             self.inq.put(p)
-                        self.outq.put(("status", "En ecoute... (%d lignes lues, %d messages)"
+                        self.outq.put(("status", _("En ecoute... (%d lignes lues, %d messages)")
                                        % (self.nlines, self.nparsed)))
                 else:
                     st = os.stat(path)
@@ -1809,12 +2343,12 @@ class App:
                     now = time.time()
                     if now - getattr(self, "_last_diag", 0) >= 1:
                         self._last_diag = now
-                        self.outq.put(("status", "En ecoute... %d lignes, %d msg | log %d Ko, ecrit il y a %ds"
+                        self.outq.put(("status", _("En ecoute... %d lignes, %d msg | log %d Ko, ecrit il y a %ds")
                                        % (self.nlines, self.nparsed, st.st_size // 1024,
                                           max(0, int(now - st.st_mtime)))))
                     time.sleep(0.25)
             except Exception as e:  # noqa
-                self.outq.put(("status", "Erreur lecture : %s" % e))
+                self.outq.put(("status", _("Erreur lecture : %s") % e))
                 f = None
                 time.sleep(2)
 
@@ -1830,7 +2364,7 @@ class App:
             try:
                 org = wow_client_origin()
                 if org is None:
-                    self.outq.put(("status", "Pont image : fenetre WoW introuvable"))
+                    self.outq.put(("status", _("Pont image : fenetre WoW introuvable")))
                     off = None
                     time.sleep(1)
                     continue
@@ -1845,7 +2379,7 @@ class App:
                             save_bmp(os.path.join(HERE, "debug_pont.bmp"), cap, sw, sh)
                         except OSError:
                             pass
-                        self.outq.put(("status", "Pont image : signal absent | WoW en (%d,%d) | capture %d%% non noire, moy %s | voir debug_pont.bmp"
+                        self.outq.put(("status", _("Pont image : signal absent | WoW en (%d,%d) | capture %d%% non noire, moy %s | voir debug_pont.bmp")
                                        % (x, y, pct, avg)))
                         time.sleep(2)
                         continue
@@ -1874,10 +2408,10 @@ class App:
                 now = time.time()
                 if now - last_status >= 1:
                     last_status = now
-                    self.outq.put(("status", "Pont image : OK (%d messages recus)" % nmsg))
+                    self.outq.put(("status", _("Pont image : OK (%d messages recus)") % nmsg))
                 time.sleep(0.04)
             except Exception as e:  # noqa
-                self.outq.put(("status", "Pont image : erreur %s" % e))
+                self.outq.put(("status", _("Pont image : erreur %s") % e))
                 off = None
                 time.sleep(2)
 
@@ -1957,6 +2491,8 @@ class App:
             link_segs = [seg for seg, code in _spans if code]
             gtext = "".join(seg if not code else "Zl%dx" % link_segs.index(seg) for seg, code in _spans) \
                 if has_links else text
+            if has_links:   # "[Enchantement]dispo" : jeton colle au mot -> Google ne lit plus "dispo"
+                gtext = re.sub(r"(?<=\w)(Zl\d+x)", r" \1", re.sub(r"(Zl\d+x)(?=\w)", r"\1 ", gtext))
 
             def relink(t):
                 if not t or not has_links:
@@ -1979,30 +2515,46 @@ class App:
                 trans, lang = lex, "en"           # lexique : pas d'appel a Google
             elif not mine and cfg["target"].lower() == "fr" and sure_french(judge):
                 lang = "fr"                            # deja en francais : pas d'appel a Google
+            elif not mine and cfg["target"].lower() == "en" and (lexicon_full(judge.strip()) or sure_english(judge)):
+                lang = "en"                            # "lfm", "wts", "lfg/lfm" : jargon anglais, rien a traduire
             elif not mine and worth_translating(judge):
                 try:
-                    trans, lang = google_translate(fr_mix_fix(gtext), cfg["target"])
+                    src_text = ru_slang(gtext)
+                    if cfg["target"].lower() != "fr":
+                        src_text = fr_slang(src_text)      # argot francais ("pex", "slt", "tlm") avant Google
+                    trans, lang = google_translate(fr_mix_fix(src_text), cfg["target"])
                     if lang == "en" and cfg["target"].lower() == "fr":
                         exp = lexicon_expand(gtext)
                         if exp != gtext or has_protected_name(gtext, cfg["target"]):
                             # abreviations / noms propres : on retraduit la phrase developpee
-                            trans, _ = google_translate_safe(exp, cfg["target"], source="en")
+                            trans, _x = google_translate_safe(exp, cfg["target"], source="en")
                     elif lang not in ("?", "") and has_protected_name(gtext, cfg["target"]):
-                        trans, _ = google_translate_safe(gtext, cfg["target"], source=lang)
+                        trans, _x = google_translate_safe(gtext, cfg["target"], source=lang)
                     if unreliable_detection(judge, lang):
                         # 2-3 mots, langue improbable (ex. "more for hogger" -> norvegien) :
                         # francais mal ecrit, sinon on reessaie en supposant de l'anglais
+                        first = (trans, lang)
                         trans, lang = None, "?"
                         if looks_french(judge):
                             lang = "fr"
                         else:
-                            t2, _ = google_translate_safe(lexicon_expand(gtext), cfg["target"], source="en")
+                            t2, _x = google_translate_safe(lexicon_expand(gtext), cfg["target"], source="en")
                             if t2 and t2.strip().lower() != gtext.strip().lower():
                                 trans, lang = t2, "en"
+                            elif first[0] and first[0].strip().lower() != gtext.strip().lower():
+                                # pas de l'anglais non plus ("A TE IR KADS LATVIETIS?" = letton) :
+                                # on garde la premiere traduction de Google
+                                trans, lang = first
                     trans = relink(trans)
                 except Exception as e:  # noqa
                     # affiche l'erreur sous le message (la barre d'etat est vite ecrasee par le pont)
-                    trans, lang = "\u26a0 traduction impossible : %s" % e, "?"
+                    trans, lang = _("\u26a0 traduction impossible : %s") % err_text(e), "?"
+            if trans and not trans.startswith("\u26a0") and near_same(trans, text):
+                # "traduction" identique au message ("lfg/lfm" pris pour de l'allemand) : rien a traduire,
+                # c'est deja lisible dans ta langue -> pas de ligne en double, badge de ta langue
+                trans, lang = None, "?"     # pas de badge : on ne sait pas vraiment quelle langue c'etait
+            if lang == "en" and re.search("[\u0400-\u04ff]", judge):
+                lang = "ru"                            # "ЛФГ ТЮРЬМА" : jargon remplace, mais le joueur ecrit en russe
             self.outq.put(("msg", hhmm, kind, chan, author, text, trans, lang, alert, mine, raw))
 
     def check_update(self):
@@ -2043,7 +2595,7 @@ class App:
                 elif item[0] == "wowfront":
                     self.follow_wow(item[1])
                 elif item[0] == "update":
-                    self.update_btn.config(text="Mise \u00e0 jour %s dispo" % item[1])
+                    self.update_btn.config(text=_("Mise \u00e0 jour %s dispo") % item[1])
                     self.update_btn.pack(side="left", padx=3, pady=4, after=self._clear_btn)
         except queue.Empty:
             pass
@@ -2100,7 +2652,7 @@ class App:
         lang = lang.lower()
         if self.out_lang.get().strip().lower() != lang:
             self.out_lang.set(lang)
-            self.out_result.config(text="Langue de reponse : %s (auto, d'apres %s)" % (lang, author), fg=self.T["muted"])
+            self.out_result.config(text=_("Langue de reponse : %s (auto, d'apres %s)") % (lang, author), fg=self.T["muted"])
 
     def beep(self):
         if not self.cfg["sound"]:
@@ -2124,26 +2676,26 @@ class App:
         lang = (self.out_lang.get() or "en").strip().lower()
         if not txt:
             return
-        self.out_result.config(text="Traduction en cours...", fg=self.T["muted"])
+        self.out_result.config(text=_("Traduction en cours..."), fg=self.T["muted"])
 
         def run():
             try:
                 # "coucou" seul : Google donne "cuckoo" (l'oiseau)
                 m = re.fullmatch(r"(?i)\s*coucou+\s*([!.?]*)\s*", txt)
-                if m and lang == "en":
+                if m and lang == "en" and UI == "fr":
                     res = ("Hi" if txt.strip()[:1].isupper() else "hi") + m.group(1)
                     self.outq.put(("out", txt, res, lang, None))
                     return
                 # tu ecris en francais : on le dit a Google (sinon "bonjour" seul est pris pour de l'anglais)
-                res, _ = google_translate(txt, lang, source="fr")
+                res, _x = translate_out(txt, lang, UI)
                 check = None
                 if res.strip().lower() == txt.strip().lower():
-                    res, _ = google_translate(txt, lang)   # pas du francais finalement : detection auto
-                    if res.strip().lower() == txt.strip().lower() and lang != "fr":
+                    res, _x = google_translate(txt, lang)   # pas dans ta langue finalement : detection auto
+                    if res.strip().lower() == txt.strip().lower() and lang != UI:
                         # deja ecrit dans la langue cible ("you speak english") : on montre le sens
                         # en francais pour verifier, mais c'est bien ton texte qui est copie
                         try:
-                            check, _ = google_translate(txt, "fr", source=lang)
+                            check, _x = google_translate(txt, UI, source=lang)
                             if check.strip().lower() == txt.strip().lower():
                                 check = None
                         except Exception:  # noqa
@@ -2161,18 +2713,18 @@ class App:
 
     def show_out(self, src, res, lang, err, check=None):
         if err:
-            self.out_result.config(text="Erreur : %s" % err, fg=self.T["err"])
+            self.out_result.config(text=_("Erreur : %s") % err, fg=self.T["err"])
             return
         to = getattr(self, "reply_to", None)
         copy = "/w %s %s" % (to, res) if to else res
         self.root.clipboard_clear()
         self.root.clipboard_append(copy)
         self.root.update()
-        self.out_result.config(text="Copie ! (Entree, Ctrl+V, Entree dans WoW)  %s" % copy, fg=self.T["ok"])
-        who = "Vous \u2192 %s " % to if to else "Vous \u2192 "
+        self.out_result.config(text=_("Copie ! (Entree, Ctrl+V, Entree dans WoW)  %s") % copy, fg=self.T["ok"])
+        who = _("Vous \u2192 %s ") % to if to else _("Vous \u2192 ")
         if check:
             self.add((who + "[%s] " % lang.upper(), "me"), (src + "\n", "me"),
-                     ("\u2192 (en fran\u00e7ais : " + check + ")\n", "trans"))
+                     (_("\u2192 (en fran\u00e7ais : %s)") % check + "\n", "trans"))
         else:
             self.add((who + "[%s] " % lang.upper(), "me"), (src + "\n", "me"), ("\u2192 " + res + "\n", "trans"))
         self.out_entry.delete(0, "end")
@@ -2229,7 +2781,7 @@ class App:
         self.cfg["locked"] = not self.cfg.get("locked")
         save_config(self.cfg)
         self.draw_lock()
-        self.status.set("Fenetre verrouillee" if self.cfg["locked"] else "Fenetre deverrouillee")
+        self.status.set(_("Fenetre verrouillee") if self.cfg["locked"] else _("Fenetre deverrouillee"))
 
     def _drag_start(self, e):
         self._dx, self._dy = e.x_root - self.root.winfo_x(), e.y_root - self.root.winfo_y()

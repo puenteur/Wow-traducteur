@@ -1,8 +1,9 @@
 ## Interface: 16001, 120000, 110207
 ## Title: ChatFR
-## Notes: Annote le tchat avec des traductions FR (abreviations courantes) et active le log pour le traducteur externe.
+## Notes: Sends the chat to WoW Traducteur (external translator, any language).
+## Notes-frFR: Annote le tchat avec des traductions FR (abreviations courantes) et active le log pour le traducteur externe.
 ## Author: Yohann
-## Version: 1.8
+## Version: 1.9
 ## SavedVariables: ChatFRDB
 
 Dictionary.lua

@@ -12,6 +12,8 @@ Traduction en direct du tchat de **World of Warcraft: Forever** vers le françai
 
 Le détail de chaque étape est plus bas.
 
+> **English:** WoW Traducteur and ChatFR are also available in English. At first launch, the translator asks *Français* or *English*: in English, the whole app is in English and the chat is translated **into English** (from French, German, Russian…). ChatFR follows your game language. Install steps are the same as above: Python, the `ChatFR` addon in `AddOns`, windowed mode, then `Lancer le traducteur.bat`. Video tutorial (in French): https://youtu.be/TS2QQybs0JI
+
 ## Ce que ça fait
 
 **Traduction du tchat**

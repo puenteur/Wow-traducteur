@@ -200,6 +200,23 @@ local function QuestCode(data, color)
   return (-d <= green) and "q1" or "q0"
 end
 
+-- Quete d'un autre joueur, hors de ton journal : le jeu ne la connait pas encore (niveau 0, nom dans
+-- la langue de l'envoyeur). On lui demande de la charger (BridgePush attend un peu), puis on prend
+-- son niveau (couleur) et son nom dans la langue de TON jeu.
+local function QuestTitle(id)
+  local f = id and C_QuestLog and C_QuestLog.GetTitleForQuestID
+  if not f then return nil end
+  local ok, t = pcall(f, id)
+  if ok and type(t) == "string" and t ~= "" and not (issecretvalue and issecretvalue(t)) then return t end
+end
+
+local function QuestKnown(id)
+  if QuestTitle(id) then return true end
+  local f = C_QuestLog and C_QuestLog.GetQuestDifficultyLevel
+  local ok, l = pcall(f, id)
+  return ok and type(l) == "number" and l > 0
+end
+
 local function LinkMark(color, ltype, data, name)
   local code = LTYPE[ltype] or "o"
   if code == "i" then
@@ -209,6 +226,8 @@ local function LinkMark(color, ltype, data, name)
   elseif code == "q" then
     local ok, qc = pcall(QuestCode, data, color)
     code = ok and qc or "q"
+    local t = QuestTitle(tonumber((data or ""):match("^:(%d+)")))
+    if t then name = "[" .. t:gsub("[\1-\31]", " ") .. "]" end
   end
   return "\2" .. code .. "\3" .. name .. "\4"
 end
@@ -289,11 +308,25 @@ local function PushTip(hlink, name, tries)
   if #queue > MAXQ then table.remove(queue, 1) end
 end
 
-function ns.BridgePush(event, msg, author, chan)
+function ns.BridgePush(event, msg, author, chan, tries)
   if not frame or not (ChatFRDB and ChatFRDB.bridge) then return end
   local kind = KIND[event]
   if not kind or type(msg) ~= "string" or type(author) ~= "string" then return end
   if issecretvalue and (issecretvalue(msg) or issecretvalue(author) or issecretvalue(chan)) then return end
+  -- quete liee pas encore connue du jeu : on la fait charger et on renvoie le message un peu plus tard
+  -- (2 essais max, ~1 s), sinon il partirait en dore avec le nom de l'envoyeur
+  local load = C_QuestLog and C_QuestLog.RequestLoadQuestByID
+  if load and C_Timer and C_Timer.After and (tries or 0) < 2 then
+    local wait = false
+    for id in msg:gmatch("|Hquest:(%d+)") do
+      id = tonumber(id)
+      if id and not QuestKnown(id) then pcall(load, id); wait = true end
+    end
+    if wait then
+      C_Timer.After(0.5, function() pcall(ns.BridgePush, event, msg, author, chan, (tries or 0) + 1) end)
+      return
+    end
+  end
   local raw = msg                                     -- liens d'origine, pour les infobulles
   msg = msg:gsub("[\1-\31]", " ")
   msg = msg:gsub("|c(%x%x%x%x%x%x%x%x)|H([^:|]+)([^|]*)|h(.-)|h|r", LinkMark)
@@ -317,6 +350,7 @@ function ns.BridgePush(event, msg, author, chan)
   queue[#queue + 1] = rec
   if #queue > MAXQ then table.remove(queue, 1) end
   for hl, ltype, name in (raw or ""):gmatch("|H(([^:|]+):[^|]*)|h%[(.-)%]|h") do
+    if ltype == "quest" then name = QuestTitle(tonumber(hl:match("^quest:(%d+)"))) or name end
     if TIP_TYPES[ltype] then pcall(PushTip, hl, name) end
   end
 end
@@ -340,5 +374,5 @@ local init = CreateFrame("Frame")
 init:RegisterEvent("PLAYER_LOGIN")
 init:SetScript("OnEvent", function()
   local ok, err = pcall(Create)
-  if not ok then print("|cff33ccffChatFR|r: pont image indisponible : " .. tostring(err)) end
+  if not ok then print("|cff33ccffChatFR|r: " .. ((GetLocale and GetLocale() == "frFR") and "pont image indisponible : " or "image bridge unavailable: ") .. tostring(err)) end
 end)
