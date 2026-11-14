@@ -3,7 +3,7 @@
 ## Notes: Sends the chat to WoW Traducteur (external translator, any language).
 ## Notes-frFR: Annote le tchat avec des traductions FR (abreviations courantes) et active le log pour le traducteur externe.
 ## Author: Yohann
-## Version: 1.9
+## Version: 1.9.1
 ## SavedVariables: ChatFRDB
 
 Dictionary.lua

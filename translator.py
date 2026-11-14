@@ -37,7 +37,7 @@ try:
 except ImportError:  # pas sous Windows
     winsound = None
 
-VERSION = "1.9"
+VERSION = "1.9.1"
 # Verification de mise a jour : le fichier version.txt du depot contient le numero de la derniere version.
 VERSION_URL = "https://raw.githubusercontent.com/puenteur/Wow-traducteur/main/version.txt"
 KOFI_URL = "https://ko-fi.com/puenteur"
@@ -51,12 +51,14 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 NEWS = {
     "fr": ["WoW Traducteur %s : maintenant aussi en anglais !" % VERSION,
            "- La grande nouveaut\u00e9 : tout le traducteur existe en anglais. Au premier lancement, on choisit Fran\u00e7ais ou English ; en anglais, le tchat est traduit vers l'anglais. Pratique pour tes amis anglophones ! (changeable dans les R\u00e9glages)",
+           "- Nouveau en %s : cliquer sur la fen\u00eatre ne prend plus le clavier \u00e0 WoW (tu continues \u00e0 bouger et \u00e0 parler aux PNJ). Seule la zone \u00ab \u00c9crire \u00bb le prend, quand tu cliques dedans. Tes messages de groupe en bleu, comme dans le jeu." % VERSION,
            "- Pi\u00e8ces d'or, d'argent et de cuivre en ic\u00f4nes bien visibles, m\u00eame quand le jeu \u00e9crit \u00ab 25 Cuivre \u00bb.",
            "- Langue de r\u00e9ponse : une liste qui s'ouvre vers le haut (EN, DE, ES, puis Autre langue\u2026).",
            "- Fen\u00eatre des nouveaut\u00e9s apr\u00e8s chaque mise \u00e0 jour (celle-ci !).",
            "- Meilleures traductions : lfg/lfm, wts/wtb, Deadmines, jargon russe (\u041b\u0424\u0413), mots coll\u00e9s aux liens, petits messages en espagnol ou en letton, moins d'appels inutiles \u00e0 Google."],
     "en": ["WoW Traducteur %s: now in English!" % VERSION,
            "- The big one: the whole translator is now available in English. Choose Fran\u00e7ais or English at first launch; in English, the chat is translated into English (can be changed in Settings).",
+           "- New in %s: clicking the window no longer takes the keyboard away from WoW (keep moving and talking to NPCs). Only the \"Write\" box takes it, when you click in it. Your party messages in blue, like in the game." % VERSION,
            "- Gold, silver and copper coins shown as clear icons, even when the game writes \"25 Copper\".",
            "- Reply language: a list that opens upwards (FR, DE, ES, then Other language\u2026).",
            "- A window like this one after each update.",
@@ -844,6 +846,7 @@ LEX_KEEP = {"tank": "tank", "tanks": "tanks", "heal": "heal", "heals": "heals",
             "boss": "boss", "bosses": "boss", "full": "full",
             "proc": "proc", "procs": "procs",   # "procs" -> "procédures" sinon
             "hunt": "hunt", "hunts": "hunts",
+            "craft": "craft", "crafts": "crafts", "crafted": "crafté", "crafting": "craft",   # "artisanat" sinon
             "mob": "mob", "mobs": "mobs", "pull": "pull", "pulls": "pulls", "pulled": "pull"}   # chasseur, pas "chasse"   # "full for boss" -> "full pour le boss"
 # Classes que Google traduit mal ("rogue" -> "voyou", "warlock" -> "sorcier") : nom francais du jeu.
 LEX_CLASSES = {"rogue": "voleur", "rogues": "voleurs", "warlock": "démoniste", "warlocks": "démonistes"}
@@ -1596,6 +1599,9 @@ class App:
         self.apply_window_cfg()
         self._first_run = not self.cfg.get("help_seen")
         self.build_ui()
+        # cliquer sur la fenetre ne prend plus le clavier a WoW (seule la zone "Ecrire" le prend)
+        self.root.bind("<FocusOut>", lambda e: self.root.after(80, self._give_back_keyboard), add="+")
+        self.root.after(300, lambda: self.set_noactivate(True))
         self.root.after(1500, self.show_news)
         threading.Thread(target=self.reader, daemon=True).start()
         threading.Thread(target=self.bridge_reader, daemon=True).start()
@@ -1646,6 +1652,45 @@ class App:
             if self.cfg.get("out_lang") == code:
                 self.cfg["out_lang"] = "en" if code == "fr" else "fr"
         save_config(self.cfg)
+
+    # ---- ne pas prendre le clavier a WoW ----------------------------------
+    def set_noactivate(self, on):
+        """WS_EX_NOACTIVATE : un clic sur la fenetre (lien, defilement, bouton) ne lui donne pas le
+        clavier, WoW le garde (on peut continuer a bouger, parler aux PNJ). Seule la zone "Ecrire"
+        reprend le clavier quand on clique dedans (take_keyboard)."""
+        if os.name != "nt":
+            return
+        try:
+            u = ctypes.windll.user32
+            get = getattr(u, "GetWindowLongPtrW", None) or u.GetWindowLongW
+            put = getattr(u, "SetWindowLongPtrW", None) or u.SetWindowLongW
+            get.restype, get.argtypes = ctypes.c_ssize_t, [ctypes.c_void_p, ctypes.c_int]
+            put.restype, put.argtypes = ctypes.c_ssize_t, [ctypes.c_void_p, ctypes.c_int, ctypes.c_ssize_t]
+            u.GetParent.restype, u.GetParent.argtypes = ctypes.c_void_p, [ctypes.c_void_p]
+            h = u.GetParent(self.root.winfo_id()) or self.root.winfo_id()
+            st = get(h, -20)                                 # GWL_EXSTYLE
+            new = (st | 0x08000000) if on else (st & ~0x08000000)
+            if new != st:
+                put(h, -20, new)
+        except Exception:  # noqa
+            pass
+
+    def take_keyboard(self, _e=None):
+        """Clic dans "Ecrire" (ou sur un pseudo) : la fenetre prend le clavier pour que tu ecrives."""
+        self.set_noactivate(False)
+        try:
+            self.root.focus_force()
+            self.out_entry.focus_set()
+        except tk.TclError:
+            pass
+
+    def _give_back_keyboard(self):
+        """Tu es reparti dans WoW (ou ailleurs) : la fenetre redevient "sans clavier" au clic."""
+        try:
+            if self.root.focus_get() is None:
+                self.set_noactivate(True)
+        except (tk.TclError, KeyError):
+            self.set_noactivate(True)
 
     # ---- interface -------------------------------------------------------
     def apply_window_cfg(self):
@@ -1782,6 +1827,7 @@ class App:
                                    bg=P, fg=T["muted"], anchor="w", justify="left", wraplength=520)
         self.out_result.grid(row=1, column=0, columnspan=5, sticky="ew", padx=4, pady=(0, 3))
         self.out_entry.bind("<Return>", lambda e: self.send_out())
+        self.out_entry.bind("<Button-1>", self.take_keyboard, add="+")
         self.out_entry.bind("<Escape>", lambda e: self.clear_out())
         self.set_reply_to(getattr(self, "reply_to", None), quiet=True)
 
@@ -2006,7 +2052,7 @@ class App:
             if not quiet:
                 self.out_result.config(text=_("Chuchotement \u00e0 %s : ta reponse sera copiee avec /w %s")
                                        % (self.reply_to, self.reply_to), fg=self.T["muted"])
-                self.out_entry.focus_set()
+                self.take_keyboard()
         else:
             self.reply_lbl.config(text=_("Ecrire (%s) \u2192") % UI.upper(), fg=self.T["fg"])
             self.reply_x.pack_forget()
@@ -2606,7 +2652,7 @@ class App:
         same = (lang or "").lower().split("-")[0] == tgt
         if same and not self.cfg["show_french"] and not alert:
             return
-        tag = "me" if mine else kind
+        tag = kind          # tes messages aussi : couleur du canal, comme dans WoW (groupe = bleu)
         badge = "[%s] " % lang.upper() if lang not in ("?", "") and not mine else ""
         tail = chan if kind in ("channel", "lfg") else ""
         start_line = int(self.text.index("end-1c").split(".")[0])
@@ -2760,6 +2806,7 @@ class App:
             self._minimized = False
             self.root.overrideredirect(True)
             self.apply_window_cfg()
+            self.root.after(100, lambda: self.set_noactivate(True))
 
     def draw_lock(self):
         """Cadenas ferme (couleur d'accent) ou ouvert (gris)."""
