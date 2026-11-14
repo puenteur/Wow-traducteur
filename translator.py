@@ -47,18 +47,24 @@ RELEASE_URL = "https://github.com/puenteur/Wow-traducteur/releases/latest"
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
+# Liens de metier ("[Alchimie]" = liste de recettes d'un joueur) : le jeu n'en donne pas de fiche.
+PROFESSIONS = set("""alchimie forge couture enchantement ingénierie ingenierie cuisine secourisme pêche peche
+minage herboristerie dépeçage depecage joaillerie calligraphie alchemy blacksmithing tailoring
+enchanting engineering cooking fishing mining herbalism skinning jewelcrafting inscription""".split()) | {
+    "travail du cuir", "premiers soins", "leatherworking", "first aid"}
+
 # Nouveautes affichees une fois dans la fenetre apres une mise a jour (pas au premier lancement).
 NEWS = {
     "fr": ["WoW Traducteur %s : maintenant aussi en anglais !" % VERSION,
            "- La grande nouveaut\u00e9 : tout le traducteur existe en anglais. Au premier lancement, on choisit Fran\u00e7ais ou English ; en anglais, le tchat est traduit vers l'anglais. Pratique pour tes amis anglophones ! (changeable dans les R\u00e9glages)",
-           "- Nouveau en %s : cliquer sur la fen\u00eatre ne prend plus le clavier \u00e0 WoW (tu continues \u00e0 bouger et \u00e0 parler aux PNJ). Seule la zone \u00ab \u00c9crire \u00bb le prend, quand tu cliques dedans. Tes messages de groupe en bleu, comme dans le jeu." % VERSION,
+           "- Nouveau en %s : cliquer sur la fen\u00eatre ne prend plus le clavier \u00e0 WoW (tu continues \u00e0 bouger et \u00e0 parler aux PNJ). Seule la zone \u00ab \u00c9crire \u00bb le prend, quand tu cliques dedans. Tes messages de groupe en bleu, comme dans le jeu. Liens de qu\u00eate Questie des autres joueurs : bonne couleur et nom dans ta langue (avec ChatFR \u00e0 jour)." % VERSION,
            "- Pi\u00e8ces d'or, d'argent et de cuivre en ic\u00f4nes bien visibles, m\u00eame quand le jeu \u00e9crit \u00ab 25 Cuivre \u00bb.",
            "- Langue de r\u00e9ponse : une liste qui s'ouvre vers le haut (EN, DE, ES, puis Autre langue\u2026).",
            "- Fen\u00eatre des nouveaut\u00e9s apr\u00e8s chaque mise \u00e0 jour (celle-ci !).",
            "- Meilleures traductions : lfg/lfm, wts/wtb, Deadmines, jargon russe (\u041b\u0424\u0413), mots coll\u00e9s aux liens, petits messages en espagnol ou en letton, moins d'appels inutiles \u00e0 Google."],
     "en": ["WoW Traducteur %s: now in English!" % VERSION,
            "- The big one: the whole translator is now available in English. Choose Fran\u00e7ais or English at first launch; in English, the chat is translated into English (can be changed in Settings).",
-           "- New in %s: clicking the window no longer takes the keyboard away from WoW (keep moving and talking to NPCs). Only the \"Write\" box takes it, when you click in it. Your party messages in blue, like in the game." % VERSION,
+           "- New in %s: clicking the window no longer takes the keyboard away from WoW (keep moving and talking to NPCs). Only the \"Write\" box takes it, when you click in it. Your party messages in blue, like in the game. Questie quest links from other players: right color and name in your language (with ChatFR updated)." % VERSION,
            "- Gold, silver and copper coins shown as clear icons, even when the game writes \"25 Copper\".",
            "- Reply language: a list that opens upwards (FR, DE, ES, then Other language\u2026).",
            "- A window like this one after each update.",
@@ -126,6 +132,8 @@ EN = {
     "Chuchotement à %s : ta reponse sera copiee avec /w %s": "Whisper to %s: your reply will be copied with /w %s",
     "Reponse normale (sans /w).": "Normal reply (no /w).",
     "(haut fait : le détail est sur Wowhead)": "(achievement: details are on Wowhead)",
+    "(lien de métier : clique dessus dans WoW pour voir ses recettes)":
+        "(profession link: click it in WoW to see the recipes)",
     "(le jeu ne donne pas la fiche de cette quête, souvent tant qu'elle n'est pas dans ton journal : vois-la sur Wowhead)":
         "(the game doesn't send this quest's details, usually until it is in your quest log: see it on Wowhead)",
     "(fiche pas encore reçue du jeu : elle arrivera au prochain lien de cet objet)":
@@ -2081,6 +2089,8 @@ class App:
         if not lines:                            # pas recue (lien d'avant la mise a jour...)
             if link == "link_a":                 # haut fait : le jeu n'envoie pas de fiche
                 lines = [_("(haut fait : le détail est sur Wowhead)")]
+            elif link == "link_e" and name.lower() in PROFESSIONS:   # lien de metier : pas de fiche
+                lines = [_("(lien de métier : clique dessus dans WoW pour voir ses recettes)")]
             elif link.startswith("link_q"):        # quete inconnue du jeu (pas dans ton journal) : jamais recue
                 lines = [_("(le jeu ne donne pas la fiche de cette quête, souvent tant qu'elle n'est pas "
                            "dans ton journal : vois-la sur Wowhead)")]

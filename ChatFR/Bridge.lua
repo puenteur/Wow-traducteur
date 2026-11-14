@@ -139,7 +139,7 @@ end
 -- qualite, q quete, s sort, e enchantement/metier, a haut fait, o autre).
 local QUALITY = { ["9d9d9d"] = "0", ["ffffff"] = "1", ["1eff00"] = "2", ["0070dd"] = "3",
                   ["a335ee"] = "4", ["ff8000"] = "5", ["e6cc80"] = "6", ["00ccff"] = "7" }
-local LTYPE = { item = "i", quest = "q", spell = "s", talent = "s", enchant = "e",
+local LTYPE = { item = "i", quest = "q", questie = "q", spell = "s", talent = "s", enchant = "e",
                 trade = "e", achievement = "a" }
 
 -- Quete : couleur selon son niveau et le tien, comme dans le tchat du jeu (q0 gris, q1 vert, q2 jaune,
@@ -163,8 +163,8 @@ local function CodeFromRGB(r, g, b)
 end
 
 local function QuestCode(data, color)
-  local id, lvl = (data or ""):match("^:(%-?%d+):(%-?%d+)")
-  lvl, id = tonumber(lvl), tonumber(id)
+  local id = tonumber((data or ""):match("^:(%d+)"))
+  local lvl = tonumber((data or ""):match("^:%d+:(%-?%d+)"))
   -- Forever : niveau 0 dans le lien ("quest:202:0") -> on demande le niveau au jeu
   if (not lvl or lvl <= 0) and id and C_QuestLog and C_QuestLog.GetQuestDifficultyLevel then
     local ok, l = pcall(C_QuestLog.GetQuestDifficultyLevel, id)
@@ -217,6 +217,14 @@ local function QuestKnown(id)
   return ok and type(l) == "number" and l > 0
 end
 
+-- Lien de quete reecrit par Questie : "|Hquestie:180:joueur|h[[26] WANTED: X (180)]|h"
+-- -> nom "[WANTED: X]" et niveau 26 (pris dans le texte du lien)
+local function QuestieName(name)
+  local lv, nm = name:match("^%[%[(%-?%d+)[^%]]*%]%s*(.-)%s*%(%d+%)%]$")
+  if nm and nm ~= "" then return "[" .. nm .. "]", tonumber(lv) end
+  return name, nil
+end
+
 local function LinkMark(color, ltype, data, name)
   local code = LTYPE[ltype] or "o"
   if code == "i" then
@@ -224,6 +232,11 @@ local function LinkMark(color, ltype, data, name)
     local q = color and (color:match("^IQ(%d)$") or QUALITY[color:lower():sub(3)])
     code = "i" .. (q or "1")
   elseif code == "q" then
+    if ltype == "questie" then
+      local nm, lv = QuestieName(name)
+      name = nm
+      data = ":" .. ((data or ""):match("^:(%d+)") or "0") .. ":" .. (lv or 0)
+    end
     local ok, qc = pcall(QuestCode, data, color)
     code = ok and qc or "q"
     local t = QuestTitle(tonumber((data or ""):match("^:(%d+)")))
@@ -318,7 +331,7 @@ function ns.BridgePush(event, msg, author, chan, tries)
   local load = C_QuestLog and C_QuestLog.RequestLoadQuestByID
   if load and C_Timer and C_Timer.After and (tries or 0) < 2 then
     local wait = false
-    for id in msg:gmatch("|Hquest:(%d+)") do
+    for id in msg:gmatch("|Hquest[ie]*:(%d+)") do
       id = tonumber(id)
       if id and not QuestKnown(id) then pcall(load, id); wait = true end
     end
@@ -350,6 +363,11 @@ function ns.BridgePush(event, msg, author, chan, tries)
   queue[#queue + 1] = rec
   if #queue > MAXQ then table.remove(queue, 1) end
   for hl, ltype, name in (raw or ""):gmatch("|H(([^:|]+):[^|]*)|h%[(.-)%]|h") do
+    if ltype == "questie" then                          -- fiche lue avec un vrai lien de quete
+      local id = hl:match("^questie:(%d+)")
+      name = (QuestieName("[" .. name .. "]")):sub(2, -2)
+      hl, ltype = "quest:" .. (id or 0) .. ":0", "quest"
+    end
     if ltype == "quest" then name = QuestTitle(tonumber(hl:match("^quest:(%d+)"))) or name end
     if TIP_TYPES[ltype] then pcall(PushTip, hl, name) end
   end
