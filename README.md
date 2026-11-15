@@ -2,9 +2,13 @@
 
 Traduction en direct du tchat de **World of Warcraft: Forever** vers le français (ou une autre langue), avec réponse dans la langue de ton interlocuteur.
 
+### ⬇️ [Télécharger WoW Traducteur](https://github.com/puenteur/Wow-traducteur/releases/latest/download/WoW-Traducteur.zip) (dernière version, en un clic)
+
+L'addon **ChatFR** s'installe depuis CurseForge (mises à jour automatiques).
+
 ## En bref
 
-1. Installe Python (en cochant « Add python.exe to PATH »).
+1. Python : si tu ne l'as pas, `Lancer le traducteur.bat` propose de l'installer tout seul (réponds **O**). Sinon, installe-le depuis python.org en cochant « Add python.exe to PATH ».
 2. Copie l'addon `ChatFR` dans le dossier `AddOns` de WoW Forever.
 3. Mets le jeu en mode **Fenêtré** ou **Plein écran (fenêtré)**.
 4. Lance WoW, puis double-clique sur `Lancer le traducteur.bat`.

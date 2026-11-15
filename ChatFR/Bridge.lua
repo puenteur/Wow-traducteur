@@ -34,7 +34,8 @@ local KIND = {
   CHAT_MSG_MONSTER_EMOTE = "npc", CHAT_MSG_MONSTER_PARTY = "npc",
   CHAT_MSG_RAID_BOSS_EMOTE = "npc", CHAT_MSG_RAID_BOSS_WHISPER = "npc",
   CHAT_MSG_SYSTEM = "system", CHAT_MSG_TEXT_EMOTE = "system", CHAT_MSG_COMBAT_FACTION_CHANGE = "faction",
-  CHAT_MSG_COMBAT_XP_GAIN = "system", CHAT_MSG_COMBAT_HONOR_GAIN = "system", CHAT_MSG_SKILL = "system",
+  CHAT_MSG_COMBAT_XP_GAIN = "system", CHAT_MSG_COMBAT_HONOR_GAIN = "system",
+  CHAT_MSG_SKILL = "faction",   -- competences : bleu dans le jeu, comme la reputation (meme couleur dans le traducteur)
   CHAT_MSG_AFK = "system", CHAT_MSG_DND = "system",
   CHAT_MSG_LOOT = "loot", CHAT_MSG_MONEY = "loot", CHAT_MSG_CURRENCY = "loot",
   CHATFR_SPENT = "spent",

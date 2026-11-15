@@ -817,7 +817,8 @@ local function ShowNews()
   end
   newsFrame:Show()
 end
-local TRAD_URL = "github.com/puenteur/Wow-traducteur"
+-- lien direct vers le dernier zip du traducteur (toujours le meme, sans passer par la page GitHub)
+local TRAD_URL = "github.com/puenteur/Wow-traducteur/releases/latest/download/WoW-Traducteur.zip"
 local noticeFrame
 
 local function ShowTradNotice()
@@ -848,15 +849,15 @@ local function ShowTradNotice()
     body:SetText(L("C'est la |cffffd100derni\195\168re mise \195\160 jour \195\160 faire \195\160 la main|r : ensuite, WoW Traducteur\n" ..
                    "se met \195\160 jour tout seul, en un clic (bouton \194\171 Mettre \195\160 jour \194\187).\n" ..
                    "Pas encore le traducteur ? C'est un petit programme gratuit \195\160 lancer \195\160 c\195\180t\195\169 du jeu.\n" ..
-                   "T\195\169l\195\169charge le zip WoW-Traducteur dans les Releases de :",
+                   "T\195\169l\195\169charge le zip WoW-Traducteur avec ce lien direct :",
                    "This is the |cffffd100last update to do by hand|r: after that, WoW Traducteur\n" ..
                    "updates itself in one click (\"Update\" button).\n" ..
                    "Don't have the translator yet? It's a small free program to run next to the game.\n" ..
-                   "Download the WoW-Traducteur zip from the Releases at:"))
+                   "Download the WoW-Traducteur zip with this direct link:"))
 
     -- Adresse dans une zone de texte : clic dedans puis Ctrl+C pour la copier.
     local eb = CreateFrame("EditBox", nil, p, "InputBoxTemplate")
-    eb:SetSize(300, 24)
+    eb:SetSize(420, 24)
     eb:SetPoint("TOP", body, "BOTTOM", 0, -10)
     eb:SetAutoFocus(false)
     eb:SetText(TRAD_URL)
@@ -1100,7 +1101,7 @@ f:SetScript("OnEvent", function(_, event, name, author, a3, a4, a5, a6, a7, a8, 
     if ChatFRDB.tradNotice ~= TRAD_NOTICE then
       local function notice()
         Say(L("|cffffd100Mets WoW Traducteur \195\160 jour en ", "|cffffd100Update WoW Traducteur to ") .. TRAD_NOTICE ..
-            L("|r (derni\195\168re mise \195\160 jour \195\160 la main, ensuite elle se fait en un clic) : ", "|r (last update by hand, then it's one click): ") .. TRAD_URL .. " (Releases).")
+            L("|r (derni\195\168re mise \195\160 jour \195\160 la main, ensuite elle se fait en un clic) : ", "|r (last update by hand, then it's one click): ") .. TRAD_URL)
         local okN, errN = pcall(ShowTradNotice)
         if not okN then Say(L("annonce indisponible : ", "notice unavailable: ") .. tostring(errN)) end
       end

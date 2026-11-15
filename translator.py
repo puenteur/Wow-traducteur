@@ -41,7 +41,7 @@ try:
 except ImportError:  # pas sous Windows
     winsound = None
 
-VERSION = "1.9.4"
+VERSION = "1.9.5"
 # Verification de mise a jour : le fichier version.txt du depot contient le numero de la derniere version.
 VERSION_URL = "https://raw.githubusercontent.com/puenteur/Wow-traducteur/main/version.txt"
 KOFI_URL = "https://ko-fi.com/puenteur"
@@ -60,7 +60,8 @@ enchanting engineering cooking fishing mining herbalism skinning jewelcrafting i
 # Nouveautes affichees une fois dans la fenetre apres une mise a jour (pas au premier lancement).
 NEWS = {
     "fr": ["WoW Traducteur %s" % VERSION,
-           "- Nouveau en %s : mise \u00e0 jour en un clic (bouton \u00ab Mettre \u00e0 jour \u00bb) ; tes r\u00e9glages sont maintenant rang\u00e9s \u00e0 part (%%APPDATA%%\\WoW-Traducteur) et ne se perdent plus ; la fen\u00eatre se place sur le tchat de WoW (premier lancement, ou bouton dans les R\u00e9glages) et se cache quand un menu du jeu s'ouvre ; \u00ab \u2014 \u00bb replie la fen\u00eatre sur sa barre ; messages de l'h\u00f4tel des ventes ; meilleures traductions (WTB/WTS, prix, COD, dr, unstuck). Mets aussi ChatFR \u00e0 jour." % VERSION,
+           "- Nouveau en %s : le traducteur se met \u00e0 jour tout seul au lancement (avec un compte \u00e0 rebours) ; s'il manque Python, \u00ab Lancer le traducteur.bat \u00bb propose de l'installer ; symboles des pings Menace et Par ici ; marques de raid reconnues dans toutes les langues du jeu ; annonces de Questie non traduites ; la fen\u00eatre ne redescend plus quand tu lis plus haut ; case \u00ab \u00c9crire \u00bb corrig\u00e9e dans une petite fen\u00eatre ; meilleures traductions (La Prison, \u00c9olide, Comt\u00e9-du-Nord, chevalet de tannage, BS / LW + niveau, q = qu\u00eate, yo, dr, dobro do\u0161li). Mets aussi ChatFR \u00e0 jour." % VERSION,
+           "- 1.9.4 : mise \u00e0 jour en un clic (bouton \u00ab Mettre \u00e0 jour \u00bb) ; tes r\u00e9glages sont maintenant rang\u00e9s \u00e0 part (%APPDATA%\\WoW-Traducteur) et ne se perdent plus ; la fen\u00eatre se place sur le tchat de WoW (premier lancement, ou bouton dans les R\u00e9glages) et se cache quand un menu du jeu s'ouvre ; \u00ab \u2014 \u00bb replie la fen\u00eatre sur sa barre ; messages de l'h\u00f4tel des ventes ; meilleures traductions (WTB/WTS, prix, COD, unstuck).",
            "- La grande nouveaut\u00e9 : tout le traducteur existe en anglais. Au premier lancement, on choisit Fran\u00e7ais ou English ; en anglais, le tchat est traduit vers l'anglais. Pratique pour tes amis anglophones ! (changeable dans les R\u00e9glages)",
            "- 1.9.3 : le nom du canal devant les messages (Groupe, Guilde, Raid, Officier) ; tes messages reconnus tout seuls ; r\u00e9ponse \u00e0 un joueur fran\u00e7ais copi\u00e9e telle quelle ; phrase \u00e9crite dans une autre langue que le fran\u00e7ais bien traduite ; marques de raid ; liens de qu\u00eate Questie en texte simple (mets aussi ChatFR \u00e0 jour) ; fonctionne aussi avec une r\u00e9solution personnalis\u00e9e ou une \u00e9chelle de rendu r\u00e9duite ; le lanceur trouve mieux Python ; abr\u00e9viations mieux traduites (ty, lfr, slt, tlm...) ; ic\u00f4nes des pings (\u26a0 \u2691 \u2b07 \u2694).",
            "- 1.9.1 : cliquer sur la fen\u00eatre ne prend plus le clavier \u00e0 WoW (tu continues \u00e0 bouger et \u00e0 parler aux PNJ). Seule la zone \u00ab \u00c9crire \u00bb le prend, quand tu cliques dedans. Tes messages de groupe en bleu, comme dans le jeu. Liens de qu\u00eate Questie des autres joueurs : bonne couleur et nom dans ta langue.",
@@ -69,7 +70,8 @@ NEWS = {
            "- Fen\u00eatre des nouveaut\u00e9s apr\u00e8s chaque mise \u00e0 jour (celle-ci !).",
            "- Meilleures traductions : lfg/lfm, wts/wtb, Deadmines, jargon russe (\u041b\u0424\u0413), mots coll\u00e9s aux liens, petits messages en espagnol ou en letton, moins d'appels inutiles \u00e0 Google."],
     "en": ["WoW Traducteur %s" % VERSION,
-           "- New in %s: one-click update (\"Update\" button); your settings are now stored separately (%%APPDATA%%\\WoW-Traducteur) and are no longer lost; the window places itself over the WoW chat (first launch, or button in Settings) and hides when a game menu opens; \"\u2014\" rolls the window up to its bar; auction house messages; better translations (WTB/WTS, prices, COD, unstuck). Update ChatFR too." % VERSION,
+           "- New in %s: the translator now updates itself at launch (with a countdown); if Python is missing, \"Lancer le traducteur.bat\" offers to install it; Threat and Look ping symbols; raid marks recognized in every game language; Questie announcements no longer translated; the window no longer jumps down while you read older messages; \"Write\" box fixed in a small window; better translations (BS / LW + skill, q = quest, Skyborne, Northshire, Tanning Rack). Update ChatFR too." % VERSION,
+           "- 1.9.4: one-click update (\"Update\" button); your settings are now stored separately (%APPDATA%\\WoW-Traducteur) and are no longer lost; the window places itself over the WoW chat (first launch, or button in Settings) and hides when a game menu opens; \"\u2014\" rolls the window up to its bar; auction house messages; better translations (WTB/WTS, prices, COD, unstuck).",
            "- The big one: the whole translator is now available in English. Choose Fran\u00e7ais or English at first launch; in English, the chat is translated into English (can be changed in Settings).",
            "- 1.9.3: channel name in front of messages (Party, Guild, Raid, Officer); your own messages recognized automatically; replies in your own language copied as is; text written in another language than English translated correctly; raid marks; Questie quest links in plain text (update ChatFR too); also works with a custom resolution or a lower render scale; the launcher finds Python more reliably; better abbreviations (ty, lfr, slt, tlm...); ping icons (\u26a0 \u2691 \u2b07 \u2694).",
            "- 1.9.1: clicking the window no longer takes the keyboard away from WoW (keep moving and talking to NPCs). Only the \"Write\" box takes it, when you click in it. Your party messages in blue, like in the game. Questie quest links from other players: right color and name in your language.",
@@ -161,6 +163,7 @@ DEFAULTS = {
     # nom de reglage : l'ancien "auto_reply_lang", active pour tout le monde, est ignore)
     "reply_lang_auto": False,
     "hide_on_menu": True,           # se cacher quand un menu du jeu s'ouvre (menu du tchat, clic droit...)
+    "auto_update": True,            # au lancement, installer tout seul une nouvelle version (sinon : bouton)
     "theme": "Sombre",              # theme de la fenetre (voir THEMES)
     "locked": False,                # cadenas : fenetre verrouillee (ni deplacement ni redimensionnement)
     "help_seen": False,             # fenetre d'aide deja montree une fois (premier lancement)
@@ -235,6 +238,9 @@ EN = {
     "Enregistrer": "Save",
     "Placer sur le tchat de WoW": "Place over the WoW chat",
     "Se cacher quand un menu du jeu s'ouvre (menu du tchat, clic droit)": "Hide when a game menu opens (chat menu, right-click)",
+    "Mises a jour automatiques (au lancement)": "Automatic updates (at launch)",
+    "(le traducteur va se fermer puis se rouvrir tout seul)": "(the translator will close and reopen by itself)",
+    "Nouvelle version %s : mise à jour automatique...": "New version %s: updating automatically...",
     "Pas encore recu de ChatFR (1.9.4 ou plus) : reessaie dans 30 s.": "Not received from ChatFR yet (1.9.4 or later): try again in 30 s.",
     "Log introuvable : %s (tape /chatlog dans WoW)": "Log not found: %s (type /chatlog in WoW)",
     "En ecoute...": "Listening...",
@@ -588,6 +594,15 @@ RAID_MARKS = {
     "rt6": "\u25a0", "square": "\u25a0", "carre": "\u25a0", "carr\u00e9": "\u25a0",
     "rt7": "\u2716", "cross": "\u2716", "croix": "\u2716", "x": "\u2716",
     "rt8": "\u2620", "skull": "\u2620", "crane": "\u2620", "cr\u00e2ne": "\u2620",
+    # noms des marques dans les autres langues du jeu (ru, de, es, pt, it) : "{звезда}" -> ★
+    "звезда": "\u2605", "stern": "\u2605", "estrella": "\u2605", "estrela": "\u2605", "stella": "\u2605",
+    "круг": "\u25cf", "kreis": "\u25cf", "círculo": "\u25cf", "circulo": "\u25cf", "cerchio": "\u25cf",
+    "ромб": "\u25c6", "diamant": "\u25c6", "diamante": "\u25c6", "rombo": "\u25c6",
+    "треугольник": "\u25b2", "dreieck": "\u25b2", "triángulo": "\u25b2", "triangulo": "\u25b2", "triângulo": "\u25b2", "triangolo": "\u25b2",
+    "полумесяц": "\u263e", "луна": "\u263e", "mond": "\u263e", "luna": "\u263e", "lua": "\u263e",
+    "квадрат": "\u25a0", "quadrat": "\u25a0", "cuadrado": "\u25a0", "quadrado": "\u25a0", "quadrato": "\u25a0",
+    "крест": "\u2716", "kreuz": "\u2716", "cruz": "\u2716", "xis": "\u2716", "croce": "\u2716",
+    "череп": "\u2620", "totenschädel": "\u2620", "schädel": "\u2620", "calavera": "\u2620", "caveira": "\u2620", "teschio": "\u2620",
 }
 _MARK_RE = re.compile(r"\{(" + "|".join(sorted(RAID_MARKS, key=len, reverse=True)) + r")\}", re.I)
 
@@ -599,6 +614,9 @@ PING_ICONS = [
     (("aide", "assist"), "\u2691", "#4cd14c"),
     (("je me dirige", "on my way"), "\u2b07", "#3fa7ff"),
     (("attaque", "attack"), "\u2694", "#ff9d3a"),
+    (("pas une menace", "pas de menace", "sans danger", "non-threat", "non threat", "not a threat"), "\u25ce", "#4cd14c"),
+    (("menace", "threat"), "\u25c9", "#ff4a3d"),
+    (("par ici", "look", "ping"), "\u25c8", "#3fa7ff"),       # ping simple : losange bleu dans le jeu
 ]
 
 
@@ -871,12 +889,18 @@ LEX_NAMES = ["Hogger"]
 # puis remplaces par leur nom francais (seulement quand la langue cible est le francais).
 # "SFK" -> "Donjon d'Ombrecroc". Ajoute les tiens ici : "abreviation en minuscules": "nom francais".
 LEX_PLACES = {
+    # objets de camp de Forever (nom officiel francais, verifie en jeu)
+    'tanning racks': 'chevalets de tannage', 'tanning rack': 'chevalet de tannage',
+    # race de Forever (nom officiel Blizzard fr : Eolides / Eolide) et sa zone de depart ; "skybron" : faute vue en jeu
+    'skyborne': '\u00c9olide', 'skyborn': '\u00c9olide', 'skybron': '\u00c9olide',
+    'zephras isle': "\u00cele de Z\u00e9phras", 'zephras': 'Z\u00e9phras',
+    'northshire valley': 'Vall\u00e9e de Comt\u00e9-du-Nord', 'northshire': 'Comt\u00e9-du-Nord',
     'rfc': 'Gouffre de Ragefeu', 'ragefire chasm': 'Gouffre de Ragefeu', 'wc': 'Cavernes des lamentations',
     'wailing caverns': 'Cavernes des lamentations', 'vc': 'Mortemines',
     'dm': 'Mortemines (ou Hache-tripes)', 'deadmines': 'Mortemines', 'deadmine': 'Mortemines', 'sfk': "Donjon d'Ombrecroc",
     'shadowfang keep': "Donjon d'Ombrecroc", 'bfd': 'Profondeurs de Brassenoire',
-    'blackfathom deeps': 'Profondeurs de Brassenoire', 'stockades': 'Les Cachots', 'stocks': 'Les Cachots',
-    'the stockade': 'Les Cachots', 'stockade': 'Les Cachots', 'gnomer': 'Gnomeregan',
+    'blackfathom deeps': 'Profondeurs de Brassenoire', 'stockades': 'La Prison', 'stocks': 'La Prison',
+    'the stockade': 'La Prison', 'stockade': 'La Prison', 'gnomer': 'Gnomeregan',
     'gnomeregan': 'Gnomeregan', 'rfk': 'Kraal de Tranchebauge', 'razorfen kraul': 'Kraal de Tranchebauge',
     'sm': 'Monastère écarlate', 'scarlet monastery': 'Monastère écarlate',
     'sm gy': 'Monastère écarlate : cimetière', 'sm lib': 'Monastère écarlate : bibliothèque',
@@ -972,10 +996,10 @@ _PLACE_NOT_BEFORE = {"dm": r"(?!\s*(?:me|him|her|them|u|you|pls|plz)\b)"}
 LEX_PLACES_FOREIGN = {
     # noms allemands et espagnols ("TODESMINE" = Mortemines)
     'todesminen': 'Mortemines', 'todesmine': 'Mortemines', 'burg schattenfang': "Donjon d'Ombrecroc",
-    'das verlies': 'Les Cachots', 'verlies': 'Les Cachots', 'h\u00f6hlen des wehklagens': 'Cavernes des lamentations',
+    'das verlies': 'La Prison', 'verlies': 'La Prison', 'h\u00f6hlen des wehklagens': 'Cavernes des lamentations',
     'tiefschwarze grotte': 'Profondeurs de Brassenoire', 'scharlachrotes kloster': 'Monast\u00e8re \u00e9carlate',
     'flammenschlund': 'Gouffre de Ragefeu', 'minas de la muerte': 'Mortemines',
-    'castillo de colmillo oscuro': "Donjon d'Ombrecroc", 'las mazmorras': 'Les Cachots',
+    'castillo de colmillo oscuro': "Donjon d'Ombrecroc", 'las mazmorras': 'La Prison',
     'cuevas de los lamentos': 'Cavernes des lamentations', 'monasterio escarlata': 'Monast\u00e8re \u00e9carlate',
 }
 LEX_PLACES_EN = dict(LEX_PLACES)        # cles anglaises seulement (pour la table francais -> anglais)
@@ -1628,7 +1652,7 @@ LEX_FULL = {
     "ty": "merci", "thx": "merci", "thanks": "merci", "tyvm": "merci beaucoup",
     "thank you": "merci", "ty all": "merci à tous", "thanks all": "merci à tous",
     "np": "pas de souci", "no problem": "pas de souci", "yw": "de rien", "you're welcome": "de rien",
-    "hi": "salut", "hello": "bonjour", "hey": "salut", "yo": "salut", "hi all": "salut tout le monde",
+    "hi": "salut", "hello": "bonjour", "hey": "salut", "hi all": "salut tout le monde",
     "hello all": "bonjour à tous", "hey all": "salut tout le monde", "sup": "quoi de neuf",
     "bye": "au revoir", "cya": "à plus", "see ya": "à plus", "gn": "bonne nuit", "good night": "bonne nuit",
     "gm": "bonjour", "good morning": "bonjour",
@@ -1637,6 +1661,7 @@ LEX_FULL = {
     "lol": "mdr", "lmao": "mdr", "lmfao": "mdr", "rofl": "mdr", "haha": "haha", "xd": "xD",
     "brb": "je reviens", "afk": "absent (AFK)", "back": "de retour", "re": "re",   # dit aussi en francais : pas de traduction
     "un": "un",                             # seul, c'est du francais ("un" -> "ONU" par Google)
+    "yo": "yo",                             # salut familier, dit pareil en francais : pas de "-> salut"
     "omw": "j'arrive", "otw": "j'arrive", "coming": "j'arrive", "wait": "attends", "sec": "une seconde",
     "1 sec": "une seconde", "1 min": "une minute", "ready": "prêt", "rdy": "prêt", "r": "prêt",
     "go": "on y va", "lets go": "allez, on y va", "let's go": "allez, on y va",
@@ -1720,6 +1745,15 @@ LEX_PHRASES = [
 _TRADE_RE = re.compile(r"(?i)\b(?:wts|wtb|wtt|want to (?:buy|sell|trade)|each|ea|per|cod|price|selling|buying)\b")
 _PRICE_RE = re.compile(r"(?i)\b(\d+)\s?([gsc])\b")
 _PRICE_UNIT = {"g": "gold", "s": "silver", "c": "copper"}
+# Metier abrege suivi d'un niveau ("Any BS 215+ ?") -> nom entier ("blacksmith 215+"). Sans chiffre on ne touche
+# a rien ("bs" = aussi "n'importe quoi" en anglais).
+_PROF_ABBR = {"bs": "blacksmith", "lw": "leatherworker", "alch": "alchemist", "alchy": "alchemist",
+              "engi": "engineer", "eng": "engineer", "ench": "enchanter", "tailor": "tailor"}
+_PROF_RE = re.compile(r"(?i)\b(%s)(?=\s*\d{2,3}\s*\+?)" % "|".join(sorted(_PROF_ABBR, key=len, reverse=True)))
+# "q" en fin de phrase apres un mot = quete ("anyone for the attack q ?") ; ailleurs ("q up") = file d'attente
+_Q_END_RE = re.compile(r"(?i)(?<=[a-z\]])\s+q(?=\s*[?!.]*\s*$)")
+_LFG_PLACE_RE = re.compile(r"(?i)\b(lfg|lfm)\s+(?=(?:%s)\b)" % "|".join(
+    re.escape(k) for k in sorted(LEX_PLACES_EN, key=len, reverse=True)))
 
 # 3) Francais qui contient du jargon anglais ("un last tank et on part") : Google le prend pour de
 #    l'anglais et traduit "tank" par "reservoir". Si la phrase contient des mots francais sans
@@ -1816,6 +1850,13 @@ def lexicon_expand(text):
     """Remplace les abreviations par l'anglais complet (mots entiers seulement)."""
     for pat, repl in LEX_PHRASES:
         text = re.sub(pat, repl, text, flags=re.I)
+    # "LFG Stockades" -> "looking for a group for Stockades" ("lfg" seul devant un nom de donjon donnait
+    # "je recherche le groupe La Prison", comme si c'etait le nom du groupe)
+    text = _LFG_PLACE_RE.sub(lambda m: "looking for a group for " if m.group(1).lower() == "lfg"
+                             else "looking for more players for ", text)
+    text = _PROF_RE.sub(lambda m: _PROF_ABBR[m.group(1).lower()], text)
+    text = _Q_END_RE.sub(lambda m: m.group(0) if re.search(
+        r"(?i)\b(?:anyone|anybody|someone|who|u|you|we|i|pls|plz)$", text[:m.start()]) else " quest", text)
     if _TRADE_RE.search(text):
         text = _PRICE_RE.sub(lambda m: "%s %s" % (m.group(1), _PRICE_UNIT[m.group(2).lower()]), text)
 
@@ -1853,6 +1894,32 @@ def fix_words(src, trans, lang):
             trans = re.sub(r"\b%s" % a, b, trans)
             trans = re.sub(r"\b%s" % a.capitalize(), b.capitalize(), trans)
     return trans
+
+
+# Petites phrases etrangeres que Google traduit mal quand elles sont seules (souvent sans accents).
+# (motif du message entier, langue, {langue cible: traduction})
+FOREIGN_FULL = [
+    # "dobro dosly" (croate / serbe / bosnien "dobro dosli" = bienvenue) -> Google : "bien joue"
+    (r"dobro\s*do[s\u0161]l[iy]", "hr", {"fr": "bienvenue", "en": "welcome"}),
+]
+
+
+def foreign_full(text, target):
+    """-> (traduction, langue) si le message entier est une de ces phrases, sinon None."""
+    t = re.sub(r"[\s!?.,:;^)(*xXdDpP3<>-]+$", "", text.strip())     # smileys / ponctuation a la fin
+    for pat, lang, tr in FOREIGN_FULL:
+        if re.fullmatch(pat, t, flags=re.I) and target.lower() in tr:
+            return tr[target.lower()], lang
+    return None
+
+
+# Annonces automatiques de Questie ("★ Questie : Foulard en laine rouge : 10/10 pour [La couleur du Sang] !") :
+# le lien de quete est deja dans la langue du jeu et les chiffres se lisent seuls -> pas de traduction.
+_QUESTIE_RE = re.compile(r"^\s*(?:\{[^}]*\}\s*|[\u2605\u25cf\u25c6\u25b2\u263e\u25a0\u2716\u2620]\s*)*Questie\s*:", re.I)
+
+
+def is_questie(text):
+    return bool(_QUESTIE_RE.match(text or ""))
 
 
 def unknown_abbrev(text):
@@ -1998,6 +2065,14 @@ class App:
         except Exception:  # noqa
             pass
 
+    def _follow_cursor(self, _e=None):
+        """Le texte defile pour que la fin (la ou on ecrit) reste visible dans la case."""
+        try:
+            if self.out_entry.index("insert") >= self.out_entry.index("end"):
+                self.out_entry.xview_moveto(1.0)
+        except tk.TclError:
+            pass
+
     def take_keyboard(self, _e=None):
         """Clic dans "Ecrire" (ou sur un pseudo) : la fenetre prend le clavier pour que tu ecrives."""
         self.set_noactivate(False)
@@ -2130,8 +2205,10 @@ class App:
         self.reply_x = tk.Button(lf, text="\u2715", command=lambda: self.set_reply_to(None), bg=P, fg=T["muted"],
                                  activebackground=P, activeforeground=T["fg"], relief="flat", bd=0,
                                  highlightthickness=0, padx=2, pady=0, cursor="hand2", font=("Segoe UI", 8))
+        # width=1 : la case prend juste la place restante (avec sa largeur par defaut, dans une petite
+        # fenetre, une partie passait sous les boutons et le curseur sortait de la partie visible)
         self.out_entry = tk.Entry(out, bg=T["entry"], fg=T["fg"], insertbackground=T["fg"], relief="flat",
-                                  highlightthickness=0)
+                                  highlightthickness=0, width=1)
         self.out_entry.grid(row=0, column=1, sticky="ew", padx=(2, 0))
         # croix : efface vite le texte a traduire et le dernier resultat (touche Echap aussi)
         tk.Button(out, text="\u2715", command=self.clear_out, bg=T["entry"], fg=T["err"],
@@ -2156,6 +2233,7 @@ class App:
         self.out_entry.bind("<Return>", lambda e: self.send_out())
         self.out_entry.bind("<Button-1>", self.take_keyboard, add="+")
         self.out_entry.bind("<Escape>", lambda e: self.clear_out())
+        self.out_entry.bind("<KeyRelease>", self._follow_cursor, add="+")
         self.set_reply_to(getattr(self, "reply_to", None), quiet=True)
 
         grip = tk.Label(r, text="\u25e2", bg=T["bg"], fg=T["scroll_act"], font=("Segoe UI", 9))
@@ -2207,7 +2285,10 @@ class App:
     def add(self, *parts):
         """parts: (texte, tag...)"""
         t = self.text
-        at_end = t.yview()[1] >= 0.98
+        # on ne descend tout seul que si la toute derniere ligne est visible : avant (98 % du texte),
+        # avec un long historique, remonter de quelques messages comptait encore comme "en bas"
+        # "end-2l" : debut du dernier message (la toute derniere ligne, vide, n'est pas toujours affichee)
+        at_end = t.yview()[1] >= 0.999 or t.dlineinfo("end-2l") is not None or t.dlineinfo("end-1c") is not None
         t.configure(state="normal")
         for p in parts:
             self._insert_with_coins(p[0], p[1:])
@@ -2608,7 +2689,8 @@ class App:
                  (_("Se fermer quand WoW se ferme"), "autoclose"),
                  (_("Se cacher quand WoW n'est pas la fenetre active"), "follow_wow"),
                  (_("Langue de reponse automatique (dernier message etranger)"), "reply_lang_auto"),
-                 (_("Se cacher quand un menu du jeu s'ouvre (menu du tchat, clic droit)"), "hide_on_menu")]
+                 (_("Se cacher quand un menu du jeu s'ouvre (menu du tchat, clic droit)"), "hide_on_menu"),
+                 (_("Mises a jour automatiques (au lancement)"), "auto_update")]
         bv = {}
         row = len(fields)
         for lab, key in bools:
@@ -2924,10 +3006,14 @@ class App:
                 lang = "fr"                            # "re" : mot deja compris en francais, rien a ajouter
             elif lex:
                 trans, lang = lex, "en"           # lexique : pas d'appel a Google
+            elif not mine and foreign_full(judge, cfg["target"]):
+                trans, lang = foreign_full(judge, cfg["target"])      # "dobro dosly" -> "bienvenue"
             elif not mine and cfg["target"].lower() == "fr" and sure_french(judge):
                 lang = "fr"                            # deja en francais : pas d'appel a Google
             elif not mine and cfg["target"].lower() == "en" and (lexicon_full(judge.strip()) or sure_english(judge)):
                 lang = "en"                            # "lfm", "wts", "lfg/lfm" : jargon anglais, rien a traduire
+            elif is_questie(judge):
+                pass                                   # annonce de Questie : affichee telle quelle
             elif not mine and unknown_abbrev(judge):
                 pass                                   # "lfr" : abreviation inconnue, affichee telle quelle
             elif not mine and worth_translating(judge):
@@ -3013,13 +3099,20 @@ class App:
         threading.Thread(target=run, daemon=True).start()
 
     def update_countdown(self, n):
-        """Compte a rebours visible avant la relance (5, 4, 3...)."""
+        """Compte a rebours visible avant la relance (5, 4, 3...) : dans le bouton, la barre d'etat et
+        sous la case Ecrire, pour qu'on ne croie pas a un plantage quand la fenetre se ferme."""
+        self._updating = True
         if n <= 0:
             self.restart()
             return
         msg = _("Mise \u00e0 jour %s termin\u00e9e \u2713 Red\u00e9marrage dans %d s") % (getattr(self, "latest", ""), n)
         self.update_btn.config(text=msg, state="disabled")
         self.status.set(msg)
+        try:
+            self.out_result.config(text=msg + "  " + _("(le traducteur va se fermer puis se rouvrir tout seul)"),
+                                   fg=self.T["name"])
+        except tk.TclError:
+            pass
         self.root.after(1000, lambda: self.update_countdown(n - 1))
 
     def restart(self):
@@ -3040,7 +3133,8 @@ class App:
             while True:
                 item = self.outq.get_nowait()
                 if item[0] == "status":
-                    self.status.set(item[1])
+                    if not getattr(self, "_updating", False):   # pendant la mise a jour : on garde son message
+                        self.status.set(item[1])
                 elif item[0] == "msg":
                     self.show(*item[1:])
                 elif item[0] == "quit":
@@ -3067,10 +3161,14 @@ class App:
                     self.latest = item[1]
                     self.update_btn.config(text=_("Mettre \u00e0 jour (%s)") % item[1], state="normal")
                     self.update_btn.pack(side="left", padx=3, pady=4, after=self._clear_btn)
+                    # mise a jour automatique : seulement ici, au lancement (jamais en pleine partie)
+                    if self.cfg.get("auto_update", True):
+                        self.add((_("Nouvelle version %s : mise \u00e0 jour automatique...") % item[1] + "\n", "news"))
+                        self.do_update()
                 elif item[0] == "updated":
                     # on le dit avant de fermer : sinon la fenetre qui disparait ressemble a un plantage
                     self.add((_("Mise \u00e0 jour %s termin\u00e9e \u2713") % getattr(self, "latest", "") + "\n", "news"))
-                    self.update_countdown(5)
+                    self.update_countdown(10)
                 elif item[0] == "update_failed":
                     self.update_btn.config(text=_("Mise \u00e0 jour impossible : ouvrir la page"), state="normal",
                                            command=lambda: webbrowser.open(RELEASE_URL))
