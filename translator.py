@@ -41,7 +41,7 @@ try:
 except ImportError:  # pas sous Windows
     winsound = None
 
-VERSION = "1.9.5"
+VERSION = "1.9.6"
 # Verification de mise a jour : le fichier version.txt du depot contient le numero de la derniere version.
 VERSION_URL = "https://raw.githubusercontent.com/puenteur/Wow-traducteur/main/version.txt"
 KOFI_URL = "https://ko-fi.com/puenteur"
@@ -60,7 +60,8 @@ enchanting engineering cooking fishing mining herbalism skinning jewelcrafting i
 # Nouveautes affichees une fois dans la fenetre apres une mise a jour (pas au premier lancement).
 NEWS = {
     "fr": ["WoW Traducteur %s" % VERSION,
-           "- Nouveau en %s : le traducteur se met \u00e0 jour tout seul au lancement (avec un compte \u00e0 rebours) ; s'il manque Python, \u00ab Lancer le traducteur.bat \u00bb propose de l'installer ; symboles des pings Menace et Par ici ; marques de raid reconnues dans toutes les langues du jeu ; annonces de Questie non traduites ; la fen\u00eatre ne redescend plus quand tu lis plus haut ; case \u00ab \u00c9crire \u00bb corrig\u00e9e dans une petite fen\u00eatre ; meilleures traductions (La Prison, \u00c9olide, Comt\u00e9-du-Nord, chevalet de tannage, BS / LW + niveau, q = qu\u00eate, yo, dr, dobro do\u0161li). Mets aussi ChatFR \u00e0 jour." % VERSION,
+           "- Nouveau en %s : correction importante, le traducteur ne s'arr\u00eate plus d'afficher les messages apr\u00e8s une annonce de qu\u00eate de Questie ; s'il plante sur un message, il continue avec les suivants et note l'erreur dans erreurs.txt ; noms des joueurs \u00e0 la couleur de leur classe, comme dans le jeu (ton pseudo en gras) ; \u00e9motes en orange, exp\u00e9rience en bleu, changements de r\u00f4le en groupe ; la fen\u00eatre se cache quand la carte est ouverte en grand ; avertissement si ChatFR et le traducteur n'ont pas la m\u00eame version ; liens de qu\u00eate Questie nettoy\u00e9s ; \u00ab salty \u00bb traduit par \u00ab vex\u00e9 \u00bb. Mets aussi ChatFR \u00e0 jour." % VERSION,
+           "- 1.9.5 : le traducteur se met \u00e0 jour tout seul au lancement (avec un compte \u00e0 rebours) ; s'il manque Python, \u00ab Lancer le traducteur.bat \u00bb propose de l'installer ; symboles des pings Menace et Par ici ; marques de raid reconnues dans toutes les langues du jeu ; annonces de Questie non traduites ; la fen\u00eatre ne redescend plus quand tu lis plus haut ; case \u00ab \u00c9crire \u00bb corrig\u00e9e dans une petite fen\u00eatre ; meilleures traductions (La Prison, \u00c9olide, Comt\u00e9-du-Nord, chevalet de tannage, BS / LW + niveau, q = qu\u00eate, yo, dr, dobro do\u0161li). Mets aussi ChatFR \u00e0 jour.",
            "- 1.9.4 : mise \u00e0 jour en un clic (bouton \u00ab Mettre \u00e0 jour \u00bb) ; tes r\u00e9glages sont maintenant rang\u00e9s \u00e0 part (%APPDATA%\\WoW-Traducteur) et ne se perdent plus ; la fen\u00eatre se place sur le tchat de WoW (premier lancement, ou bouton dans les R\u00e9glages) et se cache quand un menu du jeu s'ouvre ; \u00ab \u2014 \u00bb replie la fen\u00eatre sur sa barre ; messages de l'h\u00f4tel des ventes ; meilleures traductions (WTB/WTS, prix, COD, unstuck).",
            "- La grande nouveaut\u00e9 : tout le traducteur existe en anglais. Au premier lancement, on choisit Fran\u00e7ais ou English ; en anglais, le tchat est traduit vers l'anglais. Pratique pour tes amis anglophones ! (changeable dans les R\u00e9glages)",
            "- 1.9.3 : le nom du canal devant les messages (Groupe, Guilde, Raid, Officier) ; tes messages reconnus tout seuls ; r\u00e9ponse \u00e0 un joueur fran\u00e7ais copi\u00e9e telle quelle ; phrase \u00e9crite dans une autre langue que le fran\u00e7ais bien traduite ; marques de raid ; liens de qu\u00eate Questie en texte simple (mets aussi ChatFR \u00e0 jour) ; fonctionne aussi avec une r\u00e9solution personnalis\u00e9e ou une \u00e9chelle de rendu r\u00e9duite ; le lanceur trouve mieux Python ; abr\u00e9viations mieux traduites (ty, lfr, slt, tlm...) ; ic\u00f4nes des pings (\u26a0 \u2691 \u2b07 \u2694).",
@@ -70,7 +71,8 @@ NEWS = {
            "- Fen\u00eatre des nouveaut\u00e9s apr\u00e8s chaque mise \u00e0 jour (celle-ci !).",
            "- Meilleures traductions : lfg/lfm, wts/wtb, Deadmines, jargon russe (\u041b\u0424\u0413), mots coll\u00e9s aux liens, petits messages en espagnol ou en letton, moins d'appels inutiles \u00e0 Google."],
     "en": ["WoW Traducteur %s" % VERSION,
-           "- New in %s: the translator now updates itself at launch (with a countdown); if Python is missing, \"Lancer le traducteur.bat\" offers to install it; Threat and Look ping symbols; raid marks recognized in every game language; Questie announcements no longer translated; the window no longer jumps down while you read older messages; \"Write\" box fixed in a small window; better translations (BS / LW + skill, q = quest, Skyborne, Northshire, Tanning Rack). Update ChatFR too." % VERSION,
+           "- New in %s: important fix, the translator no longer stops showing messages after a Questie quest announcement; if it fails on a message, it carries on with the next ones and writes the error to erreurs.txt; player names in their class color, like in the game (your name in bold); emotes in orange, experience in blue, group role changes; the window hides when the world map is open full size; warning if ChatFR and the translator are not the same version; cleaner Questie quest links; \"salty\" handled in French translations. Update ChatFR too." % VERSION,
+           "- 1.9.5: the translator now updates itself at launch (with a countdown); if Python is missing, \"Lancer le traducteur.bat\" offers to install it; Threat and Look ping symbols; raid marks recognized in every game language; Questie announcements no longer translated; the window no longer jumps down while you read older messages; \"Write\" box fixed in a small window; better translations (BS / LW + skill, q = quest, Skyborne, Northshire, Tanning Rack). Update ChatFR too.",
            "- 1.9.4: one-click update (\"Update\" button); your settings are now stored separately (%APPDATA%\\WoW-Traducteur) and are no longer lost; the window places itself over the WoW chat (first launch, or button in Settings) and hides when a game menu opens; \"\u2014\" rolls the window up to its bar; auction house messages; better translations (WTB/WTS, prices, COD, unstuck).",
            "- The big one: the whole translator is now available in English. Choose Fran\u00e7ais or English at first launch; in English, the chat is translated into English (can be changed in Settings).",
            "- 1.9.3: channel name in front of messages (Party, Guild, Raid, Officer); your own messages recognized automatically; replies in your own language copied as is; text written in another language than English translated correctly; raid marks; Questie quest links in plain text (update ChatFR too); also works with a custom resolution or a lower render scale; the launcher finds Python more reliably; better abbreviations (ty, lfr, slt, tlm...); ping icons (\u26a0 \u2691 \u2b07 \u2694).",
@@ -97,6 +99,24 @@ def _data_dir():
 
 
 DATA_DIR = _data_dir()
+ERROR_LOG = os.path.join(DATA_DIR, "erreurs.txt")
+
+
+def log_error(where, item=None, tb=True):
+    """Note une erreur dans erreurs.txt (dossier des reglages) : a envoyer pour qu'on corrige la cause."""
+    try:
+        import traceback
+        if os.path.exists(ERROR_LOG) and os.path.getsize(ERROR_LOG) > 300000:
+            os.replace(ERROR_LOG, ERROR_LOG + ".ancien")   # pas de fichier qui grossit sans fin
+        with open(ERROR_LOG, "a", encoding="utf-8") as f:
+            f.write("=== %s  WoW Traducteur %s  (%s)\n" % (time.strftime("%Y-%m-%d %H:%M:%S"), VERSION, where))
+            if item is not None:
+                f.write("Message : %r\n" % (item,))
+            if tb:
+                f.write(traceback.format_exc())
+            f.write("\n")
+    except Exception:  # noqa
+        pass
 for _name in ("translator_config.json", "infobulles.json"):   # 1.9.3 et avant : reglages dans le dossier
     _old, _new = os.path.join(HERE, _name), os.path.join(DATA_DIR, _name)
     if DATA_DIR != HERE and os.path.exists(_old) and not os.path.exists(_new):
@@ -181,11 +201,12 @@ COLORS = {
     "whisper_out": "#ff8bd8",                                     # tes chuchotements envoyes
     "faction": "#8080ff",                                         # reputation (bleu, comme dans WoW)
     "ping": "#7fb2ff",                                            # pings du groupe (couleur du groupe)
+    "emote": "#ff8040", "temote": "#ff8040",                      # emotes (/e, /genou...) : orange, comme dans WoW
 }
 # Nom du canal affiche devant le pseudo, comme dans WoW : (Groupe) Nom: ...
 KIND_LABEL = {"party": ("Groupe", "Party"), "raid": ("Raid", "Raid"),
               "guild": ("Guilde", "Guild"), "officer": ("Officier", "Officer")}
-NO_TRANSLATE = ("npc", "system", "loot", "spent", "whisper_out", "faction", "ping")   # ping : texte du jeu
+NO_TRANSLATE = ("npc", "system", "temote", "loot", "spent", "whisper_out", "faction", "ping")   # ping : texte du jeu
 # Pieces dans les messages du jeu ("11 pa 32 pc") : petite icone ronde a la place de po / pa / pc.
 # Seulement pour les messages du jeu : dans le tchat des joueurs, "2pc" veut souvent dire "2 pieces".
 COIN_KINDS = ("loot", "spent", "system")
@@ -201,6 +222,12 @@ UI = "fr"
 
 EN = {
     "Demarrage...": "Starting...",
+    "Bienvenue dans WoW Traducteur %s !": "Welcome to WoW Traducteur %s!",
+    "Le traducteur est gratuit. Pour me soutenir : ": "The translator is free. To support me: ",
+    "\u26a0 ChatFR est en %s, le traducteur en %s : mets ChatFR \u00e0 jour (CurseForge), puis relance le jeu.":
+        "\u26a0 ChatFR is %s, the translator is %s: update ChatFR (CurseForge), then restart the game.",
+    "\u26a0 ChatFR est en %s, le traducteur en %s : mets le traducteur \u00e0 jour (bouton dans les R\u00e9glages).":
+        "\u26a0 ChatFR is %s, the translator is %s: update the translator (button in Settings).",
     "⚙ Réglages": "⚙ Settings",
     "Effacer": "Clear",
     "Clique sur un message pour repondre dans sa langue.": "Click a message to reply in its language.",
@@ -461,7 +488,8 @@ THEMES = {
                                "guild": "#2a7a1e", "officer": "#1f6016", "whisper": "#a8327e",
                                "channel": "#4a3f2a", "lfg": "#8a6a00", "other": "#4a3f2a",
                                "npc": "#6a5a00", "system": "#7a6a00", "loot": "#1d7a00", "spent": "#c0261f",
-                               "whisper_out": "#a8327e", "faction": "#3a3ab0", "ping": "#1f5fae"},
+                               "whisper_out": "#a8327e", "faction": "#3a3ab0", "ping": "#1f5fae",
+                               "emote": "#b5530e", "temote": "#b5530e"},
                        links={"q": "#8a6a00", "q0": "#6e6e6e", "q1": "#1d7a00", "q2": "#8a6a00", "q3": "#b5530e", "q4": "#c0261f", "i0": "#6e6e6e", "i1": "#2b2416", "i2": "#1d7a00", "i3": "#0058b0",
                               "i4": "#7a2fc0", "i5": "#b85a00", "i6": "#8a7440", "i7": "#0080a8", "i8": "#0080a8",
                               "s": "#0070a8", "e": "#8a6a00", "a": "#8a7a00", "o": "#8a6a00"}),
@@ -1338,6 +1366,10 @@ def locate_bridge(buf, width, height):
     return ox, oy, p
 
 
+# Couleur de classe des joueurs, envoyee par ChatFR ("say#C69B6D") : pseudo -> "#c69b6d"
+NAME_COLS = {}
+
+
 def parse_bridge_record(payload):
     """payload = 'kind\\x1fcanal\\x1fauteur\\x1ftexte' -> tuple comme parse()."""
     try:
@@ -1350,12 +1382,34 @@ def parse_bridge_record(payload):
         return time.strftime("%H:%M"), "geo", chan, "", ""
     if kind == "ui":                     # menu du jeu ouvert ("1") ou ferme ("0") (ChatFR 1.9.4)
         return time.strftime("%H:%M"), "ui", chan, "", ""
+    if kind == "ver":                    # version de ChatFR (ChatFR 1.9.6)
+        return time.strftime("%H:%M"), "ver", chan, "", ""
     if not text.strip():
         return None
+    kind, _sep, ncol = kind.partition("#")
+    if ncol and re.fullmatch(r"[0-9A-Fa-f]{6}", ncol) and author.strip():
+        NAME_COLS[clean_name(author)] = "#" + ncol.lower()
     low = chan.lower()
     if kind == "channel" and ("looking" in low or "recherche" in low or "suche" in low):
         kind = "lfg"
     return time.strftime("%H:%M"), kind, chan, clean_name(author), text
+
+
+def color_name_in(spans, author, ctag):
+    """Premiere apparition du pseudo dans le texte (hors liens) -> morceau avec la couleur de classe."""
+    out, done = [], False
+    for seg, code in spans:
+        i = -1 if (done or code) else seg.find(author)
+        if i < 0:
+            out.append((seg, code))
+            continue
+        if seg[:i]:
+            out.append((seg[:i], code))
+        out.append((author, ctag))
+        if seg[i + len(author):]:
+            out.append((seg[i + len(author):], code))
+        done = True
+    return out
 
 
 _gdi_ready = False
@@ -1881,6 +1935,9 @@ def is_coin_only(text):
 WORD_FIXES = [
     (r"(?i)\bgild", "is", [("valeurs", "guildes"), ("valeur", "guilde"), ("values", "guilds"), ("value", "guild")]),
     (r"(?i)\bunstuck\b", "en", [("d\u00e9coll", "d\u00e9bloqu")]),
+    # "salty" (argot de joueur) = vexe, aigri ; Google : "sale" (le gout). Les plus longs d'abord.
+    (r"(?i)\bsalty\b", "en", [("sal\u00e9es", "vex\u00e9es"), ("sal\u00e9e", "vex\u00e9e"),
+                              ("sal\u00e9s", "vex\u00e9s"), ("sal\u00e9", "vex\u00e9")]),
 ]
 
 
@@ -1915,11 +1972,14 @@ def foreign_full(text, target):
 
 # Annonces automatiques de Questie ("★ Questie : Foulard en laine rouge : 10/10 pour [La couleur du Sang] !") :
 # le lien de quete est deja dans la langue du jeu et les chiffres se lisent seuls -> pas de traduction.
-_QUESTIE_RE = re.compile(r"^\s*(?:\{[^}]*\}\s*|[\u2605\u25cf\u25c6\u25b2\u263e\u25a0\u2716\u2620]\s*)*Questie\s*:", re.I)
+# Annonce de Questie ("{rt1} Questie : ..."). Nom different du motif des liens Questie plus haut :
+# en 1.9.5 les deux s'appelaient _QUESTIE_RE, celui-ci remplacait l'autre et chaque annonce de Questie
+# faisait planter le traitement des messages (plus rien ne s'affichait ensuite).
+_QUESTIE_ANNOUNCE_RE = re.compile(r"^\s*(?:\{[^}]*\}\s*|[\u2605\u25cf\u25c6\u25b2\u263e\u25a0\u2716\u2620]\s*)*Questie\s*:", re.I)
 
 
 def is_questie(text):
-    return bool(_QUESTIE_RE.match(text or ""))
+    return bool(_QUESTIE_ANNOUNCE_RE.match(text or ""))
 
 
 def unknown_abbrev(text):
@@ -1954,6 +2014,13 @@ class App:
         self._tips_dirty = False
         self.T = THEMES.get(str(self.cfg.get("theme", "")), _SOMBRE)
         self.root = tk.Tk()
+        # erreur dans un bouton ou une minuterie de la fenetre : notee dans erreurs.txt
+        def _tk_err(exc, val, tb):
+            try:
+                raise val
+            except Exception:  # noqa
+                log_error("fenetre")
+        self.root.report_callback_exception = _tk_err
         self.root.title("WoW Traducteur")
         self.root.configure(bg=self.T["bg"])
         self.root.overrideredirect(True)      # pas de barre de titre Windows : on a la notre
@@ -1990,6 +2057,7 @@ class App:
         # cliquer sur la fenetre ne prend plus le clavier a WoW (seule la zone "Ecrire" le prend)
         self.root.bind("<FocusOut>", lambda e: self.root.after(80, self._give_back_keyboard), add="+")
         self.root.after(300, lambda: self.set_noactivate(True))
+        self.show_welcome()                          # tout en haut, avant les messages
         self.root.after(1500, self.show_news)
         if os.environ.get("WOWTRAD_UPDATED"):        # relance juste apres une mise a jour en un clic
             self.root.after(300, self.show_updated)
@@ -2182,6 +2250,13 @@ class App:
         self.text.tag_configure("me", foreground=T["me"])
         self.text.tag_configure("name", foreground=T["name"],    # apres les canaux : la couleur du pseudo prime
                                 font=("Segoe UI", int(self.cfg["font_size"]), "bold"))
+        # ton propre pseudo : en gras comme les autres, mais pas "cliquable pour repondre"
+        self.text.tag_configure("myname", font=("Segoe UI", int(self.cfg["font_size"]), "bold"))
+        # lien Ko-fi du message d'accueil (au lancement du traducteur seulement, jamais dans le jeu)
+        self.text.tag_configure("kofi", foreground="#6fa8ff" if not T["colors"] else "#0058b0", underline=True)
+        self.text.tag_bind("kofi", "<Button-1>", lambda e: webbrowser.open(KOFI_URL))
+        self.text.tag_bind("kofi", "<Enter>", lambda e: self.text.config(cursor="hand2"))
+        self.text.tag_bind("kofi", "<Leave>", lambda e: self.text.config(cursor=""))
         self.text.tag_configure("news", foreground=T["name"], font=("Segoe UI", int(self.cfg["font_size"]), "bold"))
         for i, (_w, _s, c) in enumerate(PING_ICONS):             # icones des pings, dans leur couleur
             self.text.tag_configure("ping_%d" % i, foreground=c)
@@ -2560,6 +2635,27 @@ class App:
                     self.out_result.config(text=_("Langue de reponse : %s") % lang)
                 return
 
+    def show_welcome(self):
+        """Message d'accueil a chaque lancement : la version. Le lien Ko-fi seulement au premier
+        lancement d'une nouvelle version (apres une mise a jour), pas tous les jours."""
+        self.add((_("Bienvenue dans WoW Traducteur %s !") % VERSION + "\n", "news"))
+        if not self._first_run and self.cfg.get("last_version") != VERSION:
+            self.add((_("Le traducteur est gratuit. Pour me soutenir : "), "badge"),
+                     (KOFI_URL.replace("https://", ""), "kofi"), ("\n", "badge"))
+
+    def on_chatfr_ver(self, ver):
+        """ChatFR envoie sa version toutes les 30 s : si elle differe de la notre, on previent (une fois)."""
+        def num(v):
+            return tuple(int(x) for x in re.findall(r"\d+", v))
+        if not ver or num(ver) == num(VERSION) or getattr(self, "_ver_warned", None) == ver:
+            return
+        self._ver_warned = ver
+        if num(ver) < num(VERSION):
+            msg = _("\u26a0 ChatFR est en %s, le traducteur en %s : mets ChatFR \u00e0 jour (CurseForge), puis relance le jeu.")
+        else:
+            msg = _("\u26a0 ChatFR est en %s, le traducteur en %s : mets le traducteur \u00e0 jour (bouton dans les R\u00e9glages).")
+        self.add((msg % (ver, VERSION) + "\n", "err"))
+
     def show_updated(self):
         old = os.environ.pop("WOWTRAD_UPDATED", "")
         self.add((_("\u2713 Mise \u00e0 jour termin\u00e9e : %s \u2192 %s. Pense aussi \u00e0 mettre ChatFR \u00e0 jour (CurseForge).")
@@ -2749,6 +2845,7 @@ class App:
             self.cfg["theme"] = tv.get()
             self.text.configure(font=("Segoe UI", self.cfg["font_size"]))
             self.text.tag_configure("name", font=("Segoe UI", self.cfg["font_size"], "bold"))
+            self.text.tag_configure("myname", font=("Segoe UI", self.cfg["font_size"], "bold"))
             self.apply_window_cfg()
             save_config(self.cfg)
             # langue automatique desactivee : on retire "(auto, d'apres ...)" reste affiche sous la case
@@ -2890,6 +2987,8 @@ class App:
                             self.outq.put(("geo", p[2], x, y))
                         elif p and p[1] == "ui":
                             self.outq.put(("wowmenu", p[2] == "1"))
+                        elif p and p[1] == "ver":
+                            self.outq.put(("chatfr_ver", p[2]))
                         elif p:
                             nmsg += 1
                             self.nparsed += 1
@@ -2943,119 +3042,130 @@ class App:
 
     # ---- traduction (thread) ----------------------------------------------
     def worker(self):
+        """Traite les messages un par un. Si un message fait planter le traitement, on note l'erreur
+        (erreurs.txt) et on passe au suivant : avant, un seul message bloquait tout jusqu'au redemarrage."""
         while not self.stop:
             try:
-                hhmm, kind, chan, author, text = self.inq.get(timeout=0.5)
+                item = self.inq.get(timeout=0.5)
             except queue.Empty:
                 continue
-            me_mark = chan.endswith("\u00a0")          # ChatFR marque tes propres messages
-            chan = chan.rstrip("\u00a0")
-            cfg = self.cfg
-            raw = clean_questie(replace_raid_marks(wow_grammar(text)))
-            text, _spans = split_links(raw)
-            low_chan = chan.lower()
-            hidden = [h.strip().lower() for h in cfg["hidden"].split(",") if h.strip()]
-            if any(h in low_chan for h in hidden):
-                continue
-            if kind in NO_TRANSLATE:
-                # PNJ, systeme, butin : texte du jeu, deja dans sa langue -> affiche tel quel
-                self.outq.put(("msg", hhmm, kind, chan, author, text, None, "?", False, False, raw))
-                continue
-            me = cfg["my_name"].strip().lower()
-            mine = me_mark or (bool(me) and author.lower() == me)
-            low = text.lower()
-            alert = False
-            if not mine:
-                if me and me in low:
-                    alert = True
-                for kw in cfg["keywords"].split(","):
-                    kw = kw.strip().lower()
-                    if kw and kw in low:
-                        alert = True
-            trans, lang = None, "?"
-            # Liens ([Quete], [Objet]) : leur nom est deja dans la langue du jeu. On juge la langue et on
-            # traduit SANS eux ("[Controler la population des raptors] lfm" n'est pas du francais) :
-            # chaque lien devient un jeton remis tel quel apres Google.
-            has_links = any(c for _, c in _spans)
-            outside_links = "".join(seg for seg, code in _spans if not code)
-            judge = outside_links if has_links else text
-            link_segs = [seg for seg, code in _spans if code]
-            gtext = "".join(seg if not code else "Zl%dx" % link_segs.index(seg) for seg, code in _spans) \
-                if has_links else text
-            if has_links:   # "[Enchantement]dispo" : jeton colle au mot -> Google ne lit plus "dispo"
-                gtext = re.sub(r"(?<=\w)(Zl\d+x)", r" \1", re.sub(r"(Zl\d+x)(?=\w)", r"\1 ", gtext))
+            self._busy = (time.time(), item)
+            try:
+                self.handle_message(*item)
+            except Exception:  # noqa
+                log_error("traitement du message", item)
+            finally:
+                self._busy = None
 
-            def relink(t):
-                if not t or not has_links:
-                    return t
-                for i, seg in enumerate(link_segs):
-                    t = re.sub(r"Zl%dx" % i, lambda _m, sg=seg: sg, t, flags=re.I)
+    def handle_message(self, hhmm, kind, chan, author, text):
+        me_mark = chan.endswith("\u00a0")          # ChatFR marque tes propres messages
+        chan = chan.rstrip("\u00a0")
+        cfg = self.cfg
+        raw = clean_questie(replace_raid_marks(wow_grammar(text)))
+        text, _spans = split_links(raw)
+        low_chan = chan.lower()
+        hidden = [h.strip().lower() for h in cfg["hidden"].split(",") if h.strip()]
+        if any(h in low_chan for h in hidden):
+            return
+        if kind in NO_TRANSLATE:
+            # PNJ, systeme, butin : texte du jeu, deja dans sa langue -> affiche tel quel
+            self.outq.put(("msg", hhmm, kind, chan, author, text, None, "?", False, False, raw))
+            return
+        me = cfg["my_name"].strip().lower()
+        mine = me_mark or (bool(me) and author.lower() == me)
+        low = text.lower()
+        alert = False
+        if not mine:
+            if me and me in low:
+                alert = True
+            for kw in cfg["keywords"].split(","):
+                kw = kw.strip().lower()
+                if kw and kw in low:
+                    alert = True
+        trans, lang = None, "?"
+        # Liens ([Quete], [Objet]) : leur nom est deja dans la langue du jeu. On juge la langue et on
+        # traduit SANS eux ("[Controler la population des raptors] lfm" n'est pas du francais) :
+        # chaque lien devient un jeton remis tel quel apres Google.
+        has_links = any(c for _, c in _spans)
+        outside_links = "".join(seg for seg, code in _spans if not code)
+        judge = outside_links if has_links else text
+        link_segs = [seg for seg, code in _spans if code]
+        gtext = "".join(seg if not code else "Zl%dx" % link_segs.index(seg) for seg, code in _spans) \
+            if has_links else text
+        if has_links:   # "[Enchantement]dispo" : jeton colle au mot -> Google ne lit plus "dispo"
+            gtext = re.sub(r"(?<=\w)(Zl\d+x)", r" \1", re.sub(r"(Zl\d+x)(?=\w)", r"\1 ", gtext))
+
+        def relink(t):
+            if not t or not has_links:
                 return t
-            lex = None
-            if not mine and cfg["target"].lower() == "fr":
-                lex = lexicon_full(judge.strip())
-                outs = [seg for seg, code in _spans if not code and seg.strip()]
-                if lex and has_links:
-                    # "[Quete] lfm" -> "[Quete] cherche du monde" (un seul morceau de texte hors liens)
-                    lex = relink(gtext.replace(outs[0].strip(), lex, 1)) if len(outs) == 1 else None
-            if is_coin_only(text):
-                pass                                   # "100 po" : affiche tel quel, sans traduction
-            elif has_links and not worth_translating(outside_links):
-                pass                                   # seulement des liens ("[Quete] ?") : rien a traduire
-            elif lex and lex.strip().lower() == judge.strip().lower():
-                lang = "fr"                            # "re" : mot deja compris en francais, rien a ajouter
-            elif lex:
-                trans, lang = lex, "en"           # lexique : pas d'appel a Google
-            elif not mine and foreign_full(judge, cfg["target"]):
-                trans, lang = foreign_full(judge, cfg["target"])      # "dobro dosly" -> "bienvenue"
-            elif not mine and cfg["target"].lower() == "fr" and sure_french(judge):
-                lang = "fr"                            # deja en francais : pas d'appel a Google
-            elif not mine and cfg["target"].lower() == "en" and (lexicon_full(judge.strip()) or sure_english(judge)):
-                lang = "en"                            # "lfm", "wts", "lfg/lfm" : jargon anglais, rien a traduire
-            elif is_questie(judge):
-                pass                                   # annonce de Questie : affichee telle quelle
-            elif not mine and unknown_abbrev(judge):
-                pass                                   # "lfr" : abreviation inconnue, affichee telle quelle
-            elif not mine and worth_translating(judge):
-                try:
-                    src_text = ru_slang(gtext)
-                    if cfg["target"].lower() != "fr":
-                        src_text = fr_slang(src_text)      # argot francais ("pex", "slt", "tlm") avant Google
-                    trans, lang = google_translate(fr_mix_fix(src_text), cfg["target"])
-                    if lang == "en" and cfg["target"].lower() == "fr":
-                        exp = lexicon_expand(gtext)
-                        if exp != gtext or has_protected_name(gtext, cfg["target"]):
-                            # abreviations / noms propres : on retraduit la phrase developpee
-                            trans, _x = google_translate_safe(exp, cfg["target"], source="en")
-                    elif lang not in ("?", "") and has_protected_name(gtext, cfg["target"]):
-                        trans, _x = google_translate_safe(gtext, cfg["target"], source=lang)
-                    if unreliable_detection(judge, lang):
-                        # 2-3 mots, langue improbable (ex. "more for hogger" -> norvegien) :
-                        # francais mal ecrit, sinon on reessaie en supposant de l'anglais
-                        first = (trans, lang)
-                        trans, lang = None, "?"
-                        if looks_french(judge):
-                            lang = "fr"
-                        else:
-                            t2, _x = google_translate_safe(lexicon_expand(gtext), cfg["target"], source="en")
-                            if t2 and t2.strip().lower() != gtext.strip().lower():
-                                trans, lang = t2, "en"
-                            elif first[0] and first[0].strip().lower() != gtext.strip().lower():
-                                # pas de l'anglais non plus ("A TE IR KADS LATVIETIS?" = letton) :
-                                # on garde la premiere traduction de Google
-                                trans, lang = first
-                    trans = relink(trans)
-                    trans = fix_words(judge, trans, lang)
-                except Exception as e:  # noqa
-                    # affiche l'erreur sous le message (la barre d'etat est vite ecrasee par le pont)
-                    trans, lang = _("\u26a0 traduction impossible : %s") % err_text(e), "?"
-            if trans and not trans.startswith("\u26a0") and near_same(trans, text):
-                # "traduction" identique au message ("lfg/lfm" pris pour de l'allemand) : rien a traduire,
-                # c'est deja lisible dans ta langue -> pas de ligne en double, badge de ta langue
-                trans, lang = None, "?"     # pas de badge : on ne sait pas vraiment quelle langue c'etait
-            if lang == "en" and re.search("[\u0400-\u04ff]", judge):
-                lang = "ru"                            # "ЛФГ ТЮРЬМА" : jargon remplace, mais le joueur ecrit en russe
-            self.outq.put(("msg", hhmm, kind, chan, author, text, trans, lang, alert, mine, raw))
+            for i, seg in enumerate(link_segs):
+                t = re.sub(r"Zl%dx" % i, lambda _m, sg=seg: sg, t, flags=re.I)
+            return t
+        lex = None
+        if not mine and cfg["target"].lower() == "fr":
+            lex = lexicon_full(judge.strip())
+            outs = [seg for seg, code in _spans if not code and seg.strip()]
+            if lex and has_links:
+                # "[Quete] lfm" -> "[Quete] cherche du monde" (un seul morceau de texte hors liens)
+                lex = relink(gtext.replace(outs[0].strip(), lex, 1)) if len(outs) == 1 else None
+        if is_coin_only(text):
+            pass                                   # "100 po" : affiche tel quel, sans traduction
+        elif has_links and not worth_translating(outside_links):
+            pass                                   # seulement des liens ("[Quete] ?") : rien a traduire
+        elif lex and lex.strip().lower() == judge.strip().lower():
+            lang = "fr"                            # "re" : mot deja compris en francais, rien a ajouter
+        elif lex:
+            trans, lang = lex, "en"           # lexique : pas d'appel a Google
+        elif not mine and foreign_full(judge, cfg["target"]):
+            trans, lang = foreign_full(judge, cfg["target"])      # "dobro dosly" -> "bienvenue"
+        elif not mine and cfg["target"].lower() == "fr" and sure_french(judge):
+            lang = "fr"                            # deja en francais : pas d'appel a Google
+        elif not mine and cfg["target"].lower() == "en" and (lexicon_full(judge.strip()) or sure_english(judge)):
+            lang = "en"                            # "lfm", "wts", "lfg/lfm" : jargon anglais, rien a traduire
+        elif is_questie(judge):
+            pass                                   # annonce de Questie : affichee telle quelle
+        elif not mine and unknown_abbrev(judge):
+            pass                                   # "lfr" : abreviation inconnue, affichee telle quelle
+        elif not mine and worth_translating(judge):
+            try:
+                src_text = ru_slang(gtext)
+                if cfg["target"].lower() != "fr":
+                    src_text = fr_slang(src_text)      # argot francais ("pex", "slt", "tlm") avant Google
+                trans, lang = google_translate(fr_mix_fix(src_text), cfg["target"])
+                if lang == "en" and cfg["target"].lower() == "fr":
+                    exp = lexicon_expand(gtext)
+                    if exp != gtext or has_protected_name(gtext, cfg["target"]):
+                        # abreviations / noms propres : on retraduit la phrase developpee
+                        trans, _x = google_translate_safe(exp, cfg["target"], source="en")
+                elif lang not in ("?", "") and has_protected_name(gtext, cfg["target"]):
+                    trans, _x = google_translate_safe(gtext, cfg["target"], source=lang)
+                if unreliable_detection(judge, lang):
+                    # 2-3 mots, langue improbable (ex. "more for hogger" -> norvegien) :
+                    # francais mal ecrit, sinon on reessaie en supposant de l'anglais
+                    first = (trans, lang)
+                    trans, lang = None, "?"
+                    if looks_french(judge):
+                        lang = "fr"
+                    else:
+                        t2, _x = google_translate_safe(lexicon_expand(gtext), cfg["target"], source="en")
+                        if t2 and t2.strip().lower() != gtext.strip().lower():
+                            trans, lang = t2, "en"
+                        elif first[0] and first[0].strip().lower() != gtext.strip().lower():
+                            # pas de l'anglais non plus ("A TE IR KADS LATVIETIS?" = letton) :
+                            # on garde la premiere traduction de Google
+                            trans, lang = first
+                trans = relink(trans)
+                trans = fix_words(judge, trans, lang)
+            except Exception as e:  # noqa
+                # affiche l'erreur sous le message (la barre d'etat est vite ecrasee par le pont)
+                trans, lang = _("\u26a0 traduction impossible : %s") % err_text(e), "?"
+        if trans and not trans.startswith("\u26a0") and near_same(trans, text):
+            # "traduction" identique au message ("lfg/lfm" pris pour de l'allemand) : rien a traduire,
+            # c'est deja lisible dans ta langue -> pas de ligne en double, badge de ta langue
+            trans, lang = None, "?"     # pas de badge : on ne sait pas vraiment quelle langue c'etait
+        if lang == "en" and re.search("[\u0400-\u04ff]", judge):
+            lang = "ru"                            # "ЛФГ ТЮРЬМА" : jargon remplace, mais le joueur ecrit en russe
+        self.outq.put(("msg", hhmm, kind, chan, author, text, trans, lang, alert, mine, raw))
 
     def check_update(self):
         """Une seule requete au demarrage. Sans Internet ou si GitHub ne repond pas : rien."""
@@ -3132,52 +3242,77 @@ class App:
         try:
             while True:
                 item = self.outq.get_nowait()
-                if item[0] == "status":
-                    if not getattr(self, "_updating", False):   # pendant la mise a jour : on garde son message
-                        self.status.set(item[1])
-                elif item[0] == "msg":
-                    self.show(*item[1:])
-                elif item[0] == "quit":
-                    self.on_close()
-                    return
-                elif item[0] == "out":
-                    self.show_out(*item[1:])
-                elif item[0] == "geo":
-                    self.on_geo(*item[1:])
-                elif item[0] == "wowmenu":
-                    self.on_wow_menu(item[1])
-                elif item[0] == "tip":
-                    key = item[1].strip().lower()
-                    self.tips.pop(key, None)
-                    self.tips[key] = [l for l in item[2].split("\x1e") if l.strip()]
-                    while len(self.tips) > 3000:              # garde les plus recents
-                        self.tips.pop(next(iter(self.tips)))
-                    if not self._tips_dirty:                  # enregistre au plus toutes les 5 s
-                        self._tips_dirty = True
-                        self.root.after(5000, self.save_tips)
-                elif item[0] == "wowfront":
-                    self.follow_wow(item[1])
-                elif item[0] == "update":
-                    self.latest = item[1]
-                    self.update_btn.config(text=_("Mettre \u00e0 jour (%s)") % item[1], state="normal")
-                    self.update_btn.pack(side="left", padx=3, pady=4, after=self._clear_btn)
-                    # mise a jour automatique : seulement ici, au lancement (jamais en pleine partie)
-                    if self.cfg.get("auto_update", True):
-                        self.add((_("Nouvelle version %s : mise \u00e0 jour automatique...") % item[1] + "\n", "news"))
-                        self.do_update()
-                elif item[0] == "updated":
-                    # on le dit avant de fermer : sinon la fenetre qui disparait ressemble a un plantage
-                    self.add((_("Mise \u00e0 jour %s termin\u00e9e \u2713") % getattr(self, "latest", "") + "\n", "news"))
-                    self.update_countdown(10)
-                elif item[0] == "update_failed":
-                    self.update_btn.config(text=_("Mise \u00e0 jour impossible : ouvrir la page"), state="normal",
-                                           command=lambda: webbrowser.open(RELEASE_URL))
-                    self.status.set(_("Mise \u00e0 jour impossible : %s") % item[1])
+                try:
+                    if self.poll_item(item):
+                        return
+                except Exception:  # noqa
+                    log_error("affichage", item)
         except queue.Empty:
             pass
+        self.check_stuck()
+        self._poll_rest()
+
+    def check_stuck(self):
+        """Traitement bloque plus de 30 s sur le meme message (service de traduction qui ne repond
+        plus...) : on le note une fois dans erreurs.txt."""
+        busy = getattr(self, "_busy", None)
+        if busy and time.time() - busy[0] > 30 and getattr(self, "_stuck_logged", None) is not busy:
+            self._stuck_logged = busy
+            log_error("traitement bloque depuis plus de 30 s", busy[1], tb=False)
+
+    def poll_item(self, item):
+        """Un element de la file d'affichage. Renvoie True si le traducteur se ferme."""
+        if item[0] == "status":
+            if not getattr(self, "_updating", False):   # pendant la mise a jour : on garde son message
+                self.status.set(item[1])
+        elif item[0] == "msg":
+            self.show(*item[1:])
+        elif item[0] == "quit":
+            self.on_close()
+            return True
+        elif item[0] == "out":
+            self.show_out(*item[1:])
+        elif item[0] == "geo":
+            self.on_geo(*item[1:])
+        elif item[0] == "wowmenu":
+            self.on_wow_menu(item[1])
+        elif item[0] == "chatfr_ver":
+            self.on_chatfr_ver(item[1])
+        elif item[0] == "tip":
+            key = item[1].strip().lower()
+            self.tips.pop(key, None)
+            self.tips[key] = [l for l in item[2].split("\x1e") if l.strip()]
+            while len(self.tips) > 3000:              # garde les plus recents
+                self.tips.pop(next(iter(self.tips)))
+            if not self._tips_dirty:                  # enregistre au plus toutes les 5 s
+                self._tips_dirty = True
+                self.root.after(5000, self.save_tips)
+        elif item[0] == "wowfront":
+            self.follow_wow(item[1])
+        elif item[0] == "update":
+            self.latest = item[1]
+            self.update_btn.config(text=_("Mettre \u00e0 jour (%s)") % item[1], state="normal")
+            self.update_btn.pack(side="left", padx=3, pady=4, after=self._clear_btn)
+            # mise a jour automatique : seulement ici, au lancement (jamais en pleine partie)
+            if self.cfg.get("auto_update", True):
+                self.add((_("Nouvelle version %s : mise \u00e0 jour automatique...") % item[1] + "\n", "news"))
+                self.do_update()
+        elif item[0] == "updated":
+            # on le dit avant de fermer : sinon la fenetre qui disparait ressemble a un plantage
+            self.add((_("Mise \u00e0 jour %s termin\u00e9e \u2713") % getattr(self, "latest", "") + "\n", "news"))
+            self.update_countdown(10)
+        elif item[0] == "update_failed":
+            self.update_btn.config(text=_("Mise \u00e0 jour impossible : ouvrir la page"), state="normal",
+                                   command=lambda: webbrowser.open(RELEASE_URL))
+            self.status.set(_("Mise \u00e0 jour impossible : %s") % item[1])
+
+    def _poll_rest(self):
         # menu ferme sans qu'on le sache (ChatFR repete "ouvert" toutes les 3 s) : on revient
-        if getattr(self, "_menu_hidden", False) and time.time() - getattr(self, "_menu_last", 0) > 5:
-            self.end_menu_hide()
+        try:
+            if getattr(self, "_menu_hidden", False) and time.time() - getattr(self, "_menu_last", 0) > 5:
+                self.end_menu_hide()
+        except Exception:  # noqa
+            log_error("menu du jeu")
         self.root.after(100, self.poll)
 
     def show(self, hhmm, kind, chan, author, text, trans, lang, alert, mine, raw=None):
@@ -3195,21 +3330,29 @@ class App:
         if tail:
             parts.append(("(%s) " % tail, "badge"))
         marks = (tag, "alert") if alert else (tag,)
-        if author:          # messages systeme / butin : pas d'auteur
-            parts.append((author, *marks) if mine or kind in NO_TRANSLATE else (author, *marks, "name"))
-            parts.append((": ", *marks))
+        ctag = self.class_tag(author)        # couleur de classe du joueur (si le jeu l'affiche)
+        if author and kind != "temote":      # messages systeme / butin : pas d'auteur
+            nm = ((author, *marks, "myname") if mine else (author, *marks) if kind in NO_TRANSLATE
+                  else (author, *marks, "name"))
+            parts.append(nm + ((ctag,) if ctag else ()))
+            parts.append((" " if kind == "emote" else ": ", *marks))     # /e : "Malya danse.", comme dans WoW
         _plain, spans = split_links(raw if raw is not None else text)
+        if kind == "temote" and ctag and author:   # "Malya salue Bob." : le nom colore dans la phrase
+            spans = color_name_in(spans, author, ctag)
         coin = ("coins",) if kind in COIN_KINDS else ()
         icon = ping_icon(text) if kind == "ping" else None
         if icon:                                       # "Avertissement" -> "⚠ Avertissement", comme dans le jeu
             parts.append((icon[0] + " ", *marks, icon[1]))
         for seg, code in spans:
+            if code and code.startswith("cls_"):
+                parts.append((seg, *marks, code))
+                continue
             parts.append((seg, *marks, "link_" + code) if code else (seg, *marks, *coin))
         parts.append(("\n", *marks))
         if trans and not same and trans.strip().lower() != text.strip().lower():
             tmarks = ("trans", "alert") if alert else ("trans",)
             parts.append(("\u2192 ", *tmarks))
-            codes = [c for _, c in spans if c]
+            codes = [c for _, c in spans if c and not c.startswith("cls_")]
             for seg, code in color_brackets(trans, codes):
                 parts.append((seg, *tmarks, "link_" + code) if code else (seg, *tmarks))
             parts.append(("\n", *tmarks))
@@ -3220,6 +3363,17 @@ class App:
             self.auto_reply_lang(lang, author, kind)
         if alert:
             self.beep()
+
+    def class_tag(self, author):
+        """Tag de couleur de classe pour ce pseudo (cree au besoin), ou None."""
+        col = NAME_COLS.get(author or "")
+        if not col:
+            return None
+        if self.T.get("colors"):                     # theme clair : couleur assombrie pour rester lisible
+            col = "#%02x%02x%02x" % tuple(int(int(col[i:i + 2], 16) * 0.55) for i in (1, 3, 5))
+        tag = "cls_" + col[1:]
+        self.text.tag_configure(tag, foreground=col)  # cree apres les autres : sa couleur prime
+        return tag
 
     def auto_reply_lang(self, lang, author, kind):
         """Regle la langue de reponse sur celle du dernier message etranger recu.

@@ -678,11 +678,11 @@ local function ShortName(author)
   return (author:gsub("%-.*$", ""))
 end
 
-local function OnChat(event, msg, author, chanFull, chanBase)
+local function OnChat(event, msg, author, chanFull, chanBase, ncol)
   if type(msg) ~= "string" then return end
   if issecretvalue and (issecretvalue(msg) or issecretvalue(author)) then return end
   -- pont image : envoie le message au traducteur (Bridge.lua)
-  if ns.BridgePush then pcall(ns.BridgePush, event, msg, author, chanBase or chanFull) end
+  if ns.BridgePush then pcall(ns.BridgePush, event, msg, author, chanBase or chanFull, nil, ncol) end
   if not win or not ChatFRDB.enabled then return end
   logDirty = true
   local ok, fr, hit, total = pcall(Translate, msg)
@@ -899,12 +899,12 @@ end
 
 -- Messages en option pour le traducteur (PNJ, systeme, butin) : deja en francais, ils vont
 -- seulement au pont image, pas dans la fenetre ChatFR. Desactives par defaut (Reglages ChatFR).
-local EXTRA_OPT = { npc = "brNpc", system = "brSystem", loot = "brLoot", spent = "brLoot", faction = "brSystem" }
+local EXTRA_OPT = { npc = "brNpc", system = "brSystem", temote = "brSystem", loot = "brLoot", spent = "brLoot", faction = "brSystem" }
 for ev, kind in pairs(ns.BRIDGE_KIND or {}) do
   if EXTRA_OPT[kind] then pcall(f.RegisterEvent, f, ev) end   -- pcall : evenement absent de ce client
 end
 
-local function PushExtra(event, kind, text, author)
+local function PushExtra(event, kind, text, author, ncol)
   if not ChatFRDB or not ChatFRDB[EXTRA_OPT[kind]] or not ns.BridgePush then return end
   -- en donjon / combat, le jeu rend certains textes "secrets" (illisibles pour les addons)
   if issecretvalue and (issecretvalue(text) or issecretvalue(author)) then return end
@@ -913,10 +913,11 @@ local function PushExtra(event, kind, text, author)
   if event == "CHAT_MSG_MONSTER_EMOTE" or event == "CHAT_MSG_RAID_BOSS_EMOTE" then
     text = text:gsub("%%s", (author:gsub("%%", "%%%%")))      -- "%s attaque !" -> "Hogger attaque !"
     author = ""
-  elseif kind ~= "npc" then
+  elseif kind ~= "npc" and kind ~= "temote" then
     author = ""                                                -- le texte est deja une phrase complete
   end
-  pcall(ns.BridgePush, event, text, author, nil)
+  -- temote ("Malya salue Bob.") : le nom est garde a part pour le colorer, le traducteur ne l'ajoute pas devant
+  pcall(ns.BridgePush, event, text, author, nil, nil, ncol)
 end
 
 -- Hotel des ventes ("Enchere creee", "Un acheteur a ete trouve pour votre enchere de...") : le jeu ecrit
@@ -948,6 +949,12 @@ local function OnChatAdd(_, m)
       local fmt = _G[key]
       if type(fmt) == "string" and fmt ~= "" then ahPatterns[#ahPatterns + 1] = FmtPattern(fmt) end
     end
+  end
+  -- heure eventuelle devant ("18:59 ", "[06:59 PM] ") retiree d'abord
+  local stamp
+  m, stamp = m:gsub("^|c%x%x%x%x%x%x%x%x", ""):gsub("^%[?%d%d?:%d%d[:%d]*", "")
+  if stamp > 0 then
+    m = m:gsub("^%s*[AaPp][Mm]([%]%s|])", "%1"):gsub("^%]", ""):gsub("^|r", ""):gsub("^%]", ""):gsub("^%s+", "")
   end
   for _, pat in ipairs(ahPatterns) do
     local a, b = m:find(pat)
@@ -1020,6 +1027,24 @@ local function OnMoney(event)
   lastMoney = m
 end
 
+-- Changement de role en groupe ("Malya Effluvia est maintenant Tank.") : le jeu l'ecrit dans le tchat
+-- sans evenement CHAT_MSG ; on recoit ROLE_CHANGED_INFORM et on refait la phrase avec les textes du jeu
+-- (l'icone du role ne peut pas s'afficher dans le traducteur : seulement le nom du role).
+pcall(f.RegisterEvent, f, "ROLE_CHANGED_INFORM")
+local function OnRoleChanged(changed, from, _, newRole)
+  if type(changed) ~= "string" or changed == "" or type(newRole) ~= "string" then return end
+  if issecretvalue and (issecretvalue(changed) or issecretvalue(from)) then return end
+  local role = _G[newRole]
+  if newRole == "NONE" or type(role) ~= "string" then return end
+  local txt
+  if type(from) == "string" and from ~= "" and from ~= changed and type(ROLE_CHANGED_INFORM_WITH_SOURCE) == "string" then
+    txt = ROLE_CHANGED_INFORM_WITH_SOURCE:format(changed, role, from)
+  elseif type(ROLE_CHANGED_INFORM) == "string" then
+    txt = ROLE_CHANGED_INFORM:format(changed, role)
+  end
+  if txt then PushExtra("CHAT_MSG_SYSTEM", "system", txt, "") end
+end
+
 for _, ev in ipairs({ "CHAT_MSG_WHISPER_INFORM", "CHAT_MSG_BN_WHISPER_INFORM" }) do
   pcall(f.RegisterEvent, f, ev)
 end
@@ -1039,6 +1064,10 @@ f:SetScript("OnEvent", function(_, event, name, author, a3, a4, a5, a6, a7, a8, 
     end
     return
   end
+  if event == "ROLE_CHANGED_INFORM" then
+    pcall(OnRoleChanged, name, author, a3, a4)
+    return
+  end
   if event == "PLAYER_MONEY" or event == "MERCHANT_SHOW" or event == "MERCHANT_CLOSED"
       or event == "PLAYER_ENTERING_WORLD" then
     pcall(OnMoney, event)
@@ -1048,13 +1077,23 @@ f:SetScript("OnEvent", function(_, event, name, author, a3, a4, a5, a6, a7, a8, 
     if xkind == "system" and type(name) == "string" and not (issecretvalue and issecretvalue(name)) then
       recentSys[name] = GetTime and GetTime() or 0           -- pour ne pas le renvoyer une 2e fois (hotel des ventes)
     end
-    pcall(PushExtra, event, xkind, name, author)
+    local ncol
+    if xkind == "temote" and ns.ClassColorHex then
+      local okC, c = pcall(ns.ClassColorHex, event, (select(3, ...)), a8)   -- 12e argument : guid
+      if okC then ncol = c end
+    end
+    pcall(PushExtra, event, xkind, name, author, ncol)
   elseif event:sub(1, 9) == "CHAT_MSG_" then
     if event == "CHAT_MSG_BN_WHISPER" then
       local okN, bn = pcall(BNetName, (select(4, ...)))   -- 13e argument : bnSenderID
       if okN and bn then author = bn end
     end
-    local ok, err = pcall(OnChat, event, name, author, a4, a9)
+    local ncol
+    if ns.ClassColorHex then
+      local okC, c = pcall(ns.ClassColorHex, event, (select(3, ...)), a8)   -- 12e argument : guid
+      if okC then ncol = c end
+    end
+    local ok, err = pcall(OnChat, event, name, author, a4, a9, ncol)
     if not ok and not ns.errShown then
       ns.errShown = true
       Say(L("erreur (message ignore) : ", "error (message skipped): ") .. tostring(err))

@@ -22,7 +22,7 @@ local seq = math.random(1, 255)
 local nextAt = 0
 
 local KIND = {
-  CHAT_MSG_SAY = "say", CHAT_MSG_EMOTE = "say", CHAT_MSG_YELL = "yell",
+  CHAT_MSG_SAY = "say", CHAT_MSG_EMOTE = "emote", CHAT_MSG_YELL = "yell",   -- /e : orange, comme dans le jeu
   CHAT_MSG_PARTY = "party", CHAT_MSG_PARTY_LEADER = "party", CHAT_MSG_PING = "ping",   -- pings ("Par ici"...) : texte du jeu, sans traduction
   CHAT_MSG_INSTANCE_CHAT = "party", CHAT_MSG_INSTANCE_CHAT_LEADER = "party",
   CHAT_MSG_RAID = "raid", CHAT_MSG_RAID_LEADER = "raid", CHAT_MSG_RAID_WARNING = "raid",
@@ -33,8 +33,10 @@ local KIND = {
   CHAT_MSG_MONSTER_SAY = "npc", CHAT_MSG_MONSTER_YELL = "npc", CHAT_MSG_MONSTER_WHISPER = "npc",
   CHAT_MSG_MONSTER_EMOTE = "npc", CHAT_MSG_MONSTER_PARTY = "npc",
   CHAT_MSG_RAID_BOSS_EMOTE = "npc", CHAT_MSG_RAID_BOSS_WHISPER = "npc",
-  CHAT_MSG_SYSTEM = "system", CHAT_MSG_TEXT_EMOTE = "system", CHAT_MSG_COMBAT_FACTION_CHANGE = "faction",
-  CHAT_MSG_COMBAT_XP_GAIN = "system", CHAT_MSG_COMBAT_HONOR_GAIN = "system",
+  CHAT_MSG_SYSTEM = "system", CHAT_MSG_TEXT_EMOTE = "temote",   -- /genou, /salut... : orange, sans traduction
+  CHAT_MSG_COMBAT_FACTION_CHANGE = "faction",
+  CHAT_MSG_COMBAT_XP_GAIN = "faction",   -- experience : bleu-violet dans le jeu, comme la reputation
+  CHAT_MSG_COMBAT_HONOR_GAIN = "system",
   CHAT_MSG_SKILL = "faction",   -- competences : bleu dans le jeu, comme la reputation (meme couleur dans le traducteur)
   CHAT_MSG_AFK = "system", CHAT_MSG_DND = "system",
   CHAT_MSG_LOOT = "loot", CHAT_MSG_MONEY = "loot", CHAT_MSG_CURRENCY = "loot",
@@ -324,7 +326,25 @@ local function PushTip(hlink, name, tries)
   if #queue > MAXQ then table.remove(queue, 1) end
 end
 
-function ns.BridgePush(event, msg, author, chan, tries)
+-- Couleur de classe du joueur ("C69B6D"), seulement si le jeu colore les noms pour ce type de
+-- message (option du tchat "Couleurs de classe"). nil pour un PNJ ou si l'info manque.
+function ns.ClassColorHex(event, guid, chanIndex)
+  if type(guid) ~= "string" or guid == "" or (issecretvalue and issecretvalue(guid)) then return nil end
+  if not GetPlayerInfoByGUID then return nil end
+  local t = event:sub(10)
+  if t:sub(1, 7) == "CHANNEL" then t = "CHANNEL" .. tostring(chanIndex or "") end
+  local info = ChatTypeInfo and ChatTypeInfo[t]
+  if not info then return nil end
+  local on
+  if Chat_ShouldColorChatByClass then on = Chat_ShouldColorChatByClass(info) else on = info.colorNameByClass end
+  if not on then return nil end
+  local _, cls = GetPlayerInfoByGUID(guid)
+  local c = cls and ((CUSTOM_CLASS_COLORS and CUSTOM_CLASS_COLORS[cls]) or (RAID_CLASS_COLORS and RAID_CLASS_COLORS[cls]))
+  if not c or not c.r then return nil end
+  return string.format("%02X%02X%02X", math.floor(c.r * 255 + 0.5), math.floor(c.g * 255 + 0.5), math.floor(c.b * 255 + 0.5))
+end
+
+function ns.BridgePush(event, msg, author, chan, tries, ncol)
   if not frame or not (ChatFRDB and ChatFRDB.bridge) then return end
   local kind = KIND[event]
   if not kind or type(msg) ~= "string" or type(author) ~= "string" then return end
@@ -347,7 +367,7 @@ function ns.BridgePush(event, msg, author, chan, tries)
       if id and not QuestKnown(id) then pcall(load, id); wait = true end
     end
     if wait then
-      C_Timer.After(0.5, function() pcall(ns.BridgePush, event, msg, author, chan, (tries or 0) + 1) end)
+      C_Timer.After(0.5, function() pcall(ns.BridgePush, event, msg, author, chan, (tries or 0) + 1, ncol) end)
       return
     end
   end
@@ -365,6 +385,8 @@ function ns.BridgePush(event, msg, author, chan, tries)
   local me = UnitName and UnitName("player")
   -- (le jeu donne "Malya", le tchat "Malya Effluvia" : on compare le premier mot, sans le royaume)
   if me and author ~= "" and (author == me or author:match("^[^%-%s]+") == me) then chan = chan .. "\194\160" end
+  -- couleur de classe collee au type : "say#C69B6D" (le traducteur colore le pseudo)
+  if type(ncol) == "string" and ncol:match("^%x%x%x%x%x%x$") then kind = kind .. "#" .. ncol end
   local rec = kind .. "\31" .. chan .. "\31" .. author .. "\31" .. msg
   if #rec > MAXREC then
     local cut = MAXREC
@@ -419,6 +441,18 @@ local function PushGeo()
   if #queue > MAXQ then table.remove(queue, 1) end
 end
 
+-- Version de ChatFR (celle du .toc) : le traducteur la compare a la sienne et previent si l'un des
+-- deux n'est pas a jour. Message vide : les anciens traducteurs l'ignorent. Envoye avec la place du tchat.
+local function PushVer()
+  if not frame or not frame:IsShown() then return end
+  local get = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
+  if not get then return end
+  local ok, v = pcall(get, ADDON_NAME, "Version")
+  if not ok or type(v) ~= "string" or not v:match("^[%d%.]+$") then return end
+  queue[#queue + 1] = "ver\31" .. v .. "\31\31"
+  if #queue > MAXQ then table.remove(queue, 1) end
+end
+
 -- Menu du jeu ouvert (menu du tchat "Dire / Groupe...", clic droit sur un joueur, listes deroulantes) :
 -- le traducteur, fenetre Windows posee par-dessus le jeu, le cacherait. On le lui signale ("1" / "0"),
 -- en tete de file pour qu'il se cache tout de suite ; "1" est repete toutes les 3 s tant que le menu
@@ -429,6 +463,21 @@ local function MenuOpen()
   for _, name in ipairs({ "ChatMenu", "DropDownList1", "L_DropDownList1", "LibDropDownMenu_List1" }) do
     local fr = _G[name]
     if fr and fr.IsShown and fr:IsShown() then return true end
+  end
+  -- carte du monde ouverte EN GRAND (touche M) : le traducteur se poserait dessus.
+  -- La petite carte (fenetree) ne cache pas le traducteur.
+  local map = _G.WorldMapFrame
+  if map and map.IsShown and map:IsShown() then
+    local okM, big = false, nil
+    if map.IsMaximized then okM, big = pcall(map.IsMaximized, map) end
+    if okM then
+      if big then return true end
+    else
+      -- pas de IsMaximized sur ce client : "en grand" = plus des 3/4 de la largeur de l'ecran
+      local okW, w = pcall(function() return map:GetWidth() * map:GetEffectiveScale() end)
+      local okU, uw = pcall(function() return UIParent:GetWidth() * UIParent:GetEffectiveScale() end)
+      if okW and okU and w and uw and uw > 0 and w >= uw * 0.75 then return true end
+    end
   end
   if Menu and Menu.GetManager then
     local ok, open = pcall(function()
@@ -463,8 +512,8 @@ local function Create()
   frame:SetScript("OnEvent", Layout)
   ns.BridgeSetShown(ChatFRDB and ChatFRDB.bridge)
   if C_Timer and C_Timer.After and C_Timer.NewTicker then
-    C_Timer.After(5, function() pcall(PushGeo) end)
-    C_Timer.NewTicker(30, function() pcall(PushGeo) end)
+    C_Timer.After(5, function() pcall(PushGeo); pcall(PushVer) end)
+    C_Timer.NewTicker(30, function() pcall(PushGeo); pcall(PushVer) end)
     C_Timer.NewTicker(0.2, function() pcall(WatchMenus) end)
   end
 end
