@@ -58,7 +58,7 @@ enchanting engineering cooking fishing mining herbalism skinning jewelcrafting i
 NEWS = {
     "fr": ["WoW Traducteur %s : maintenant aussi en anglais !" % VERSION,
            "- La grande nouveaut\u00e9 : tout le traducteur existe en anglais. Au premier lancement, on choisit Fran\u00e7ais ou English ; en anglais, le tchat est traduit vers l'anglais. Pratique pour tes amis anglophones ! (changeable dans les R\u00e9glages)",
-           "- Nouveau en %s : le nom du canal devant les messages (Groupe, Guilde, Raid, Officier) ; tes messages reconnus tout seuls ; r\u00e9ponse \u00e0 un joueur fran\u00e7ais copi\u00e9e telle quelle ; phrase \u00e9crite dans une autre langue que le fran\u00e7ais bien traduite ; marques de raid ; liens de qu\u00eate Questie en texte simple (mets aussi ChatFR \u00e0 jour) ; fonctionne aussi avec une r\u00e9solution personnalis\u00e9e ou une \u00e9chelle de rendu r\u00e9duite ; le lanceur trouve mieux Python ; abr\u00e9viations mieux traduites (ty, lfr, slt, tlm...)." % VERSION,
+           "- Nouveau en %s : le nom du canal devant les messages (Groupe, Guilde, Raid, Officier) ; tes messages reconnus tout seuls ; r\u00e9ponse \u00e0 un joueur fran\u00e7ais copi\u00e9e telle quelle ; phrase \u00e9crite dans une autre langue que le fran\u00e7ais bien traduite ; marques de raid ; liens de qu\u00eate Questie en texte simple (mets aussi ChatFR \u00e0 jour) ; fonctionne aussi avec une r\u00e9solution personnalis\u00e9e ou une \u00e9chelle de rendu r\u00e9duite ; le lanceur trouve mieux Python ; abr\u00e9viations mieux traduites (ty, lfr, slt, tlm...) ; ic\u00f4nes des pings (\u26a0 \u2691 \u2b07 \u2694)." % VERSION,
            "- 1.9.1 : cliquer sur la fen\u00eatre ne prend plus le clavier \u00e0 WoW (tu continues \u00e0 bouger et \u00e0 parler aux PNJ). Seule la zone \u00ab \u00c9crire \u00bb le prend, quand tu cliques dedans. Tes messages de groupe en bleu, comme dans le jeu. Liens de qu\u00eate Questie des autres joueurs : bonne couleur et nom dans ta langue.",
            "- Pi\u00e8ces d'or, d'argent et de cuivre en ic\u00f4nes bien visibles, m\u00eame quand le jeu \u00e9crit \u00ab 25 Cuivre \u00bb.",
            "- Langue de r\u00e9ponse : une liste qui s'ouvre vers le haut (EN, DE, ES, puis Autre langue\u2026).",
@@ -66,7 +66,7 @@ NEWS = {
            "- Meilleures traductions : lfg/lfm, wts/wtb, Deadmines, jargon russe (\u041b\u0424\u0413), mots coll\u00e9s aux liens, petits messages en espagnol ou en letton, moins d'appels inutiles \u00e0 Google."],
     "en": ["WoW Traducteur %s: now in English!" % VERSION,
            "- The big one: the whole translator is now available in English. Choose Fran\u00e7ais or English at first launch; in English, the chat is translated into English (can be changed in Settings).",
-           "- New in %s: channel name in front of messages (Party, Guild, Raid, Officer); your own messages recognized automatically; replies in your own language copied as is; text written in another language than English translated correctly; raid marks; Questie quest links in plain text (update ChatFR too); also works with a custom resolution or a lower render scale; the launcher finds Python more reliably; better abbreviations (ty, lfr, slt, tlm...)." % VERSION,
+           "- New in %s: channel name in front of messages (Party, Guild, Raid, Officer); your own messages recognized automatically; replies in your own language copied as is; text written in another language than English translated correctly; raid marks; Questie quest links in plain text (update ChatFR too); also works with a custom resolution or a lower render scale; the launcher finds Python more reliably; better abbreviations (ty, lfr, slt, tlm...); ping icons (\u26a0 \u2691 \u2b07 \u2694)." % VERSION,
            "- 1.9.1: clicking the window no longer takes the keyboard away from WoW (keep moving and talking to NPCs). Only the \"Write\" box takes it, when you click in it. Your party messages in blue, like in the game. Questie quest links from other players: right color and name in your language.",
            "- Gold, silver and copper coins shown as clear icons, even when the game writes \"25 Copper\".",
            "- Reply language: a list that opens upwards (FR, DE, ES, then Other language\u2026).",
@@ -510,6 +510,25 @@ RAID_MARKS = {
     "rt8": "\u2620", "skull": "\u2620", "crane": "\u2620", "cr\u00e2ne": "\u2620",
 }
 _MARK_RE = re.compile(r"\{(" + "|".join(sorted(RAID_MARKS, key=len, reverse=True)) + r")\}", re.I)
+
+
+# Pings du groupe (Alt + clic) : le jeu met une icone devant le texte, la fenetre ne peut pas l'afficher.
+# On met un symbole de la meme couleur. (mots de debut du ping, symbole, couleur)
+PING_ICONS = [
+    (("avertissement", "warning"), "\u26a0", "#ff4a3d"),
+    (("aide", "assist"), "\u2691", "#4cd14c"),
+    (("je me dirige", "on my way"), "\u2b07", "#3fa7ff"),
+    (("attaque", "attack"), "\u2694", "#ff9d3a"),
+]
+
+
+def ping_icon(text):
+    """-> (symbole, nom du style) pour un ping, ou None."""
+    low = text.strip().lower()
+    for i, (words, sym, _c) in enumerate(PING_ICONS):
+        if any(low.startswith(w) for w in words):
+            return sym, "ping_%d" % i
+    return None
 
 
 def replace_raid_marks(text):
@@ -1966,6 +1985,8 @@ class App:
         self.text.tag_configure("name", foreground=T["name"],    # apres les canaux : la couleur du pseudo prime
                                 font=("Segoe UI", int(self.cfg["font_size"]), "bold"))
         self.text.tag_configure("news", foreground=T["name"], font=("Segoe UI", int(self.cfg["font_size"]), "bold"))
+        for i, (_w, _s, c) in enumerate(PING_ICONS):             # icones des pings, dans leur couleur
+            self.text.tag_configure("ping_%d" % i, foreground=c)
         for code, c in (T["links"] or LINK_COLORS).items():     # en dernier : la couleur du lien prime
             self.text.tag_configure("link_" + code, foreground=c)
             if code == "o":                                      # lien sans fiche : pas de main au survol
@@ -2866,6 +2887,9 @@ class App:
             parts.append((": ", *marks))
         _plain, spans = split_links(raw if raw is not None else text)
         coin = ("coins",) if kind in COIN_KINDS else ()
+        icon = ping_icon(text) if kind == "ping" else None
+        if icon:                                       # "Avertissement" -> "⚠ Avertissement", comme dans le jeu
+            parts.append((icon[0] + " ", *marks, icon[1]))
         for seg, code in spans:
             parts.append((seg, *marks, "link_" + code) if code else (seg, *marks, *coin))
         parts.append(("\n", *marks))
