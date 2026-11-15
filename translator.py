@@ -91,7 +91,9 @@ DEFAULTS = {
     "show_french": True,            # afficher aussi les messages deja en francais
     "autoclose": True,              # se fermer quand WoW se ferme
     "follow_wow": True,             # se cacher quand WoW n'est pas la fenetre active (reduit, Alt+Tab...)
-    "auto_reply_lang": True,        # langue de reponse = langue du dernier message etranger
+    # langue de reponse = langue du dernier message etranger. Desactivee par defaut depuis 1.9.3 (nouveau
+    # nom de reglage : l'ancien "auto_reply_lang", active pour tout le monde, est ignore)
+    "reply_lang_auto": False,
     "theme": "Sombre",              # theme de la fenetre (voir THEMES)
     "locked": False,                # cadenas : fenetre verrouillee (ni deplacement ni redimensionnement)
     "help_seen": False,             # fenetre d'aide deja montree une fois (premier lancement)
@@ -2479,11 +2481,11 @@ class App:
                  (_("Afficher aussi les messages deja dans ta langue"), "show_french"),
                  (_("Se fermer quand WoW se ferme"), "autoclose"),
                  (_("Se cacher quand WoW n'est pas la fenetre active"), "follow_wow"),
-                 (_("Langue de reponse automatique (dernier message etranger)"), "auto_reply_lang")]
+                 (_("Langue de reponse automatique (dernier message etranger)"), "reply_lang_auto")]
         bv = {}
         row = len(fields)
         for lab, key in bools:
-            v = tk.BooleanVar(value=bool(self.cfg.get(key, True)))
+            v = tk.BooleanVar(value=bool(self.cfg.get(key, DEFAULTS.get(key, True))))
             bv[key] = v
             tk.Checkbutton(w, text=lab, variable=v, bg=P, fg=T["fg"], selectcolor=T["entry"],
                            activebackground=P, activeforeground=T["fg"], highlightthickness=0).grid(
@@ -2911,7 +2913,7 @@ class App:
     def auto_reply_lang(self, lang, author, kind):
         """Regle la langue de reponse sur celle du dernier message etranger recu.
         Un chuchotement reste prioritaire 60 s ; on ne change rien pendant que tu ecris."""
-        if not self.cfg.get("auto_reply_lang", True) or self.out_entry.get().strip():
+        if not self.cfg.get("reply_lang_auto", False) or self.out_entry.get().strip():
             return
         now = time.time()
         if kind != "whisper" and now - getattr(self, "_last_whisper", 0) < 60:

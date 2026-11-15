@@ -26,7 +26,7 @@ Le détail de chaque étape est plus bas.
 
 **Répondre**
 - Écris en français dans « Écrire (FR) », clique sur « Traduire + copier » : la traduction est copiée, tu la colles dans WoW (Entrée, Ctrl+V, Entrée).
-- La langue de réponse se règle seule sur ton interlocuteur.
+- Clique sur un message pour répondre dans la langue de ce joueur (ou active la langue de réponse automatique dans les Réglages).
 - Clique sur un **pseudo** : ta réponse est copiée avec `/w Pseudo` devant, pour lui chuchoter directement.
 - Le traducteur n'envoie jamais rien au jeu lui-même : c'est toujours toi qui colles.
 
@@ -88,7 +88,7 @@ Pourquoi une bande de couleurs ? Un addon WoW n'a pas accès à Internet, et le 
 1. Lance WoW et entre en jeu : une bande de cases colorées apparaît près du coin haut-gauche. C'est normal, ne la recouvre pas.
 2. Double-clique sur **Lancer le traducteur.bat**.
 3. La barre de statut doit afficher **« Pont image : OK (N messages reçus) »**. Les messages arrivent traduits en 1 à 2 secondes, avec un badge de langue (`[EN]`, `[DE]`, `[RU]`…).
-4. Pour répondre : tape en français dans **« Écrire (FR) → »**, appuie sur Entrée, puis **Ctrl+V** dans le tchat de WoW. La langue de réponse se règle seule sur le dernier message étranger reçu.
+4. Pour répondre : tape en français dans **« Écrire (FR) → »**, appuie sur Entrée, puis **Ctrl+V** dans le tchat de WoW. Pour répondre dans la langue d'un joueur, clique d'abord sur son message (ou choisis la langue dans la liste à côté du bouton).
 
 Un petit lexique de joueur traduit directement les messages courts (« who » → qui, « ty » → merci, « gg » → bien joué, « lfg » → cherche groupe…) et développe les abréviations anglaises avant Google (« where r u » → « where are you »). Les abréviations de donjons, raids, zones et villes sont remplacées par leur nom français (« SFK » → Donjon d'Ombrecroc, « STV » → Vallée de Strangleronce, « UC » → Fossoyeuse…). Le jargon « tank », « heal », « healer » et « DPS » reste tel quel. Tu peux ajouter tes mots dans `LEX_FULL` et `LEX_EXPAND`, et les noms de monstres ou de lieux que Google traduit à tort (« Hogger » → « porc ») dans `LEX_NAMES`, et tes abréviations de lieux dans `LEX_PLACES`, dans `translator.py`. Les prix en pièces (« 100 po », « 2 pa 50 pc ») ne sont jamais traduits.
 
