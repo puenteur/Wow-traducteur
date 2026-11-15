@@ -15,6 +15,7 @@ import binascii
 import difflib
 import ctypes
 import json
+import math
 import os
 import queue
 import re
@@ -37,7 +38,7 @@ try:
 except ImportError:  # pas sous Windows
     winsound = None
 
-VERSION = "1.9.1"
+VERSION = "1.9.3"
 # Verification de mise a jour : le fichier version.txt du depot contient le numero de la derniere version.
 VERSION_URL = "https://raw.githubusercontent.com/puenteur/Wow-traducteur/main/version.txt"
 KOFI_URL = "https://ko-fi.com/puenteur"
@@ -57,14 +58,16 @@ enchanting engineering cooking fishing mining herbalism skinning jewelcrafting i
 NEWS = {
     "fr": ["WoW Traducteur %s : maintenant aussi en anglais !" % VERSION,
            "- La grande nouveaut\u00e9 : tout le traducteur existe en anglais. Au premier lancement, on choisit Fran\u00e7ais ou English ; en anglais, le tchat est traduit vers l'anglais. Pratique pour tes amis anglophones ! (changeable dans les R\u00e9glages)",
-           "- Nouveau en %s : cliquer sur la fen\u00eatre ne prend plus le clavier \u00e0 WoW (tu continues \u00e0 bouger et \u00e0 parler aux PNJ). Seule la zone \u00ab \u00c9crire \u00bb le prend, quand tu cliques dedans. Tes messages de groupe en bleu, comme dans le jeu. Liens de qu\u00eate Questie des autres joueurs : bonne couleur et nom dans ta langue (avec ChatFR \u00e0 jour)." % VERSION,
+           "- Nouveau en %s : le nom du canal devant les messages (Groupe, Guilde, Raid, Officier) ; tes messages reconnus tout seuls ; r\u00e9ponse \u00e0 un joueur fran\u00e7ais copi\u00e9e telle quelle ; phrase \u00e9crite dans une autre langue que le fran\u00e7ais bien traduite ; marques de raid ; liens de qu\u00eate Questie en texte simple (mets aussi ChatFR \u00e0 jour) ; fonctionne aussi avec une r\u00e9solution personnalis\u00e9e ou une \u00e9chelle de rendu r\u00e9duite ; le lanceur trouve mieux Python ; abr\u00e9viations mieux traduites (ty, lfr, slt, tlm...)." % VERSION,
+           "- 1.9.1 : cliquer sur la fen\u00eatre ne prend plus le clavier \u00e0 WoW (tu continues \u00e0 bouger et \u00e0 parler aux PNJ). Seule la zone \u00ab \u00c9crire \u00bb le prend, quand tu cliques dedans. Tes messages de groupe en bleu, comme dans le jeu. Liens de qu\u00eate Questie des autres joueurs : bonne couleur et nom dans ta langue.",
            "- Pi\u00e8ces d'or, d'argent et de cuivre en ic\u00f4nes bien visibles, m\u00eame quand le jeu \u00e9crit \u00ab 25 Cuivre \u00bb.",
            "- Langue de r\u00e9ponse : une liste qui s'ouvre vers le haut (EN, DE, ES, puis Autre langue\u2026).",
            "- Fen\u00eatre des nouveaut\u00e9s apr\u00e8s chaque mise \u00e0 jour (celle-ci !).",
            "- Meilleures traductions : lfg/lfm, wts/wtb, Deadmines, jargon russe (\u041b\u0424\u0413), mots coll\u00e9s aux liens, petits messages en espagnol ou en letton, moins d'appels inutiles \u00e0 Google."],
     "en": ["WoW Traducteur %s: now in English!" % VERSION,
            "- The big one: the whole translator is now available in English. Choose Fran\u00e7ais or English at first launch; in English, the chat is translated into English (can be changed in Settings).",
-           "- New in %s: clicking the window no longer takes the keyboard away from WoW (keep moving and talking to NPCs). Only the \"Write\" box takes it, when you click in it. Your party messages in blue, like in the game. Questie quest links from other players: right color and name in your language (with ChatFR updated)." % VERSION,
+           "- New in %s: channel name in front of messages (Party, Guild, Raid, Officer); your own messages recognized automatically; replies in your own language copied as is; text written in another language than English translated correctly; raid marks; Questie quest links in plain text (update ChatFR too); also works with a custom resolution or a lower render scale; the launcher finds Python more reliably; better abbreviations (ty, lfr, slt, tlm...)." % VERSION,
+           "- 1.9.1: clicking the window no longer takes the keyboard away from WoW (keep moving and talking to NPCs). Only the \"Write\" box takes it, when you click in it. Your party messages in blue, like in the game. Questie quest links from other players: right color and name in your language.",
            "- Gold, silver and copper coins shown as clear icons, even when the game writes \"25 Copper\".",
            "- Reply language: a list that opens upwards (FR, DE, ES, then Other language\u2026).",
            "- A window like this one after each update.",
@@ -107,6 +110,9 @@ COLORS = {
     "faction": "#8080ff",                                         # reputation (bleu, comme dans WoW)
     "ping": "#7fb2ff",                                            # pings du groupe (couleur du groupe)
 }
+# Nom du canal affiche devant le pseudo, comme dans WoW : (Groupe) Nom: ...
+KIND_LABEL = {"party": ("Groupe", "Party"), "raid": ("Raid", "Raid"),
+              "guild": ("Guilde", "Guild"), "officer": ("Officier", "Officer")}
 NO_TRANSLATE = ("npc", "system", "loot", "spent", "whisper_out", "faction", "ping")   # ping : texte du jeu
 # Pieces dans les messages du jeu ("11 pa 32 pc") : petite icone ronde a la place de po / pa / pc.
 # Seulement pour les messages du jeu : dans le tchat des joueurs, "2pc" veut souvent dire "2 pieces".
@@ -168,6 +174,8 @@ EN = {
         "Image bridge: no signal | WoW at (%d,%d) | capture %d%% non-black, avg %s | see debug_pont.bmp",
     "Pont image : OK (%d messages recus)": "Image bridge: OK (%d messages received)",
     "Pont image : erreur %s": "Image bridge: error %s",
+    "Pont image : bande illisible (cases de %.2f px au lieu de 6) | mets la Resolution du jeu = celle de l'ecran et l'Echelle de rendu a 100 %%":
+        "Image bridge: strip unreadable (%.2f px cells instead of 6) | set the game Resolution = your screen's and Render Scale to 100 %%",
     "⚠ traduction impossible : %s": "⚠ translation failed: %s",
     "Mise à jour %s dispo": "Update %s available",
     "Erreur : %s": "Error: %s",
@@ -492,14 +500,14 @@ BRACKET_RE = re.compile(r"\[[^\]]*\]")
 
 # Marqueurs de raid du tchat ({rt1}, {star}...) : la fenetre ne peut pas afficher l'image, on met un symbole.
 RAID_MARKS = {
-    "rt1": "\u2605", "star": "\u2605", "etoile": "\u2605",
+    "rt1": "\u2605", "star": "\u2605", "etoile": "\u2605", "\u00e9toile": "\u2605",
     "rt2": "\u25cf", "circle": "\u25cf", "rond": "\u25cf", "cercle": "\u25cf",
     "rt3": "\u25c6", "diamond": "\u25c6", "losange": "\u25c6",
     "rt4": "\u25b2", "triangle": "\u25b2",
     "rt5": "\u263e", "moon": "\u263e", "lune": "\u263e",
-    "rt6": "\u25a0", "square": "\u25a0", "carre": "\u25a0",
+    "rt6": "\u25a0", "square": "\u25a0", "carre": "\u25a0", "carr\u00e9": "\u25a0",
     "rt7": "\u2716", "cross": "\u2716", "croix": "\u2716", "x": "\u2716",
-    "rt8": "\u2620", "skull": "\u2620", "crane": "\u2620",
+    "rt8": "\u2620", "skull": "\u2620", "crane": "\u2620", "cr\u00e2ne": "\u2620",
 }
 _MARK_RE = re.compile(r"\{(" + "|".join(sorted(RAID_MARKS, key=len, reverse=True)) + r")\}", re.I)
 
@@ -1033,23 +1041,30 @@ def _cell(buf, width, x0, y0):
     return _lvl(sr // 4), _lvl(sg // 4), _lvl(sb // 4)
 
 
-def _cell_at(buf, width, ox, oy, i):
+B_PMIN, B_PMAX = 3.0, 10.0   # taille de case acceptee : jeu etire (resolution perso) ou echelle de rendu reduite
+
+
+def _cell_at(buf, width, ox, oy, i, p=B_CELL):
     c, r = i % B_COLS, i // B_COLS
-    return _cell(buf, width, ox + c * B_CELL + B_CELL // 2 - 1, oy + r * B_CELL + B_CELL // 2 - 1)
+    return _cell(buf, width, int(ox + (c + 0.5) * p) - 1, int(oy + (r + 0.5) * p) - 1)
 
 
-def bridge_magic_ok(buf, width, ox, oy):
-    return all(_cell_at(buf, width, ox, oy, i) == B_MAGIC[i] for i in range(len(B_MAGIC)))
+def bridge_magic_ok(buf, width, ox, oy, p=B_CELL):
+    return all(_cell_at(buf, width, ox, oy, i, p) == B_MAGIC[i] for i in range(len(B_MAGIC)))
 
 
-def decode_bridge(buf, width, ox=0, oy=0):
-    """buf : pixels BGRA. -> (seq, payload) ou None si pas de signal / paquet corrompu."""
-    if not bridge_magic_ok(buf, width, ox, oy):
+def decode_bridge(buf, width, ox=0, oy=0, p=B_CELL):
+    """buf : pixels BGRA. -> (seq, payload) ou None si pas de signal / paquet corrompu.
+    p : taille d'une case en pixels (6, ou autre si le jeu est etire a l'ecran)."""
+    height = len(buf) // (4 * width)
+    if ox < 0 or oy < 0 or int(ox + (B_COLS - 0.5) * p) >= width or int(oy + (B_ROWS - 0.5) * p) >= height:
+        return None
+    if not bridge_magic_ok(buf, width, ox, oy, p):
         return None
     bits = nbits = 0
     out = bytearray()
     for i in range(len(B_MAGIC), B_COLS * B_ROWS):
-        r, g, b = _cell_at(buf, width, ox, oy, i)
+        r, g, b = _cell_at(buf, width, ox, oy, i, p)
         bits = (bits << 3) | (r << 2) | (g << 1) | b
         nbits += 3
         while nbits >= 8:
@@ -1067,21 +1082,137 @@ def decode_bridge(buf, width, ox=0, oy=0):
     return seq, payload
 
 
-def find_bridge_offset(buf, width, height):
-    """Cherche la bande ; renvoie le decalage qui vise le CENTRE des cases (milieu de la
-    plage de decalages qui reconnaissent la bande), plus sur face au flou des bords."""
-    for dy in range(0, height - B_H + 1):
-        for dx in range(0, width - B_W + 1):
+def find_bridge_offset(buf, width, height, maxd=None):
+    """Cherche la bande (cases de 6 px) ; renvoie le decalage qui vise le CENTRE des cases (milieu
+    de la plage de decalages qui reconnaissent la bande), plus sur face au flou des bords."""
+    ymax, xmax = height - B_H, width - B_W
+    if maxd is not None:
+        ymax, xmax = min(ymax, maxd), min(xmax, maxd)
+    for dy in range(0, ymax + 1):
+        for dx in range(0, xmax + 1):
             if bridge_magic_ok(buf, width, dx, dy):
                 dx2 = dx
-                while dx2 + 1 <= width - B_W and bridge_magic_ok(buf, width, dx2 + 1, dy):
+                while dx2 + 1 <= xmax and bridge_magic_ok(buf, width, dx2 + 1, dy):
                     dx2 += 1
                 mx = (dx + dx2) // 2
                 dy2 = dy
-                while dy2 + 1 <= height - B_H and bridge_magic_ok(buf, width, mx, dy2 + 1):
+                while dy2 + 1 <= ymax and bridge_magic_ok(buf, width, mx, dy2 + 1):
                     dy2 += 1
                 return mx, (dy + dy2) // 2
     return None
+
+
+def _cls(buf, width, x, y):
+    """Couleur d'un pixel en 3 bits (rouge, vert, bleu allume ou non)."""
+    q = (y * width + x) * 4
+    return (4 if buf[q + 2] >= 128 else 0) | (2 if buf[q + 1] >= 128 else 0) | (1 if buf[q] >= 128 else 0)
+
+
+def _magic_coarse(buf, width, height):
+    """Repere a l'oeil les 4 cases rouge, vert, bleu, blanc, quelle que soit leur taille.
+    -> (x, y, p) : bord gauche et haut de la case rouge, taille approchee d'une case."""
+    want = (4, 2, 1, 7)
+    for y in range(height):
+        runs, prev, start = [], None, 0
+        for x in range(width):
+            k = _cls(buf, width, x, y)
+            if k != prev:
+                if prev is not None:
+                    runs.append((prev, start, x - start))
+                prev, start = k, x
+        runs.append((prev, start, width - start))
+        for i, (k, s, n) in enumerate(runs):
+            if k != 4 or not 2 <= n <= B_PMAX + 3:
+                continue
+            found, j = [(k, s, n)], i + 1
+            while len(found) < 4 and j < len(runs):
+                k2, s2, n2 = runs[j]
+                if k2 == want[len(found)] and n2 >= 2:
+                    found.append(runs[j])
+                elif n2 > 2:              # plus qu'un pixel de flou entre deux cases : rate
+                    break
+                j += 1
+            if len(found) < 4:
+                continue
+            p = (found[3][1] - s) / 3.0
+            if not B_PMIN <= p <= B_PMAX or any(abs(f[2] - p) > max(2.0, 0.35 * p) for f in found[:3]):
+                continue
+            xc, top = s + n // 2, y
+            while top > 0 and _cls(buf, width, xc, top - 1) == 4:
+                top -= 1
+            return s, top, p
+    return None
+
+
+def _fit_grid(buf, width, height, x0, y0, p0):
+    """Affine la taille des cases et la position de la grille avec tous les bords entre cases
+    (un decalage de 0,4 px par case fait 25 px au bout d'une ligne : il faut etre precis)."""
+    xs, ys = [], []
+    xe = min(width, int(x0 + B_COLS * p0 * 0.97))
+    ye = min(height, int(y0 + B_ROWS * p0 * 0.97))
+    for r in range(B_ROWS):
+        y = int(y0 + (r + 0.5) * p0)
+        if y >= ye:
+            break
+        prev = _cls(buf, width, int(x0), y)
+        for x in range(int(x0) + 1, xe):
+            k = _cls(buf, width, x, y)
+            if k != prev:
+                xs.append(x)
+                prev = k
+    for c in range(B_COLS):
+        x = int(x0 + (c + 0.5) * p0)
+        if x >= xe:
+            break
+        prev = _cls(buf, width, x, int(y0))
+        for y in range(int(y0) + 1, ye):
+            k = _cls(buf, width, x, y)
+            if k != prev:
+                ys.append(y)
+                prev = k
+    if len(xs) < 12:
+        return x0, y0, p0
+    xs, ys = xs[:1500], ys[:1500]
+    best = None
+    p = p0 - 0.6
+    while p <= p0 + 0.6:
+        w = 2 * math.pi / p
+        cx = sum(math.cos(w * v) for v in xs)
+        sx = sum(math.sin(w * v) for v in xs)
+        cy = sum(math.cos(w * v) for v in ys)
+        sy = sum(math.sin(w * v) for v in ys)
+        score = cx * cx + sx * sx + cy * cy + sy * sy
+        if best is None or score > best[0]:
+            best = (score, p, cx, sx, cy, sy)
+        p += 0.004
+    _, p, cx, sx, cy, sy = best
+    fx = (math.atan2(sx, cx) / (2 * math.pi) * p) % p
+    ox = fx + p * round((x0 - fx) / p)
+    oy = y0
+    if ys:
+        fy = (math.atan2(sy, cy) / (2 * math.pi) * p) % p
+        oy = fy + p * round((y0 - fy) / p)
+    return ox, oy, p
+
+
+def locate_bridge(buf, width, height):
+    """-> (ox, oy, p) : coin de la bande et taille d'une case en pixels, ou None si pas de bande.
+    D'abord les cases normales de 6 px ; sinon (jeu etire a l'ecran) on mesure leur vraie taille."""
+    off = find_bridge_offset(buf, width, height, B_SEARCH)
+    if off and decode_bridge(buf, width, off[0], off[1]) is not None:
+        return off[0], off[1], float(B_CELL)
+    c = _magic_coarse(buf, width, height)
+    if c is None:
+        return (off[0], off[1], float(B_CELL)) if off else None
+    ox, oy, p = _fit_grid(buf, width, height, *c)
+    for dp in (0.0, -0.01, 0.01, -0.02, 0.02, -0.04, 0.04):
+        for dx in (0.0, -0.5, 0.5, -1.0, 1.0):
+            for dy in (0.0, -0.5, 0.5, -1.0, 1.0):
+                if decode_bridge(buf, width, ox + dx, oy + dy, p + dp) is not None:
+                    return ox + dx, oy + dy, p + dp
+    if off:
+        return off[0], off[1], float(B_CELL)
+    return ox, oy, p
 
 
 def parse_bridge_record(payload):
@@ -1279,7 +1410,13 @@ SURE_FR = set("je j tu il elle nous vous ils elles est suis sont es ai as avons 
               "pourquoi combien ou oui ouais merci salut bonjour bonsoir svp stp cherche cherchons recrute "
               "vend vends achete achète groupe guilde donjon quelqu quelqu'un personne besoin veux veut peux "
               "peut faut faire avoir etre être connait connais sais quelqun qqn aller viens venir ici ça ca c qu d l m n s t y bien très tres trop aussi encore "
-              "deja déjà alors voila voilà fait mort mdr ptdr bonne bon nuit dispo dispos".split())
+              "deja déjà alors voila voilà fait mort mdr ptdr bonne bon nuit dispo dispos "
+              # argot de salut : seul, Google le traduisait mal ("slt" -> "salope", "lut" -> "lutin")
+              "slt lut bjr bsr bjour tlm kikou coucou cv mrc mci merki bvn bienvenue dsl jsp jpp chepa osef tkt tqt "
+              "bcp pcq psk pq pkoi koi kwa keske kestu qd qqch qqun qq1 rdv mtn auj ajd dmn tjr tjrs ptet ptetre "
+              "jvais jvien jviens jreviens jarrive jsuis chui chuis jte jpense dac dacc ouep ouai frr frero "
+              "bsx biz bisous bn aplus bonap trkl tranquille ptn wesh wsh tg fdp ntm xptdr pex pexe pexer "
+              "donj donjs grp".split())
 # Mots d'une autre langue : s'il y en a un, on laisse Google decider (message mixte ou etranger).
 NOT_FR = set("the an is are was be been i you he she we they it my your his her our their this that "
              "these those and or but to of in at for with from by as if so not no yes any some anyone "
@@ -1381,13 +1518,14 @@ LEX_FULL = {
     "gg": "bien joué", "gg wp": "bien joué", "gj": "bien joué", "wp": "bien joué", "ggwp": "bien joué",
     "gz": "félicitations", "grats": "félicitations", "gratz": "félicitations", "congrats": "félicitations",
     "lol": "mdr", "lmao": "mdr", "lmfao": "mdr", "rofl": "mdr", "haha": "haha", "xd": "xD",
-    "brb": "je reviens", "afk": "absent (AFK)", "back": "de retour", "re": "re (de retour)",
+    "brb": "je reviens", "afk": "absent (AFK)", "back": "de retour", "re": "re",   # dit aussi en francais : pas de traduction
+    "un": "un",                             # seul, c'est du francais ("un" -> "ONU" par Google)
     "omw": "j'arrive", "otw": "j'arrive", "coming": "j'arrive", "wait": "attends", "sec": "une seconde",
     "1 sec": "une seconde", "1 min": "une minute", "ready": "prêt", "rdy": "prêt", "r": "prêt",
     "go": "on y va", "lets go": "allez, on y va", "let's go": "allez, on y va",
     "inv": "invite-moi", "inv pls": "invite-moi stp", "inv plz": "invite-moi stp", "invite": "invite-moi",
     "inv me": "invite-moi", "pls inv": "invite-moi stp", "plz inv": "invite-moi stp",
-    "lfg": "cherche groupe", "lfm": "cherche du monde", "lf1m": "cherche 1 joueur",
+    "lfg": "cherche groupe", "lfm": "cherche du monde", "lfr": "cherche un raid", "lf1m": "cherche 1 joueur",
     "lf2m": "cherche 2 joueurs", "lf3m": "cherche 3 joueurs", "lf tank": "cherche un tank",
     "lf heal": "cherche un soigneur", "lf healer": "cherche un soigneur", "lf dps": "cherche des DPS",
     "wts": "je vends", "wtb": "j'achète", "wtt": "j'échange", "pst": "écris-moi en privé",
@@ -1411,9 +1549,10 @@ LEX_FULL = {
 # 2) Abreviations remplacees par l'anglais complet AVANT Google (le reste de la phrase
 #    passe toujours par Google, qui la comprend mieux).
 LEX_EXPAND = {
-    "u": "you", "r": "are", "ur": "your", "ty": "thank you", "thx": "thanks",
+    "u": "you", "r": "are", "ur": "your", "bvn": "welcome",   # "Hello bvn" (bvn = bienvenue)
+    "ty": "thank you", "thx": "thanks",
     "tyvm": "thank you very much", "pls": "please", "plz": "please", "ppl": "people",
-    "lfg": "looking for group", "lfm": "looking for more", "lf": "looking for",
+    "lfg": "looking for group", "lfm": "looking for more", "lfr": "looking for raid", "lf": "looking for",
     "wts": "want to sell", "wtb": "want to buy", "wtt": "want to trade",
     "idk": "I don't know", "imo": "in my opinion", "btw": "by the way", "tbh": "to be honest",
     "brb": "be right back", "afk": "away from keyboard", "omw": "on my way",
@@ -1444,6 +1583,8 @@ LEX_PHRASES = [
     (r"\b(lf|looking for|wtb|need|want)\s+(?:an?\s+)?(?:enchanter\s+(?:for|to)\s+)?enchant(?:ment)?s?\s+"
      r"(gloves?|boots?|bracers?|chest|cloak|weapon|2h|shield)\b", r"\1 an enchantment on \2"),
     (r"\b(gloves?)\s+(?:\+\s*\d+%?\s*)?riding(?:\s+skill)?\b", r"\1 for mount speed"),
+    # "3 more slots" = places libres dans le groupe (pas "creneaux") ; "16 slot bag" reste un sac
+    (r"\b(\d+|a|one|two|three|four)\s+(more\s+)?(?:slots?|spots?)\b(?!\s*bags?)", r"\1 \2places in the group"),
     (r"\b(have|got|has|with|bring)\s+(?:own\s+|my\s+|the\s+)?mats\b", r"\1 the materials"),
     # question qui commence par "any" ("any group for SFK?") : Google traduit "tout groupe".
     (r"(^|\]\s*)any\s+(?!(?:one|body|1|more|way|ways|time|how)\b)", r"\1is there any "),
@@ -1505,7 +1646,18 @@ FR_SLANG = {"pex": "leveling", "pexing": "leveling", "pexe": "monte de niveau", 
             "tlm": "tout le monde", "bcp": "beaucoup", "dsl": "d\u00e9sol\u00e9", "jsp": "je ne sais pas",
             "pb": "probl\u00e8me", "pr": "pour", "mdr": "lol", "ptdr": "lol", "donj": "donjon", "donjs": "donjons",
             "grp": "groupe", "jvais": "je vais", "chui": "je suis", "chuis": "je suis", "tkt": "t'inqui\u00e8te",
-            "dispo": "disponible", "dispos": "disponibles"}
+            "dispo": "disponible", "dispos": "disponibles",
+            "lut": "salut", "bjour": "bonjour", "kikou": "coucou", "cv": "\u00e7a va", "mrc": "merci", "mci": "merci",
+            "merki": "merci", "bvn": "bienvenue", "jpp": "j'en peux plus", "chepa": "je ne sais pas",
+            "osef": "on s'en fout", "tqt": "t'inqui\u00e8te", "pcq": "parce que", "psk": "parce que",
+            "pq": "pourquoi", "pkoi": "pourquoi", "koi": "quoi", "kwa": "quoi", "keske": "qu'est-ce que",
+            "kestu": "qu'est-ce que tu", "qd": "quand", "qqch": "quelque chose", "rdv": "rendez-vous",
+            "mtn": "maintenant", "auj": "aujourd'hui", "ajd": "aujourd'hui", "dmn": "demain", "tjr": "toujours",
+            "tjrs": "toujours", "ptet": "peut-\u00eatre", "ptetre": "peut-\u00eatre", "jvien": "je viens",
+            "jviens": "je viens", "jreviens": "je reviens", "jsuis": "je suis", "jte": "je te", "jpense": "je pense",
+            "dac": "d'accord", "dacc": "d'accord", "ouep": "ouais", "frr": "fr\u00e8re", "frero": "fr\u00e8re",
+            "bsx": "bisous", "biz": "bisous", "bn": "bonne nuit", "aplus": "\u00e0 plus", "bonap": "bon app\u00e9tit",
+            "trkl": "tranquille", "xptdr": "lol"}
 _FR_SLANG_RE = re.compile(r"(?<![\w'])(" + "|".join(sorted(FR_SLANG, key=len, reverse=True)) + r")(?![\w'])", re.I)
 
 
@@ -1554,6 +1706,29 @@ _COIN_RE = re.compile(r"^(?:\s*\d+(?:[.,]\d+)?\s*k?\s*(?:po|pa|pc)(?![A-Za-z\u00
 def is_coin_only(text):
     """True si le message ne contient que des montants en po / pa / pc (ex. '100 po')."""
     return bool(_COIN_RE.match(text.strip()))
+
+
+def fix_guild(src, trans, lang):
+    """Islandais "gildi" = "guilde" dans un jeu, mais Google le traduit par "valeur" / "value"
+    ("ég er að leita að íslensku gildi" -> "je cherche une valeur islandaise")."""
+    if not trans or lang != "is" or not re.search(r"(?i)\bgild", src):
+        return trans
+    for a, b in (("valeurs", "guildes"), ("valeur", "guilde"), ("values", "guilds"), ("value", "guild")):
+        trans = re.sub(r"\b%s\b" % a, b, trans)
+        trans = re.sub(r"\b%s\b" % a.capitalize(), b.capitalize(), trans)
+    return trans
+
+
+def unknown_abbrev(text):
+    """Abreviation inconnue sans voyelle ("lfr", "mm") : Google invente une langue ("lfr" pris pour de
+    l'islandais -> "selon"). On l'affiche telle quelle. Les abreviations connues ("brb", "thx") passent."""
+    if re.search(r"[^\sA-Za-z0-9?!.,]", text):
+        return False
+    words = re.findall(r"[A-Za-z]+", text)
+    if not words or len(words) > 3:
+        return False
+    return all(not re.search("[aeiouyAEIOUY]", w) and w.lower() not in LEX_EXPAND and w.lower() not in LEX_FULL
+               and w.lower() not in SURE_FR and w.lower() not in FR_SLANG for w in words)
 
 
 def worth_translating(text):
@@ -2412,7 +2587,7 @@ class App:
     def bridge_reader(self):
         if os.name != "nt":
             return
-        off, last_seq, seen_first, bad, nmsg, last_status = None, None, False, 0, 0, 0.0
+        off, last_seq, seen_first, bad, nmsg, last_status, stuck = None, None, False, 0, 0, 0.0, 0
         while not self.stop:
             if str(self.cfg.get("source", "pont")).strip().lower() != "pont":
                 time.sleep(1)
@@ -2426,9 +2601,9 @@ class App:
                     continue
                 x, y = org
                 if off is None:
-                    sw, sh = B_W + B_SEARCH, B_H + B_SEARCH
+                    sw, sh = int(B_COLS * B_PMAX) + B_SEARCH, int(B_ROWS * B_PMAX) + B_SEARCH
                     cap = grab(x, y, sw, sh)
-                    off = find_bridge_offset(cap, sw, sh)
+                    off = locate_bridge(cap, sw, sh)
                     if off is None:
                         pct, avg = capture_stats(cap)
                         try:
@@ -2439,14 +2614,21 @@ class App:
                                        % (x, y, pct, avg)))
                         time.sleep(2)
                         continue
-                buf = grab(x + off[0], y + off[1], B_W, B_H)
-                res = decode_bridge(buf, B_W)
+                ox, oy, p = off
+                gx, gy = int(ox), int(oy)
+                bw, bh = int(B_COLS * p) + 3, int(B_ROWS * p) + 3
+                buf = grab(x + gx, y + gy, bw, bh)
+                res = decode_bridge(buf, bw, ox - gx, oy - gy, p)
                 if res is None:
                     bad += 1
-                    if bad > 60:        # fenetre deplacee ou bande disparue : on recherche
+                    if bad > 25:        # bande illisible, deplacee ou disparue : on la recherche (et on remesure les cases)
                         off, bad = None, 0
+                        stuck += 1
+                        if stuck >= 3:  # toujours illisible apres plusieurs recherches : on le dit
+                            self.outq.put(("status", _("Pont image : bande illisible (cases de %.2f px au lieu de 6) | mets la Resolution du jeu = celle de l'ecran et l'Echelle de rendu a 100 %%") % p))
                     time.sleep(0.03)
                     continue
+                stuck = 0
                 bad = 0
                 seq, payload = res
                 if seq != last_seq:
@@ -2515,6 +2697,8 @@ class App:
                 hhmm, kind, chan, author, text = self.inq.get(timeout=0.5)
             except queue.Empty:
                 continue
+            me_mark = chan.endswith("\u00a0")          # ChatFR marque tes propres messages
+            chan = chan.rstrip("\u00a0")
             cfg = self.cfg
             raw = clean_questie(replace_raid_marks(wow_grammar(text)))
             text, _spans = split_links(raw)
@@ -2527,7 +2711,7 @@ class App:
                 self.outq.put(("msg", hhmm, kind, chan, author, text, None, "?", False, False, raw))
                 continue
             me = cfg["my_name"].strip().lower()
-            mine = bool(me) and author.lower() == me
+            mine = me_mark or (bool(me) and author.lower() == me)
             low = text.lower()
             alert = False
             if not mine:
@@ -2567,12 +2751,16 @@ class App:
                 pass                                   # "100 po" : affiche tel quel, sans traduction
             elif has_links and not worth_translating(outside_links):
                 pass                                   # seulement des liens ("[Quete] ?") : rien a traduire
+            elif lex and lex.strip().lower() == judge.strip().lower():
+                lang = "fr"                            # "re" : mot deja compris en francais, rien a ajouter
             elif lex:
                 trans, lang = lex, "en"           # lexique : pas d'appel a Google
             elif not mine and cfg["target"].lower() == "fr" and sure_french(judge):
                 lang = "fr"                            # deja en francais : pas d'appel a Google
             elif not mine and cfg["target"].lower() == "en" and (lexicon_full(judge.strip()) or sure_english(judge)):
                 lang = "en"                            # "lfm", "wts", "lfg/lfm" : jargon anglais, rien a traduire
+            elif not mine and unknown_abbrev(judge):
+                pass                                   # "lfr" : abreviation inconnue, affichee telle quelle
             elif not mine and worth_translating(judge):
                 try:
                     src_text = ru_slang(gtext)
@@ -2602,6 +2790,7 @@ class App:
                                 # on garde la premiere traduction de Google
                                 trans, lang = first
                     trans = relink(trans)
+                    trans = fix_guild(judge, trans, lang)
                 except Exception as e:  # noqa
                     # affiche l'erreur sous le message (la barre d'etat est vite ecrasee par le pont)
                     trans, lang = _("\u26a0 traduction impossible : %s") % err_text(e), "?"
@@ -2664,7 +2853,7 @@ class App:
             return
         tag = kind          # tes messages aussi : couleur du canal, comme dans WoW (groupe = bleu)
         badge = "[%s] " % lang.upper() if lang not in ("?", "") and not mine else ""
-        tail = chan if kind in ("channel", "lfg") else ""
+        tail = chan if kind in ("channel", "lfg") else KIND_LABEL.get(kind, ("", ""))[UI == "en"]
         start_line = int(self.text.index("end-1c").split(".")[0])
         parts = [(hhmm + " ", "badge")]
         if badge:
@@ -2736,14 +2925,29 @@ class App:
 
         def run():
             try:
+                if lang == UI:      # reponse dans ta propre langue (joueur francais) : copie telle quelle
+                    self.outq.put(("out", txt, txt, lang, None))
+                    return
                 # "coucou" seul : Google donne "cuckoo" (l'oiseau)
                 m = re.fullmatch(r"(?i)\s*coucou+\s*([!.?]*)\s*", txt)
                 if m and lang == "en" and UI == "fr":
                     res = ("Hi" if txt.strip()[:1].isupper() else "hi") + m.group(1)
                     self.outq.put(("out", txt, res, lang, None))
                     return
-                # tu ecris en francais : on le dit a Google (sinon "bonjour" seul est pris pour de l'anglais)
-                res, _x = translate_out(txt, lang, UI)
+                # tu ecris en francais : on le dit a Google (sinon "bonjour" seul est pris pour de l'anglais).
+                # Mais une phrase clairement dans une autre langue (allemand recopie...) : detection auto,
+                # sinon Google la lit comme du francais et invente une traduction.
+                res = None
+                native = looks_french(txt) if UI == "fr" else sure_english(txt)
+                if not native and len(re.findall(r"\w+", txt)) >= 3:
+                    try:
+                        r2, det = google_translate(txt, lang)
+                        if (det or "").lower().split("-")[0] not in ("", "?", UI):
+                            res = r2
+                    except Exception:  # noqa
+                        res = None
+                if res is None:
+                    res, _x = translate_out(txt, lang, UI)
                 check = None
                 if res.strip().lower() == txt.strip().lower():
                     res, _x = google_translate(txt, lang)   # pas dans ta langue finalement : detection auto
@@ -2781,6 +2985,8 @@ class App:
         if check:
             self.add((who + "[%s] " % lang.upper(), "me"), (src + "\n", "me"),
                      (_("\u2192 (en fran\u00e7ais : %s)") % check + "\n", "trans"))
+        elif res.strip().lower() == src.strip().lower():   # meme langue : pas de ligne en double
+            self.add((who + "[%s] " % lang.upper(), "me"), (src + "\n", "me"))
         else:
             self.add((who + "[%s] " % lang.upper(), "me"), (src + "\n", "me"), ("\u2192 " + res + "\n", "trans"))
         self.out_entry.delete(0, "end")

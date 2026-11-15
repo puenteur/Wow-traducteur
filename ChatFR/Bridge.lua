@@ -257,6 +257,8 @@ local function CleanCodes(t)
        :gsub("|A:[^|]*coin%-copper[^|]*|a", " pc")
   t = t:gsub("|T[^|]*[Gg]old[Ii]con[^|]*|t", " po"):gsub("|T[^|]*[Ss]ilver[Ii]con[^|]*|t", " pa")
        :gsub("|T[^|]*[Cc]opper[Ii]con[^|]*|t", " pc")
+  -- marque de raid en image (croix, crane...) -> "{rt7}" : le traducteur l'affiche en symbole
+  t = t:gsub("|T[^|]*RaidTargetingIcon_(%d)[^|]*|t", "{rt%1}")
   t = t:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|cn[%w_]+:", ""):gsub("|r", "")
        :gsub("|T.-|t", ""):gsub("|A.-|a", "")
   return t
@@ -326,6 +328,14 @@ function ns.BridgePush(event, msg, author, chan, tries)
   local kind = KIND[event]
   if not kind or type(msg) ~= "string" or type(author) ~= "string" then return end
   if issecretvalue and (issecretvalue(msg) or issecretvalue(author) or issecretvalue(chan)) then return end
+  -- Questie ecrit parfois la quete en simple texte, sans lien : "[[25] Les collines aux hurlements (126)]".
+  -- On en fait un vrai lien de quete (niveau 25, numero 126) : couleur, nom du jeu et fiche comme les autres.
+  if not tries and msg:find("[[", 1, true) then
+    msg = msg:gsub("()%[%[(%-?%d+)[^%]]*%]%s*([^%[%]|]-)%s*%((%d+)%)%]", function(pos, lv, nm, id)
+      if pos > 2 and msg:sub(pos - 2, pos - 1) == "|h" then return nil end   -- deja dans un lien
+      return "|Hquest:" .. id .. ":" .. lv .. "|h[" .. nm .. "]|h"
+    end)
+  end
   -- quete liee pas encore connue du jeu : on la fait charger et on renvoie le message un peu plus tard
   -- (2 essais max, ~1 s), sinon il partirait en dore avec le nom de l'envoyeur
   local load = C_QuestLog and C_QuestLog.RequestLoadQuestByID
@@ -349,6 +359,11 @@ function ns.BridgePush(event, msg, author, chan, tries)
   chan = (type(chan) == "string") and chan:gsub("^%d+%.%s*", ""):gsub("[\1-\31]", " ") or ""
   -- pings : l'auteur arrive en lien "|Hplayer:Nom|h[Nom]|h" -> "Nom"
   author = CleanCodes(author:gsub("|H[^|]*|h(.-)|h", "%1")):gsub("^%[(.*)%]$", "%1"):gsub("[\1-\31]", " ")
+  -- tes propres messages : espace insecable (invisible) a la fin du canal -> le traducteur sait que
+  -- c'est toi (pas de badge, ton pseudo n'est pas "cliquable pour repondre"), sans reglage a remplir
+  local me = UnitName and UnitName("player")
+  -- (le jeu donne "Malya", le tchat "Malya Effluvia" : on compare le premier mot, sans le royaume)
+  if me and author ~= "" and (author == me or author:match("^[^%-%s]+") == me) then chan = chan .. "\194\160" end
   local rec = kind .. "\31" .. chan .. "\31" .. author .. "\31" .. msg
   if #rec > MAXREC then
     local cut = MAXREC

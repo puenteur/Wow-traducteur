@@ -8,6 +8,7 @@ ns.RAW = [[
 -- ===== RECHERCHE DE GROUPE =====
 lfm=cherche des joueurs
 lfg=cherche un groupe
+lfr=cherche un raid
 lf=cherche
 lf1m=cherche 1 joueur
 lf2m=cherche 2 joueurs
