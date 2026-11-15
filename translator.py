@@ -2542,6 +2542,10 @@ class App:
             self.text.tag_configure("name", font=("Segoe UI", self.cfg["font_size"], "bold"))
             self.apply_window_cfg()
             save_config(self.cfg)
+            # langue automatique desactivee : on retire "(auto, d'apres ...)" reste affiche sous la case
+            auto_txt = _("Langue de reponse : %s (auto, d'apres %s)").split("%s")[1]
+            if not self.cfg.get("reply_lang_auto") and auto_txt in str(self.out_result.cget("text")):
+                self.out_result.config(text="")
             w.destroy()
             if new_theme:
                 self.apply_theme(self.cfg["theme"])
