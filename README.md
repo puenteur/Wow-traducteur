@@ -37,7 +37,7 @@ Le détail de chaque étape est plus bas.
 - 13 thèmes (Sombre, Alliance, Horde, Parchemin, Givre, Arcane…), appliqués tout de suite.
 - Cadenas pour verrouiller la position et la taille.
 - Se cache quand WoW n'est pas la fenêtre active (touche Windows, Alt+Tab, WoW réduit) et revient avec lui.
-- Se ferme toute seule quand WoW se ferme, prévient quand une nouvelle version est disponible.
+- Se ferme toute seule quand WoW se ferme. Quand une nouvelle version sort, un bouton « Mettre à jour » la télécharge et l'installe en un clic (tes réglages sont gardés). L'addon ChatFR se met à jour avec CurseForge.
 - Alertes sur ton pseudo ou des mots choisis, filtre de canaux, opacité, taille du texte.
 
 **Addon ChatFR en jeu**
@@ -154,7 +154,9 @@ Avec toutes ces cases cochées, tu peux placer WoW Traducteur par-dessus le tcha
 
 Les liens apparaissent sans couleur ou avec de petits carrés bizarres : l'addon et le traducteur ne sont pas de la même version. Mets à jour les deux ensemble (addon `ChatFR` et dossier `Traducteur`).
 
-Fenêtre perdue hors de l'écran : ferme-la, supprime `translator_config.json`, relance.
+Fenêtre perdue hors de l'écran : ferme-la, supprime `translator_config.json` dans `%APPDATA%\WoW-Traducteur` (tape `%APPDATA%\WoW-Traducteur` dans la barre de l'Explorateur), relance.
+
+Tes réglages sont rangés dans `%APPDATA%\WoW-Traducteur` (depuis la 1.9.4), pas dans le dossier `Traducteur` : tu peux remplacer ce dossier sans les perdre.
 Alt+Z (masquer l'interface) cache aussi la bande : le traducteur ne reçoit plus rien tant qu'elle est masquée.
 
 ## Limites

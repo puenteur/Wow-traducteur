@@ -15,6 +15,9 @@ import binascii
 import difflib
 import ctypes
 import json
+import io
+import shutil
+import zipfile
 import math
 import os
 import queue
@@ -38,7 +41,7 @@ try:
 except ImportError:  # pas sous Windows
     winsound = None
 
-VERSION = "1.9.3"
+VERSION = "1.9.4"
 # Verification de mise a jour : le fichier version.txt du depot contient le numero de la derniere version.
 VERSION_URL = "https://raw.githubusercontent.com/puenteur/Wow-traducteur/main/version.txt"
 KOFI_URL = "https://ko-fi.com/puenteur"
@@ -56,25 +59,88 @@ enchanting engineering cooking fishing mining herbalism skinning jewelcrafting i
 
 # Nouveautes affichees une fois dans la fenetre apres une mise a jour (pas au premier lancement).
 NEWS = {
-    "fr": ["WoW Traducteur %s : maintenant aussi en anglais !" % VERSION,
+    "fr": ["WoW Traducteur %s" % VERSION,
+           "- Nouveau en %s : mise \u00e0 jour en un clic (bouton \u00ab Mettre \u00e0 jour \u00bb) ; tes r\u00e9glages sont maintenant rang\u00e9s \u00e0 part (%%APPDATA%%\\WoW-Traducteur) et ne se perdent plus ; la fen\u00eatre se place sur le tchat de WoW (premier lancement, ou bouton dans les R\u00e9glages) et se cache quand un menu du jeu s'ouvre ; \u00ab \u2014 \u00bb replie la fen\u00eatre sur sa barre ; messages de l'h\u00f4tel des ventes ; meilleures traductions (WTB/WTS, prix, COD, dr, unstuck). Mets aussi ChatFR \u00e0 jour." % VERSION,
            "- La grande nouveaut\u00e9 : tout le traducteur existe en anglais. Au premier lancement, on choisit Fran\u00e7ais ou English ; en anglais, le tchat est traduit vers l'anglais. Pratique pour tes amis anglophones ! (changeable dans les R\u00e9glages)",
-           "- Nouveau en %s : le nom du canal devant les messages (Groupe, Guilde, Raid, Officier) ; tes messages reconnus tout seuls ; r\u00e9ponse \u00e0 un joueur fran\u00e7ais copi\u00e9e telle quelle ; phrase \u00e9crite dans une autre langue que le fran\u00e7ais bien traduite ; marques de raid ; liens de qu\u00eate Questie en texte simple (mets aussi ChatFR \u00e0 jour) ; fonctionne aussi avec une r\u00e9solution personnalis\u00e9e ou une \u00e9chelle de rendu r\u00e9duite ; le lanceur trouve mieux Python ; abr\u00e9viations mieux traduites (ty, lfr, slt, tlm...) ; ic\u00f4nes des pings (\u26a0 \u2691 \u2b07 \u2694)." % VERSION,
+           "- 1.9.3 : le nom du canal devant les messages (Groupe, Guilde, Raid, Officier) ; tes messages reconnus tout seuls ; r\u00e9ponse \u00e0 un joueur fran\u00e7ais copi\u00e9e telle quelle ; phrase \u00e9crite dans une autre langue que le fran\u00e7ais bien traduite ; marques de raid ; liens de qu\u00eate Questie en texte simple (mets aussi ChatFR \u00e0 jour) ; fonctionne aussi avec une r\u00e9solution personnalis\u00e9e ou une \u00e9chelle de rendu r\u00e9duite ; le lanceur trouve mieux Python ; abr\u00e9viations mieux traduites (ty, lfr, slt, tlm...) ; ic\u00f4nes des pings (\u26a0 \u2691 \u2b07 \u2694).",
            "- 1.9.1 : cliquer sur la fen\u00eatre ne prend plus le clavier \u00e0 WoW (tu continues \u00e0 bouger et \u00e0 parler aux PNJ). Seule la zone \u00ab \u00c9crire \u00bb le prend, quand tu cliques dedans. Tes messages de groupe en bleu, comme dans le jeu. Liens de qu\u00eate Questie des autres joueurs : bonne couleur et nom dans ta langue.",
            "- Pi\u00e8ces d'or, d'argent et de cuivre en ic\u00f4nes bien visibles, m\u00eame quand le jeu \u00e9crit \u00ab 25 Cuivre \u00bb.",
            "- Langue de r\u00e9ponse : une liste qui s'ouvre vers le haut (EN, DE, ES, puis Autre langue\u2026).",
            "- Fen\u00eatre des nouveaut\u00e9s apr\u00e8s chaque mise \u00e0 jour (celle-ci !).",
            "- Meilleures traductions : lfg/lfm, wts/wtb, Deadmines, jargon russe (\u041b\u0424\u0413), mots coll\u00e9s aux liens, petits messages en espagnol ou en letton, moins d'appels inutiles \u00e0 Google."],
-    "en": ["WoW Traducteur %s: now in English!" % VERSION,
+    "en": ["WoW Traducteur %s" % VERSION,
+           "- New in %s: one-click update (\"Update\" button); your settings are now stored separately (%%APPDATA%%\\WoW-Traducteur) and are no longer lost; the window places itself over the WoW chat (first launch, or button in Settings) and hides when a game menu opens; \"\u2014\" rolls the window up to its bar; auction house messages; better translations (WTB/WTS, prices, COD, unstuck). Update ChatFR too." % VERSION,
            "- The big one: the whole translator is now available in English. Choose Fran\u00e7ais or English at first launch; in English, the chat is translated into English (can be changed in Settings).",
-           "- New in %s: channel name in front of messages (Party, Guild, Raid, Officer); your own messages recognized automatically; replies in your own language copied as is; text written in another language than English translated correctly; raid marks; Questie quest links in plain text (update ChatFR too); also works with a custom resolution or a lower render scale; the launcher finds Python more reliably; better abbreviations (ty, lfr, slt, tlm...); ping icons (\u26a0 \u2691 \u2b07 \u2694)." % VERSION,
+           "- 1.9.3: channel name in front of messages (Party, Guild, Raid, Officer); your own messages recognized automatically; replies in your own language copied as is; text written in another language than English translated correctly; raid marks; Questie quest links in plain text (update ChatFR too); also works with a custom resolution or a lower render scale; the launcher finds Python more reliably; better abbreviations (ty, lfr, slt, tlm...); ping icons (\u26a0 \u2691 \u2b07 \u2694).",
            "- 1.9.1: clicking the window no longer takes the keyboard away from WoW (keep moving and talking to NPCs). Only the \"Write\" box takes it, when you click in it. Your party messages in blue, like in the game. Questie quest links from other players: right color and name in your language.",
            "- Gold, silver and copper coins shown as clear icons, even when the game writes \"25 Copper\".",
            "- Reply language: a list that opens upwards (FR, DE, ES, then Other language\u2026).",
            "- A window like this one after each update.",
            "- Better translations: French gamer slang (pex, slt, tlm, \"du monde ?\"), Russian jargon, lfg/lfm, words stuck to links, and fewer useless calls to Google."],
 }
-CONFIG_PATH = os.path.join(HERE, "translator_config.json")
-TIPS_PATH = os.path.join(HERE, "infobulles.json")     # infobulles d'objets gardees entre deux lancements
+
+
+def _data_dir():
+    """Reglages hors du dossier du programme (%APPDATA%\\WoW-Traducteur) : on peut remplacer ou
+    supprimer le dossier Traducteur a chaque mise a jour sans rien perdre."""
+    base = os.environ.get("APPDATA")
+    if os.name == "nt" and base:
+        d = os.path.join(base, "WoW-Traducteur")
+        try:
+            os.makedirs(d, exist_ok=True)
+            return d
+        except OSError:
+            pass
+    return HERE
+
+
+DATA_DIR = _data_dir()
+for _name in ("translator_config.json", "infobulles.json"):   # 1.9.3 et avant : reglages dans le dossier
+    _old, _new = os.path.join(HERE, _name), os.path.join(DATA_DIR, _name)
+    if DATA_DIR != HERE and os.path.exists(_old) and not os.path.exists(_new):
+        try:
+            shutil.copy2(_old, _new)          # copie (l'ancien reste, au cas ou on revient en arriere)
+        except OSError:
+            pass
+CONFIG_PATH = os.path.join(DATA_DIR, "translator_config.json")
+# Mise a jour en un clic : le zip joint a la release (compte dans les telechargements de GitHub, comme un
+# telechargement a la main). Secours : les memes fichiers dans le depot, au tag de la version.
+UPDATE_ZIP = "https://github.com/puenteur/Wow-traducteur/releases/download/v%s/WoW-Traducteur-%s.zip"
+UPDATE_RAW = "https://raw.githubusercontent.com/puenteur/Wow-traducteur/v%s/"
+UPDATE_FILES = ("translator.py", "Lancer le traducteur.bat")
+
+
+def _http_get(url, timeout=30):
+    req = urllib.request.Request(url, headers={"User-Agent": "WoW-Traducteur"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return r.read()
+
+
+def download_update(latest):
+    """-> {nom: contenu} pour UPDATE_FILES. D'abord le zip de la release, sinon le depot."""
+    try:
+        z = zipfile.ZipFile(io.BytesIO(_http_get(UPDATE_ZIP % (latest, latest))))
+        got = {}
+        for name in UPDATE_FILES:
+            member = next((m for m in z.namelist() if m.replace("\\", "/").endswith("/Traducteur/" + name)), None)
+            if member:
+                got[name] = z.read(member)
+        if "translator.py" in got:
+            return got
+    except Exception:  # noqa  (zip absent ou illisible : on essaie le depot)
+        pass
+    got = {}
+    for name in UPDATE_FILES:
+        try:
+            got[name] = _http_get(UPDATE_RAW % latest + urllib.parse.quote(name), timeout=20)
+        except Exception:  # noqa
+            if name == "translator.py":
+                raise
+    return got
+# Taille minimale de la fenetre (pixels) : assez petite pour tenir sur un petit tchat de WoW,
+# assez grande pour garder la ligne "Ecrire" entiere (380 x 300 avant : trop grand)
+MIN_W, MIN_H = 320, 180
+TIPS_PATH = os.path.join(DATA_DIR, "infobulles.json")     # infobulles d'objets gardees entre deux lancements
 
 DEFAULTS = {
     "source": "pont",               # "pont" (capture de la bande de l'addon) ou "log"
@@ -94,6 +160,7 @@ DEFAULTS = {
     # langue de reponse = langue du dernier message etranger. Desactivee par defaut depuis 1.9.3 (nouveau
     # nom de reglage : l'ancien "auto_reply_lang", active pour tout le monde, est ignore)
     "reply_lang_auto": False,
+    "hide_on_menu": True,           # se cacher quand un menu du jeu s'ouvre (menu du tchat, clic droit...)
     "theme": "Sombre",              # theme de la fenetre (voir THEMES)
     "locked": False,                # cadenas : fenetre verrouillee (ni deplacement ni redimensionnement)
     "help_seen": False,             # fenetre d'aide deja montree une fois (premier lancement)
@@ -166,6 +233,9 @@ EN = {
     "Theme": "Theme",
     "Langue de l'interface": "Interface language",
     "Enregistrer": "Save",
+    "Placer sur le tchat de WoW": "Place over the WoW chat",
+    "Se cacher quand un menu du jeu s'ouvre (menu du tchat, clic droit)": "Hide when a game menu opens (chat menu, right-click)",
+    "Pas encore recu de ChatFR (1.9.4 ou plus) : reessaie dans 30 s.": "Not received from ChatFR yet (1.9.4 or later): try again in 30 s.",
     "Log introuvable : %s (tape /chatlog dans WoW)": "Log not found: %s (type /chatlog in WoW)",
     "En ecoute...": "Listening...",
     "En ecoute... (%d lignes lues, %d messages)": "Listening... (%d lines read, %d messages)",
@@ -180,6 +250,14 @@ EN = {
         "Image bridge: strip unreadable (%.2f px cells instead of 6) | set the game Resolution = your screen's and Render Scale to 100 %%",
     "⚠ traduction impossible : %s": "⚠ translation failed: %s",
     "Mise à jour %s dispo": "Update %s available",
+    "Mettre à jour (%s)": "Update (%s)",
+    "Téléchargement...": "Downloading...",
+    "Mise à jour impossible : ouvrir la page": "Update failed: open the page",
+    "Mise à jour impossible : %s": "Update failed: %s",
+    "fichier inattendu": "unexpected file",
+    "Mise à jour %s terminée ✓": "Update %s done ✓",
+    "Mise à jour %s terminée ✓ Redémarrage dans %d s": "Update %s done ✓ Restarting in %d s",
+    "✓ Mise à jour terminée : %s → %s. Pense aussi à mettre ChatFR à jour (CurseForge).": "✓ Update done: %s → %s. Remember to update ChatFR too (CurseForge).",
     "Erreur : %s": "Error: %s",
     "Copie ! (Entree, Ctrl+V, Entree dans WoW)  %s": "Copied! (Enter, Ctrl+V, Enter in WoW)  %s",
     "Vous → ": "You → ",
@@ -1244,6 +1322,10 @@ def parse_bridge_record(payload):
         return None
     if kind == "tip":                    # infobulle d'objet : lignes dans le champ canal, nom en auteur
         return time.strftime("%H:%M"), "tip", chan, author, ""
+    if kind == "geo":                    # place du tchat de WoW (ChatFR 1.9.4) : "x,y,l,h,hauteur du jeu"
+        return time.strftime("%H:%M"), "geo", chan, "", ""
+    if kind == "ui":                     # menu du jeu ouvert ("1") ou ferme ("0") (ChatFR 1.9.4)
+        return time.strftime("%H:%M"), "ui", chan, "", ""
     if not text.strip():
         return None
     low = chan.lower()
@@ -1324,6 +1406,20 @@ def wow_client_origin():
     if not u.ClientToScreen(hwnd, ctypes.byref(pt)) or pt.x < -10000:
         return None
     return pt.x, pt.y
+
+
+def wow_client_height():
+    """Hauteur (pixels ecran) de la zone de jeu de WoW, ou None."""
+    _gdi_setup()
+    u = ctypes.windll.user32
+    hwnd = u.FindWindowW("GxWindowClass", None) or u.FindWindowW(None, "World of Warcraft")
+    if not hwnd:
+        return None
+    rc = wintypes.RECT()
+    u.GetClientRect.argtypes = [ctypes.c_void_p, ctypes.POINTER(wintypes.RECT)]
+    if not u.GetClientRect(hwnd, ctypes.byref(rc)):
+        return None
+    return rc.bottom - rc.top
 
 
 def save_bmp(path, bgra, w, h):
@@ -1433,7 +1529,7 @@ SURE_FR = set("je j tu il elle nous vous ils elles est suis sont es ai as avons 
               "peut faut faire avoir etre être connait connais sais quelqun qqn aller viens venir ici ça ca c qu d l m n s t y bien très tres trop aussi encore "
               "deja déjà alors voila voilà fait mort mdr ptdr bonne bon nuit dispo dispos "
               # argot de salut : seul, Google le traduisait mal ("slt" -> "salope", "lut" -> "lutin")
-              "slt lut bjr bsr bjour tlm kikou coucou cv mrc mci merki bvn bienvenue dsl jsp jpp chepa osef tkt tqt "
+              "slt lut bjr bsr bjour tlm kikou coucou cv mrc mci merki dr bvn bienvenue dsl jsp jpp chepa osef tkt tqt "
               "bcp pcq psk pq pkoi koi kwa keske kestu qd qqch qqun qq1 rdv mtn auj ajd dmn tjr tjrs ptet ptetre "
               "jvais jvien jviens jreviens jarrive jsuis chui chuis jte jpense dac dacc ouep ouai frr frero "
               "bsx biz bisous bn aplus bonap trkl tranquille ptn wesh wsh tg fdp ntm xptdr pex pexe pexer "
@@ -1574,7 +1670,7 @@ LEX_EXPAND = {
     "ty": "thank you", "thx": "thanks",
     "tyvm": "thank you very much", "pls": "please", "plz": "please", "ppl": "people",
     "lfg": "looking for group", "lfm": "looking for more", "lfr": "looking for raid", "lf": "looking for",
-    "wts": "want to sell", "wtb": "want to buy", "wtt": "want to trade",
+    "wts": "want to sell", "wtb": "want to buy", "wtt": "want to trade", "cod": "cash on delivery", "ea": "each",
     "idk": "I don't know", "imo": "in my opinion", "btw": "by the way", "tbh": "to be honest",
     "brb": "be right back", "afk": "away from keyboard", "omw": "on my way",
     "np": "no problem", "sry": "sorry", "thru": "through", "cuz": "because", "bc": "because",
@@ -1615,7 +1711,15 @@ LEX_PHRASES = [
     (r"(^|\]\s*)any(?:one|body|1)\s+(selling|going|up|around|online|here)\b", r"\1is anyone \2"),
     (r"(^|\]\s*)any(?:one|body|1)\s+(?:seen|saw)\b", r"\1has anyone seen"),
     (r"(^|\]\s*)any(?:one|body|1)\s+can\b", r"\1can anyone"),
+    # "WTB Tiger Meat" : "want to buy" seul donnait "voulez acheter" (sans sujet)
+    (r"^\s*wtb\b", "I want to buy"), (r"^\s*wts\b", "I want to sell"), (r"^\s*wtt\b", "I want to trade"),
 ]
+
+# Prix dans un message de commerce ("2s each", "5g", "50c") : en pieces, pas "2s" laisse tel quel.
+# Seulement si le message parle d'achat ou de vente ("1s" peut aussi vouloir dire "1 seconde").
+_TRADE_RE = re.compile(r"(?i)\b(?:wts|wtb|wtt|want to (?:buy|sell|trade)|each|ea|per|cod|price|selling|buying)\b")
+_PRICE_RE = re.compile(r"(?i)\b(\d+)\s?([gsc])\b")
+_PRICE_UNIT = {"g": "gold", "s": "silver", "c": "copper"}
 
 # 3) Francais qui contient du jargon anglais ("un last tank et on part") : Google le prend pour de
 #    l'anglais et traduit "tank" par "reservoir". Si la phrase contient des mots francais sans
@@ -1664,7 +1768,7 @@ def ru_slang(text):
 FR_SLANG = {"pex": "leveling", "pexing": "leveling", "pexe": "monte de niveau", "pexer": "monter de niveau",
             "slt": "salut", "cc": "coucou", "bjr": "bonjour", "bsr": "bonsoir", "stp": "s'il te pla\u00eet",
             "svp": "s'il vous pla\u00eet", "qqn": "quelqu'un", "qqun": "quelqu'un", "qq1": "quelqu'un",
-            "tlm": "tout le monde", "bcp": "beaucoup", "dsl": "d\u00e9sol\u00e9", "jsp": "je ne sais pas",
+            "tlm": "tout le monde", "bcp": "beaucoup", "dsl": "d\u00e9sol\u00e9", "dr": "de rien", "jsp": "je ne sais pas",
             "pb": "probl\u00e8me", "pr": "pour", "mdr": "lol", "ptdr": "lol", "donj": "donjon", "donjs": "donjons",
             "grp": "groupe", "jvais": "je vais", "chui": "je suis", "chuis": "je suis", "tkt": "t'inqui\u00e8te",
             "dispo": "disponible", "dispos": "disponibles",
@@ -1712,6 +1816,8 @@ def lexicon_expand(text):
     """Remplace les abreviations par l'anglais complet (mots entiers seulement)."""
     for pat, repl in LEX_PHRASES:
         text = re.sub(pat, repl, text, flags=re.I)
+    if _TRADE_RE.search(text):
+        text = _PRICE_RE.sub(lambda m: "%s %s" % (m.group(1), _PRICE_UNIT[m.group(2).lower()]), text)
 
     def rep(m):
         w = m.group(0)
@@ -1729,14 +1835,23 @@ def is_coin_only(text):
     return bool(_COIN_RE.match(text.strip()))
 
 
-def fix_guild(src, trans, lang):
-    """Islandais "gildi" = "guilde" dans un jeu, mais Google le traduit par "valeur" / "value"
-    ("ég er að leita að íslensku gildi" -> "je cherche une valeur islandaise")."""
-    if not trans or lang != "is" or not re.search(r"(?i)\bgild", src):
+# Mots de jeu que Google traduit dans leur sens courant. (mot du message, langue du message, remplacements
+# dans la traduction). Islandais "gildi" = guilde (pas "valeur") ; "unstuck" = se debloquer (pas "se decoller").
+WORD_FIXES = [
+    (r"(?i)\bgild", "is", [("valeurs", "guildes"), ("valeur", "guilde"), ("values", "guilds"), ("value", "guild")]),
+    (r"(?i)\bunstuck\b", "en", [("d\u00e9coll", "d\u00e9bloqu")]),
+]
+
+
+def fix_words(src, trans, lang):
+    if not trans:
         return trans
-    for a, b in (("valeurs", "guildes"), ("valeur", "guilde"), ("values", "guilds"), ("value", "guild")):
-        trans = re.sub(r"\b%s\b" % a, b, trans)
-        trans = re.sub(r"\b%s\b" % a.capitalize(), b.capitalize(), trans)
+    for pat, lg, pairs in WORD_FIXES:
+        if lang != lg or not re.search(pat, src):
+            continue
+        for a, b in pairs:
+            trans = re.sub(r"\b%s" % a, b, trans)
+            trans = re.sub(r"\b%s" % a.capitalize(), b.capitalize(), trans)
     return trans
 
 
@@ -1776,14 +1891,16 @@ class App:
         self.root.configure(bg=self.T["bg"])
         self.root.overrideredirect(True)      # pas de barre de titre Windows : on a la notre
         geo = str(self.cfg.get("geometry", ""))
-        if not re.match(r"^\d+x\d+\+-?\d+\+-?\d+$", geo):     # premier lancement : sur le tchat de WoW
+        # premier lancement : la fenetre se placera sur le tchat de WoW des que ChatFR en donne la place
+        self.geo_auto, self.last_geo = not re.match(r"^\d+x\d+\+-?\d+\+-?\d+$", geo), None
+        if not re.match(r"^\d+x\d+\+-?\d+\+-?\d+$", geo):     # en attendant : a peu pres sur le tchat
             sw, sh = self.root.winfo_screenwidth(), self.root.winfo_screenheight()
             gw, gh = min(540, sw), min(300, sh)                      # en bas a gauche, au-dessus des barres
             geo = "%dx%d+%d+%d" % (gw, gh, int(sw * 0.016), max(0, int(sh * 0.885) - gh))
         self.root.geometry(geo)
         self.root.configure(highlightthickness=self.T["border_w"], highlightbackground=self.T["border"],
                             highlightcolor=self.T["border"])
-        self.root.minsize(380, 300)
+        self.root.minsize(MIN_W, MIN_H)
         self.inq = queue.Queue()
         self.outq = queue.Queue()
         self.stop = False
@@ -1807,6 +1924,8 @@ class App:
         self.root.bind("<FocusOut>", lambda e: self.root.after(80, self._give_back_keyboard), add="+")
         self.root.after(300, lambda: self.set_noactivate(True))
         self.root.after(1500, self.show_news)
+        if os.environ.get("WOWTRAD_UPDATED"):        # relance juste apres une mise a jour en un clic
+            self.root.after(300, self.show_updated)
         threading.Thread(target=self.reader, daemon=True).start()
         threading.Thread(target=self.bridge_reader, daemon=True).start()
         threading.Thread(target=self.worker, daemon=True).start()
@@ -1909,6 +2028,7 @@ class App:
         T = self.T
         BAR = T["bar"]
         bar = tk.Frame(r, bg=BAR)
+        self._bar = bar
         bar.pack(fill="x")
         if T["border_w"] > 1:       # liseré sous la barre, couleur du cadre
             tk.Frame(r, bg=T["border"], height=1).pack(fill="x")
@@ -1929,7 +2049,7 @@ class App:
         self._clear_btn.pack(side="left", padx=3, pady=4)
         tk.Button(bar, text="?", command=self.open_help, **dict(btn, padx=7)).pack(side="left", padx=3, pady=4)
         # bouton cache, affiche seulement si une nouvelle version existe sur GitHub
-        self.update_btn = tk.Button(bar, text="", command=lambda: webbrowser.open(RELEASE_URL),
+        self.update_btn = tk.Button(bar, text="", command=self.do_update,
                                     **dict(btn, bg=T["accent"], fg=T["accent_fg"], activebackground=T["accent_act"]))
         closeb = tk.Button(bar, text="\u2715", command=self.on_close, bg=BAR, fg=T["icon"], relief="flat", bd=0,
                            padx=10, pady=2, activebackground="#c0392b", activeforeground="white",
@@ -1939,6 +2059,7 @@ class App:
                          padx=10, pady=2, activebackground=T["btn_act"], activeforeground="white",
                          cursor="hand2", font=("Segoe UI", 10), highlightthickness=0)
         minb.pack(side="right", pady=4)
+        self._minb = minb
         # cadenas : dessine (pas d'emoji, mal affiche par tkinter sous Windows)
         self.lock_cv = tk.Canvas(bar, width=22, height=22, bg=BAR, highlightthickness=0, bd=0, cursor="hand2")
         self.lock_cv.pack(side="right", padx=(0, 2), pady=3)
@@ -2358,6 +2479,11 @@ class App:
                     self.out_result.config(text=_("Langue de reponse : %s") % lang)
                 return
 
+    def show_updated(self):
+        old = os.environ.pop("WOWTRAD_UPDATED", "")
+        self.add((_("\u2713 Mise \u00e0 jour termin\u00e9e : %s \u2192 %s. Pense aussi \u00e0 mettre ChatFR \u00e0 jour (CurseForge).")
+                  % (old, VERSION) + "\n", "news"))
+
     def show_news(self):
         """Apres une mise a jour (jamais au premier lancement, qui montre deja l'aide) :
         une petite fenetre avec les nouveautes, une seule fois."""
@@ -2481,7 +2607,8 @@ class App:
                  (_("Afficher aussi les messages deja dans ta langue"), "show_french"),
                  (_("Se fermer quand WoW se ferme"), "autoclose"),
                  (_("Se cacher quand WoW n'est pas la fenetre active"), "follow_wow"),
-                 (_("Langue de reponse automatique (dernier message etranger)"), "reply_lang_auto")]
+                 (_("Langue de reponse automatique (dernier message etranger)"), "reply_lang_auto"),
+                 (_("Se cacher quand un menu du jeu s'ouvre (menu du tchat, clic droit)"), "hide_on_menu")]
         bv = {}
         row = len(fields)
         for lab, key in bools:
@@ -2550,6 +2677,17 @@ class App:
             if new_theme:
                 self.apply_theme(self.cfg["theme"])
 
+        def on_chat():
+            if self.place_on_chat():
+                place_lbl.config(text="")
+            else:
+                place_lbl.config(text=_("Pas encore recu de ChatFR (1.9.4 ou plus) : reessaie dans 30 s."))
+        tk.Button(w, text=_("Placer sur le tchat de WoW"), command=on_chat, bg=T["entry"], fg=T["fg"],
+                  activebackground=T["entry"], activeforeground=T["fg"], relief="flat").grid(
+            row=row, column=0, sticky="w", padx=6, pady=(6, 0))
+        place_lbl = tk.Label(w, text="", bg=P, fg=T["muted"], wraplength=300, justify="left")
+        place_lbl.grid(row=row, column=1, sticky="w", padx=6, pady=(6, 0))
+        row += 1
         tk.Button(w, text=_("Enregistrer"), command=ok, bg=T["accent"], fg=T["accent_fg"],
                   activebackground=T["accent_act"], activeforeground=T["accent_fg"],
                   relief="flat").grid(row=row, column=0, columnspan=2, pady=8)
@@ -2666,6 +2804,10 @@ class App:
                         p = parse_bridge_record(payload)
                         if p and p[1] == "tip":
                             self.outq.put(("tip", p[3], p[2]))
+                        elif p and p[1] == "geo":
+                            self.outq.put(("geo", p[2], x, y))
+                        elif p and p[1] == "ui":
+                            self.outq.put(("wowmenu", p[2] == "1"))
                         elif p:
                             nmsg += 1
                             self.nparsed += 1
@@ -2817,7 +2959,7 @@ class App:
                                 # on garde la premiere traduction de Google
                                 trans, lang = first
                     trans = relink(trans)
-                    trans = fix_guild(judge, trans, lang)
+                    trans = fix_words(judge, trans, lang)
                 except Exception as e:  # noqa
                     # affiche l'erreur sous le message (la barre d'etat est vite ecrasee par le pont)
                     trans, lang = _("\u26a0 traduction impossible : %s") % err_text(e), "?"
@@ -2841,6 +2983,57 @@ class App:
         except Exception:
             pass
 
+    def do_update(self):
+        """Telecharge translator.py et le .bat de la release GitHub, les remplace (copie .old gardee)
+        et relance le traducteur. Rien n'est remplace si un telechargement echoue."""
+        latest = getattr(self, "latest", None)
+        if not latest:
+            return
+        self.update_btn.config(text=_("T\u00e9l\u00e9chargement..."), state="disabled")
+
+        def run():
+            try:
+                got = download_update(latest)
+                code = got["translator.py"]
+                # verification : bon numero de version et code Python valide, sinon on ne touche a rien
+                if ('VERSION = "%s"' % latest).encode() not in code:
+                    raise ValueError(_("fichier inattendu"))
+                compile(code, "translator.py", "exec")
+                for name, data in got.items():
+                    path = os.path.join(HERE, name)
+                    if os.path.exists(path):
+                        shutil.copy2(path, path + ".old")
+                    tmp = path + ".new"
+                    with open(tmp, "wb") as f:
+                        f.write(data)
+                    os.replace(tmp, path)
+                self.outq.put(("updated",))
+            except Exception as e:  # noqa
+                self.outq.put(("update_failed", err_text(e)))
+        threading.Thread(target=run, daemon=True).start()
+
+    def update_countdown(self, n):
+        """Compte a rebours visible avant la relance (5, 4, 3...)."""
+        if n <= 0:
+            self.restart()
+            return
+        msg = _("Mise \u00e0 jour %s termin\u00e9e \u2713 Red\u00e9marrage dans %d s") % (getattr(self, "latest", ""), n)
+        self.update_btn.config(text=msg, state="disabled")
+        self.status.set(msg)
+        self.root.after(1000, lambda: self.update_countdown(n - 1))
+
+    def restart(self):
+        """Relance le traducteur (apres une mise a jour) puis ferme celui-ci."""
+        try:
+            exe = sys.executable
+            if exe.lower().endswith("python.exe") and os.path.exists(exe[:-10] + "pythonw.exe"):
+                exe = exe[:-10] + "pythonw.exe"                 # pas de fenetre noire
+            env = dict(os.environ, WOWTRAD_UPDATED=VERSION)     # le nouveau traducteur dira "mis a jour"
+            subprocess.Popen([exe, os.path.join(HERE, "translator.py")], cwd=HERE, env=env)
+        except Exception:  # noqa
+            pass
+        self.on_close()
+
     # ---- affichage ---------------------------------------------------------
     def poll(self):
         try:
@@ -2855,6 +3048,10 @@ class App:
                     return
                 elif item[0] == "out":
                     self.show_out(*item[1:])
+                elif item[0] == "geo":
+                    self.on_geo(*item[1:])
+                elif item[0] == "wowmenu":
+                    self.on_wow_menu(item[1])
                 elif item[0] == "tip":
                     key = item[1].strip().lower()
                     self.tips.pop(key, None)
@@ -2867,10 +3064,22 @@ class App:
                 elif item[0] == "wowfront":
                     self.follow_wow(item[1])
                 elif item[0] == "update":
-                    self.update_btn.config(text=_("Mise \u00e0 jour %s dispo") % item[1])
+                    self.latest = item[1]
+                    self.update_btn.config(text=_("Mettre \u00e0 jour (%s)") % item[1], state="normal")
                     self.update_btn.pack(side="left", padx=3, pady=4, after=self._clear_btn)
+                elif item[0] == "updated":
+                    # on le dit avant de fermer : sinon la fenetre qui disparait ressemble a un plantage
+                    self.add((_("Mise \u00e0 jour %s termin\u00e9e \u2713") % getattr(self, "latest", "") + "\n", "news"))
+                    self.update_countdown(5)
+                elif item[0] == "update_failed":
+                    self.update_btn.config(text=_("Mise \u00e0 jour impossible : ouvrir la page"), state="normal",
+                                           command=lambda: webbrowser.open(RELEASE_URL))
+                    self.status.set(_("Mise \u00e0 jour impossible : %s") % item[1])
         except queue.Empty:
             pass
+        # menu ferme sans qu'on le sache (ChatFR repete "ouvert" toutes les 3 s) : on revient
+        if getattr(self, "_menu_hidden", False) and time.time() - getattr(self, "_menu_last", 0) > 5:
+            self.end_menu_hide()
         self.root.after(100, self.poll)
 
     def show(self, hhmm, kind, chan, author, text, trans, lang, alert, mine, raw=None):
@@ -3035,22 +3244,48 @@ class App:
                 self.root.withdraw()
         elif getattr(self, "_auto_hidden", False):
             self._auto_hidden = False
-            self.root.deiconify()
-            self.apply_window_cfg()
+            if not getattr(self, "_menu_hidden", False):     # un menu du jeu est encore ouvert : on attend
+                self.root.deiconify()
+                self.apply_window_cfg()
 
     def minimize(self):
-        """Reduit dans la barre des taches (une fenetre sans cadre ne peut pas l'etre :
-        on remet le cadre le temps de la reduction, puis on le retire au retour)."""
+        """Bouton "—" : replie la fenetre sur sa seule barre du haut ; un 2e clic la deplie.
+        (Avant : reduction dans la barre des taches. Mais une fenetre qui ne prend pas le clavier a WoW
+        n'y a pas de bouton : reduite, on ne la retrouvait plus, et elle grandissait a chaque retour.)"""
+        if getattr(self, "_rolled", None):
+            geo, self._rolled = self._rolled, None
+            self.root.minsize(MIN_W, MIN_H)
+            self.root.geometry(geo)
+            self._minb.config(text="\u2014")
+            self._save_geometry()
+            return
         self._save_geometry()
-        self._minimized = True
+        self.close_tip()
+        self._rolled = self.root.geometry()
         self.root.update_idletasks()
-        self.root.overrideredirect(False)
-        self.root.iconify()
+        h = self._bar.winfo_height() + 2 * int(self.T["border_w"])
+        self.root.minsize(MIN_W, 1)
+        self.root.geometry("%dx%d" % (self.root.winfo_width(), max(h, 20)))
+        self._minb.config(text="\u25a2")
 
     def _on_map(self, e):
+        # remettre le cadre Windows fait reapparaitre la fenetre un instant, juste avant la reduction :
+        # ce n'est pas un vrai retour (le journal le montrait), on l'ignore
+        if e.widget is self.root and self._minimized and (
+                time.time() - getattr(self, "_min_at", 0) < 0.7 or self.root.state() != "normal"):
+            return
         if e.widget is self.root and self._minimized:
             self._minimized = False
             self.root.overrideredirect(True)
+            # le cadre Windows remis pour la reduction agrandissait la fenetre a chaque fois (sa bordure
+            # et sa barre de titre s'ajoutaient) : on remet la taille et la place d'avant la reduction,
+            # plusieurs fois (Windows termine sa restauration apres l'evenement) sans rien enregistrer entre-temps
+            geo = getattr(self, "_pre_min_geo", "") or str(self.cfg.get("geometry", ""))
+            self._restoring_until = time.time() + 1.0
+            if re.match(r"^\d+x\d+\+-?\d+\+-?\d+$", geo):
+                for ms in (0, 60, 250, 600):
+                    self.root.after(ms, lambda g=geo: self.root.geometry(g))
+                self.root.after(900, lambda g=geo: self._force_save_geometry(g))
             self.apply_window_cfg()
             self.root.after(100, lambda: self.set_noactivate(True))
 
@@ -3089,24 +3324,73 @@ class App:
         self._rw, self._rh = self.root.winfo_width(), self.root.winfo_height()
 
     def _resize_move(self, e):
-        if self.cfg.get("locked"):
+        if self.cfg.get("locked") or getattr(self, "_rolled", None):
             return
-        w = max(380, self._rw + e.x_root - self._rx)
-        h = max(300, self._rh + e.y_root - self._ry)
+        w = max(MIN_W, self._rw + e.x_root - self._rx)
+        h = max(MIN_H, self._rh + e.y_root - self._ry)
         self.root.geometry("%dx%d" % (w, h))
 
+    def on_geo(self, data, ox, oy):
+        """Place du tchat de WoW envoyee par ChatFR (pixels de l'image du jeu) -> pixels de l'ecran."""
+        try:
+            l, t, w, h, ph = [int(v) for v in data.split(",")]
+        except ValueError:
+            return
+        ch = wow_client_height()
+        k = ch / ph if ch and ph > 0 else 1.0           # jeu etire a l'ecran (resolution personnalisee)
+        self.last_geo = (int(ox + l * k), int(oy + t * k), max(MIN_W, int(w * k)), max(MIN_H, int(h * k)))
+        if self.geo_auto:
+            self.geo_auto = False
+            self.place_on_chat()
+
+    def on_wow_menu(self, open_):
+        """Menu du jeu ouvert (menu du tchat, clic droit...) : on s'efface pour ne pas le cacher."""
+        if open_:
+            self._menu_last = time.time()
+            if (self.cfg.get("hide_on_menu", True) and not getattr(self, "_menu_hidden", False)
+                    and not self._minimized and not getattr(self, "_auto_hidden", False)):
+                self.close_tip()
+                self._save_geometry()
+                self._menu_hidden = True
+                self.root.withdraw()
+        else:
+            self.end_menu_hide()
+
+    def end_menu_hide(self):
+        if getattr(self, "_menu_hidden", False):
+            self._menu_hidden = False
+            if not getattr(self, "_auto_hidden", False):
+                self.root.deiconify()
+                self.apply_window_cfg()
+
+    def place_on_chat(self):
+        if not self.last_geo:
+            return False
+        x, y, w, h = self.last_geo
+        self.root.geometry("%dx%d+%d+%d" % (w, h, x, y))
+        self._save_geometry()
+        return True
+
     def _save_geometry(self):
+        if getattr(self, "_minimized", False) or time.time() < getattr(self, "_restoring_until", 0):
+            return                     # pendant une reduction / un retour : taille pas encore la bonne
+        if getattr(self, "_rolled", None):
+            return                     # repliee sur sa barre : on garde la taille depliee
         try:
             self.cfg["geometry"] = self.root.geometry()
             save_config(self.cfg)
         except tk.TclError:
             pass
 
+    def _force_save_geometry(self, geo):
+        self.cfg["geometry"] = geo
+        save_config(self.cfg)
+
     def on_close(self):
         self.stop = True
         self.save_tips()
         try:
-            self.cfg["geometry"] = self.root.geometry()
+            self.cfg["geometry"] = getattr(self, "_rolled", None) or self.root.geometry()
         except tk.TclError:
             pass
         save_config(self.cfg)

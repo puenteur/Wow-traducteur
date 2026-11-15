@@ -735,7 +735,7 @@ for _, ev in ipairs(EVENTS) do
 end
 pcall(f.RegisterEvent, f, "CHAT_MSG_PING")   -- pings du groupe ("Par ici"...) ; pcall : absent sur certains clients
 -- Fenetre d'annonce "nouvelle version du traducteur" (voir PLAYER_LOGIN).
-local TRAD_NOTICE = "1.9"
+local TRAD_NOTICE = "1.9.4"   -- 1.9.4 : derniere mise a jour du traducteur a faire a la main
 -- Nouveautes affichees une fois dans le tchat apres une mise a jour de ChatFR (pas a la premiere installation).
 local CHATFR_VERSION = "1.9"
 local function GetNews() return {
@@ -824,7 +824,7 @@ local function ShowTradNotice()
   if not noticeFrame then
     local p = CreateFrame("Frame", "ChatFRNotice", UIParent, "BackdropTemplate")
     noticeFrame = p
-    p:SetSize(440, 190)
+    p:SetSize(460, 225)
     p:SetPoint("CENTER", 0, 120)
     p:SetFrameStrata("DIALOG")
     p:SetClampedToScreen(true)
@@ -839,14 +839,20 @@ local function ShowTradNotice()
 
     local title = p:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOP", 0, -14)
-    title:SetText(L("ChatFR fonctionne avec WoW Traducteur", "ChatFR works with WoW Traducteur"))
+    title:SetText(L("Mets WoW Traducteur \195\160 jour : ", "Update WoW Traducteur: ") .. TRAD_NOTICE)
 
     local body = p:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     body:SetPoint("TOP", title, "BOTTOM", 0, -12)
-    body:SetWidth(400)
+    body:SetWidth(430)
     body:SetJustifyH("CENTER")
-    body:SetText(L("La traduction se fait dans WoW Traducteur (version ", "Translation happens in WoW Traducteur (version ") .. TRAD_NOTICE .. L("), un petit programme gratuit\n", "), a small free program\n") ..
-                 L("à lancer à côté du jeu. Télécharge le zip WoW-Traducteur dans les Releases de :", "to run next to the game. Download the WoW-Traducteur zip from the Releases at:"))
+    body:SetText(L("C'est la |cffffd100derni\195\168re mise \195\160 jour \195\160 faire \195\160 la main|r : ensuite, WoW Traducteur\n" ..
+                   "se met \195\160 jour tout seul, en un clic (bouton \194\171 Mettre \195\160 jour \194\187).\n" ..
+                   "Pas encore le traducteur ? C'est un petit programme gratuit \195\160 lancer \195\160 c\195\180t\195\169 du jeu.\n" ..
+                   "T\195\169l\195\169charge le zip WoW-Traducteur dans les Releases de :",
+                   "This is the |cffffd100last update to do by hand|r: after that, WoW Traducteur\n" ..
+                   "updates itself in one click (\"Update\" button).\n" ..
+                   "Don't have the translator yet? It's a small free program to run next to the game.\n" ..
+                   "Download the WoW-Traducteur zip from the Releases at:"))
 
     -- Adresse dans une zone de texte : clic dedans puis Ctrl+C pour la copier.
     local eb = CreateFrame("EditBox", nil, p, "InputBoxTemplate")
@@ -910,6 +916,53 @@ local function PushExtra(event, kind, text, author)
     author = ""                                                -- le texte est deja une phrase complete
   end
   pcall(ns.BridgePush, event, text, author, nil)
+end
+
+-- Hotel des ventes ("Enchere creee", "Un acheteur a ete trouve pour votre enchere de...") : le jeu ecrit
+-- ces messages directement dans la fenetre de tchat, sans evenement CHAT_MSG (verifie en jeu). On les
+-- reconnait grace aux textes du jeu lui-meme (dans sa langue) et seulement ceux-la.
+local AH_STRINGS = { "ERR_AUCTION_STARTED", "ERR_AUCTION_REMOVED", "ERR_AUCTION_SOLD_S", "ERR_AUCTION_WON_S",
+                     "ERR_AUCTION_OUTBID_S", "ERR_AUCTION_EXPIRED_S", "ERR_AUCTION_BID_PLACED" }
+local ahPatterns, recentSys = nil, {}
+
+local function FmtPattern(fmt)                 -- "Votre enchere de %s a expire." -> motif Lua
+  local parts, rest = {}, fmt
+  while true do
+    local a, b = rest:find("%%%d*%$?s")
+    if not a then break end
+    parts[#parts + 1] = rest:sub(1, a - 1)
+    rest = rest:sub(b + 1)
+  end
+  parts[#parts + 1] = rest
+  for i, part in ipairs(parts) do parts[i] = part:gsub("[%(%)%.%%%+%-%*%?%[%]%^%$]", "%%%0") end
+  return table.concat(parts, ".+")
+end
+
+local function OnChatAdd(_, m)
+  if type(m) ~= "string" or m == "" or (issecretvalue and issecretvalue(m)) then return end
+  if not ChatFRDB or not ChatFRDB.brSystem then return end
+  if not ahPatterns then
+    ahPatterns = {}
+    for _, key in ipairs(AH_STRINGS) do
+      local fmt = _G[key]
+      if type(fmt) == "string" and fmt ~= "" then ahPatterns[#ahPatterns + 1] = FmtPattern(fmt) end
+    end
+  end
+  for _, pat in ipairs(ahPatterns) do
+    local a, b = m:find(pat)
+    -- seulement en debut de ligne (apres l'heure eventuelle) : pas un joueur qui ecrit la meme phrase
+    if a and m:sub(1, a - 1):find("^[%d%s:%[%]%.APMapm]*$") then
+      local txt = m:sub(a, b)                  -- sans l'heure eventuelle devant
+      local now = GetTime and GetTime() or 0
+      if recentSys[txt] and now - recentSys[txt] < 3 then return end   -- deja recu par l'evenement
+      recentSys[txt] = now
+      PushExtra("CHAT_MSG_SYSTEM", "system", txt, "")
+      return
+    end
+  end
+end
+if hooksecurefunc and DEFAULT_CHAT_FRAME then
+  pcall(hooksecurefunc, DEFAULT_CHAT_FRAME, "AddMessage", function(...) pcall(OnChatAdd, ...) end)
 end
 
 -- Vente a un marchand : le jeu ecrit "Vous avez obtenu : 18 pc" directement dans le tchat, sans
@@ -991,6 +1044,9 @@ f:SetScript("OnEvent", function(_, event, name, author, a3, a4, a5, a6, a7, a8, 
     if event ~= "PLAYER_ENTERING_WORLD" then return end
   end
   if xkind and EXTRA_OPT[xkind] then
+    if xkind == "system" and type(name) == "string" and not (issecretvalue and issecretvalue(name)) then
+      recentSys[name] = GetTime and GetTime() or 0           -- pour ne pas le renvoyer une 2e fois (hotel des ventes)
+    end
     pcall(PushExtra, event, xkind, name, author)
   elseif event:sub(1, 9) == "CHAT_MSG_" then
     if event == "CHAT_MSG_BN_WHISPER" then
@@ -1043,7 +1099,8 @@ f:SetScript("OnEvent", function(_, event, name, author, a3, a4, a5, a6, a7, a8, 
     end
     if ChatFRDB.tradNotice ~= TRAD_NOTICE then
       local function notice()
-        Say("|cffffd100ChatFR fonctionne avec WoW Traducteur (" .. TRAD_NOTICE .. L(")|r : a telecharger sur ", ")|r: download it from ") .. TRAD_URL .. " (Releases).")
+        Say(L("|cffffd100Mets WoW Traducteur \195\160 jour en ", "|cffffd100Update WoW Traducteur to ") .. TRAD_NOTICE ..
+            L("|r (derni\195\168re mise \195\160 jour \195\160 la main, ensuite elle se fait en un clic) : ", "|r (last update by hand, then it's one click): ") .. TRAD_URL .. " (Releases).")
         local okN, errN = pcall(ShowTradNotice)
         if not okN then Say(L("annonce indisponible : ", "notice unavailable: ") .. tostring(errN)) end
       end

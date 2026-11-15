@@ -388,6 +388,66 @@ function ns.BridgePush(event, msg, author, chan, tries)
   end
 end
 
+-- Place de la fenetre de tchat principale (onglet compris, zone de saisie NON comprise : le traducteur
+-- se pose juste au-dessus, la barre ou l'on tape reste visible), en pixels depuis le coin
+-- haut-gauche du jeu : le traducteur s'y place a son premier lancement. Message vide : les anciens
+-- traducteurs l'ignorent. Envoye regulierement (le traducteur peut etre lance apres le jeu).
+local function PushGeo()
+  local cf = _G.ChatFrame1
+  if not frame or not frame:IsShown() or not cf or not cf.GetLeft or not GetPhysicalScreenSize then return end
+  local _, ph = GetPhysicalScreenSize()
+  if not ph or ph <= 0 then return end
+  local function edges(f)                                -- bords en unites d'echelle 1
+    local l, r, b, t = f:GetLeft(), f:GetRight(), f:GetBottom(), f:GetTop()
+    if not (l and r and b and t) then return nil end
+    local s = f:GetEffectiveScale()
+    return l * s, r * s, b * s, t * s
+  end
+  local l, r, b, t = edges(cf)
+  if not l then return end
+  for _, extra in ipairs({ _G.ChatFrame1Tab }) do
+    if extra and extra.GetLeft and extra:IsShown() then
+      local el, er, eb, et = edges(extra)
+      if el then l, r, b, t = math.min(l, el), math.max(r, er), math.min(b, eb), math.max(t, et) end
+    end
+  end
+  local k = ph / 768                                     -- pixels par unite a l'echelle 1
+  -- 5e nombre : hauteur de l'image du jeu (le traducteur corrige si le jeu est etire a l'ecran)
+  local geo = string.format("%d,%d,%d,%d,%d", floor(l * k), floor(ph - t * k), floor((r - l) * k), floor((t - b) * k), ph)
+  queue[#queue + 1] = "geo\31" .. geo .. "\31\31"
+  if #queue > MAXQ then table.remove(queue, 1) end
+end
+
+-- Menu du jeu ouvert (menu du tchat "Dire / Groupe...", clic droit sur un joueur, listes deroulantes) :
+-- le traducteur, fenetre Windows posee par-dessus le jeu, le cacherait. On le lui signale ("1" / "0"),
+-- en tete de file pour qu'il se cache tout de suite ; "1" est repete toutes les 3 s tant que le menu
+-- reste ouvert (un traducteur lance entre-temps ne reste pas cache pour rien). Les anciens traducteurs
+-- ignorent ce message (texte vide).
+local menuOpen, menuSent = false, 0
+local function MenuOpen()
+  for _, name in ipairs({ "ChatMenu", "DropDownList1", "L_DropDownList1", "LibDropDownMenu_List1" }) do
+    local fr = _G[name]
+    if fr and fr.IsShown and fr:IsShown() then return true end
+  end
+  if Menu and Menu.GetManager then
+    local ok, open = pcall(function()
+      local mg = Menu.GetManager()
+      return mg and mg.GetOpenMenu and mg:GetOpenMenu()
+    end)
+    if ok and open then return true end
+  end
+  return false
+end
+
+local function WatchMenus()
+  if not frame or not frame:IsShown() then return end
+  local open, now = MenuOpen(), GetTime and GetTime() or 0
+  if open ~= menuOpen or (open and now - menuSent > 3) then
+    menuOpen, menuSent = open, now
+    table.insert(queue, 1, "ui\31" .. (open and "1" or "0") .. "\31\31")
+  end
+end
+
 local function Create()
   frame = CreateFrame("Frame", "ChatFRBridge", UIParent)
   frame:SetFrameStrata("TOOLTIP")
@@ -401,6 +461,11 @@ local function Create()
   frame:RegisterEvent("DISPLAY_SIZE_CHANGED")
   frame:SetScript("OnEvent", Layout)
   ns.BridgeSetShown(ChatFRDB and ChatFRDB.bridge)
+  if C_Timer and C_Timer.After and C_Timer.NewTicker then
+    C_Timer.After(5, function() pcall(PushGeo) end)
+    C_Timer.NewTicker(30, function() pcall(PushGeo) end)
+    C_Timer.NewTicker(0.2, function() pcall(WatchMenus) end)
+  end
 end
 
 local init = CreateFrame("Frame")
