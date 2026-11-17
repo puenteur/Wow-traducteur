@@ -41,7 +41,7 @@ try:
 except ImportError:  # pas sous Windows
     winsound = None
 
-VERSION = "1.9.6"
+VERSION = "1.9.7"
 # Verification de mise a jour : le fichier version.txt du depot contient le numero de la derniere version.
 VERSION_URL = "https://raw.githubusercontent.com/puenteur/Wow-traducteur/main/version.txt"
 KOFI_URL = "https://ko-fi.com/puenteur"
@@ -60,7 +60,8 @@ enchanting engineering cooking fishing mining herbalism skinning jewelcrafting i
 # Nouveautes affichees une fois dans la fenetre apres une mise a jour (pas au premier lancement).
 NEWS = {
     "fr": ["WoW Traducteur %s" % VERSION,
-           "- Nouveau en %s : correction importante, le traducteur ne s'arr\u00eate plus d'afficher les messages apr\u00e8s une annonce de qu\u00eate de Questie ; s'il plante sur un message, il continue avec les suivants et note l'erreur dans erreurs.txt ; noms des joueurs \u00e0 la couleur de leur classe, comme dans le jeu (ton pseudo en gras) ; \u00e9motes en orange, exp\u00e9rience en bleu, changements de r\u00f4le en groupe ; la fen\u00eatre se cache quand la carte est ouverte en grand ; avertissement si ChatFR et le traducteur n'ont pas la m\u00eame version ; liens de qu\u00eate Questie nettoy\u00e9s ; \u00ab salty \u00bb traduit par \u00ab vex\u00e9 \u00bb. Mets aussi ChatFR \u00e0 jour." % VERSION,
+           "- Nouveau en %s : si Google tombe en panne, les traducteurs de secours (Lingva, MyMemory) prennent maintenant toujours le relais ; prix des fiches d'objets avec les pi\u00e8ces, comme dans le jeu ; pings \u00ab Menace \u00bb et \u00ab Par ici \u00bb avec leur losange ; un fichier services.txt (dossier des r\u00e9glages) note quel service a traduit les messages et les pannes, sans jamais le texte des messages. Mets aussi ChatFR \u00e0 jour." % VERSION,
+           "- 1.9.6 : correction importante, le traducteur ne s'arr\u00eate plus d'afficher les messages apr\u00e8s une annonce de qu\u00eate de Questie ; s'il plante sur un message, il continue avec les suivants et note l'erreur dans erreurs.txt ; noms des joueurs \u00e0 la couleur de leur classe, comme dans le jeu (ton pseudo en gras) ; \u00e9motes en orange, exp\u00e9rience en bleu, changements de r\u00f4le en groupe ; la fen\u00eatre se cache quand la carte est ouverte en grand ; avertissement si ChatFR et le traducteur n'ont pas la m\u00eame version ; liens de qu\u00eate Questie nettoy\u00e9s ; \u00ab salty \u00bb traduit par \u00ab vex\u00e9 \u00bb.",
            "- 1.9.5 : le traducteur se met \u00e0 jour tout seul au lancement (avec un compte \u00e0 rebours) ; s'il manque Python, \u00ab Lancer le traducteur.bat \u00bb propose de l'installer ; symboles des pings Menace et Par ici ; marques de raid reconnues dans toutes les langues du jeu ; annonces de Questie non traduites ; la fen\u00eatre ne redescend plus quand tu lis plus haut ; case \u00ab \u00c9crire \u00bb corrig\u00e9e dans une petite fen\u00eatre ; meilleures traductions (La Prison, \u00c9olide, Comt\u00e9-du-Nord, chevalet de tannage, BS / LW + niveau, q = qu\u00eate, yo, dr, dobro do\u0161li). Mets aussi ChatFR \u00e0 jour.",
            "- 1.9.4 : mise \u00e0 jour en un clic (bouton \u00ab Mettre \u00e0 jour \u00bb) ; tes r\u00e9glages sont maintenant rang\u00e9s \u00e0 part (%APPDATA%\\WoW-Traducteur) et ne se perdent plus ; la fen\u00eatre se place sur le tchat de WoW (premier lancement, ou bouton dans les R\u00e9glages) et se cache quand un menu du jeu s'ouvre ; \u00ab \u2014 \u00bb replie la fen\u00eatre sur sa barre ; messages de l'h\u00f4tel des ventes ; meilleures traductions (WTB/WTS, prix, COD, unstuck).",
            "- La grande nouveaut\u00e9 : tout le traducteur existe en anglais. Au premier lancement, on choisit Fran\u00e7ais ou English ; en anglais, le tchat est traduit vers l'anglais. Pratique pour tes amis anglophones ! (changeable dans les R\u00e9glages)",
@@ -71,7 +72,8 @@ NEWS = {
            "- Fen\u00eatre des nouveaut\u00e9s apr\u00e8s chaque mise \u00e0 jour (celle-ci !).",
            "- Meilleures traductions : lfg/lfm, wts/wtb, Deadmines, jargon russe (\u041b\u0424\u0413), mots coll\u00e9s aux liens, petits messages en espagnol ou en letton, moins d'appels inutiles \u00e0 Google."],
     "en": ["WoW Traducteur %s" % VERSION,
-           "- New in %s: important fix, the translator no longer stops showing messages after a Questie quest announcement; if it fails on a message, it carries on with the next ones and writes the error to erreurs.txt; player names in their class color, like in the game (your name in bold); emotes in orange, experience in blue, group role changes; the window hides when the world map is open full size; warning if ChatFR and the translator are not the same version; cleaner Questie quest links; \"salty\" handled in French translations. Update ChatFR too." % VERSION,
+           "- New in %s: if Google goes down, the backup translators (Lingva, MyMemory) now always take over; item tooltip prices shown with coins, like in the game; \"Threat\" and \"Look here\" pings with their diamond icon; a services.txt file (settings folder) records which service translated the messages and any outages, never the message text. Update ChatFR too." % VERSION,
+           "- 1.9.6: important fix, the translator no longer stops showing messages after a Questie quest announcement; if it fails on a message, it carries on with the next ones and writes the error to erreurs.txt; player names in their class color, like in the game (your name in bold); emotes in orange, experience in blue, group role changes; the window hides when the world map is open full size; warning if ChatFR and the translator are not the same version; cleaner Questie quest links; \"salty\" handled in French translations.",
            "- 1.9.5: the translator now updates itself at launch (with a countdown); if Python is missing, \"Lancer le traducteur.bat\" offers to install it; Threat and Look ping symbols; raid marks recognized in every game language; Questie announcements no longer translated; the window no longer jumps down while you read older messages; \"Write\" box fixed in a small window; better translations (BS / LW + skill, q = quest, Skyborne, Northshire, Tanning Rack). Update ChatFR too.",
            "- 1.9.4: one-click update (\"Update\" button); your settings are now stored separately (%APPDATA%\\WoW-Traducteur) and are no longer lost; the window places itself over the WoW chat (first launch, or button in Settings) and hides when a game menu opens; \"\u2014\" rolls the window up to its bar; auction house messages; better translations (WTB/WTS, prices, COD, unstuck).",
            "- The big one: the whole translator is now available in English. Choose Fran\u00e7ais or English at first launch; in English, the chat is translated into English (can be changed in Settings).",
@@ -648,6 +650,53 @@ PING_ICONS = [
 ]
 
 
+# Pings dessines en petite image (plus proche du jeu qu'un caractere) : numero dans PING_ICONS -> couleurs
+# (clair, moyen, fonce, contour) d'un losange avec un losange plus sombre au centre.
+PING_SHAPES = {
+    5: ((255, 150, 130), (226, 38, 38), (120, 10, 14), (40, 0, 4)),        # Menace : losange rouge
+    6: ((170, 215, 255), (52, 150, 245), (14, 64, 140), (4, 22, 52)),       # Par ici : losange bleu
+}
+
+
+def _ping_diamond(cols, u, v):
+    """Couleur d'un point (u, v dans -1..1) du losange de ping, ou None (transparent)."""
+    hi, mid, lo, out = cols
+    d = abs(u) + abs(v)
+    if d > 1:
+        return None
+    if d > 0.84:
+        return out                                   # contour
+    if d > 0.5:
+        return _coin_mix(hi, mid, (u + v + 1) / 2)   # bord, eclaire en haut a gauche
+    if d > 0.38:
+        return out
+    if d > 0.16:
+        return lo                                    # creux sombre au milieu
+    return mid                                       # point central
+
+
+def ping_png(index, size, ss=4):
+    """PNG (octets) du losange d'un ping, size x size, bords lisses."""
+    cols = PING_SHAPES[index]
+    raw = bytearray()
+    for y in range(size):
+        raw.append(0)
+        for x in range(size):
+            r = g = b = n = 0
+            for sy in range(ss):
+                for sx in range(ss):
+                    c = _ping_diamond(cols, (x + (sx + 0.5) / ss) / size * 2 - 1,
+                                      (y + (sy + 0.5) / ss) / size * 2 - 1)
+                    if c is not None:
+                        r += c[0]; g += c[1]; b += c[2]; n += 1
+            raw += bytes((round(r / n), round(g / n), round(b / n), round(255 * n / (ss * ss)))) if n else b"\0\0\0\0"
+
+    def chunk(t, d):
+        return struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xffffffff)
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", size, size, 8, 6, 0, 0, 0))
+            + chunk(b"IDAT", zlib.compress(bytes(raw), 9)) + chunk(b"IEND", b""))
+
+
 def ping_icon(text):
     """-> (symbole, nom du style) pour un ping, ou None."""
     low = text.strip().lower()
@@ -794,6 +843,65 @@ _gt_pause = [0.0]          # apres un 429 : plus aucune requete jusqu'a cette he
 GT_PAUSE = 120             # secondes
 
 
+# ---- Historique des services de traduction (services.txt) --------------------
+# Par jour : combien de messages chaque service a traduits, et les incidents (Google bloque, en panne...).
+# JAMAIS le texte des messages ni les pseudos : seulement des chiffres et des heures.
+SERVICES_TXT = os.path.join(DATA_DIR, "services.txt")
+SERVICES_JSON = os.path.join(DATA_DIR, "services.json")      # memes donnees, pour les relire au lancement
+_svc_lock = threading.Lock()
+_svc = {"days": {}, "events": []}
+_svc_dirty = [False]
+try:
+    with open(SERVICES_JSON, "r", encoding="utf-8") as _f:
+        _svc.update(json.load(_f))
+except Exception:  # noqa
+    pass
+
+
+def svc_count(service):
+    """Un message traduit par ce service ("google", "lingva", "mymemory") ou "echec"."""
+    day = time.strftime("%Y-%m-%d")
+    with _svc_lock:
+        d = _svc["days"].setdefault(day, {})
+        d[service] = d.get(service, 0) + 1
+        _svc_dirty[0] = True
+
+
+def svc_event(text):
+    """Un incident, avec la date et l'heure."""
+    with _svc_lock:
+        _svc["events"].append("%s  %s" % (time.strftime("%Y-%m-%d %H:%M"), text))
+        del _svc["events"][:-200]                     # les 200 derniers seulement
+        _svc_dirty[0] = True
+
+
+def svc_save():
+    """Ecrit services.json et services.txt (lisible au Bloc-notes). Appele toutes les 30 s et a la fermeture."""
+    with _svc_lock:
+        if not _svc_dirty[0]:
+            return
+        _svc_dirty[0] = False
+        for old in sorted(_svc["days"])[:-30]:          # les 30 derniers jours seulement
+            del _svc["days"][old]
+        data = json.loads(json.dumps(_svc))
+    try:
+        with open(SERVICES_JSON, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+        names = (("google", "Google"), ("lingva", "Lingva"), ("mymemory", "MyMemory"), ("echec", "Echecs"))
+        lines = ["WoW Traducteur %s - services de traduction utilises" % VERSION,
+                 "(seulement des chiffres et des heures, jamais le texte des messages)", "",
+                 "Messages traduits par jour :"]
+        for day in sorted(data["days"], reverse=True):
+            d = data["days"][day]
+            lines.append("  %s   " % day + "   ".join("%s %d" % (lab, d.get(k, 0)) for k, lab in names))
+        lines += ["", "Incidents (les plus recents en haut) :"]
+        lines += ["  " + e for e in reversed(data["events"])] or ["  aucun"]
+        with open(SERVICES_TXT, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines) + "\n")
+    except Exception:  # noqa
+        pass
+
+
 def _google(text, target, source="auto", timeout=8):
     """-> (traduction, langue_detectee). Google limite le nombre de requetes (erreur 429) :
     on espace les appels, on garde un cache et on reessaie apres une courte pause."""
@@ -822,10 +930,10 @@ def _google(text, target, source="auto", timeout=8):
             last_err = e
             if e.code == 429:
                 break                                  # bloque : inutile d'insister, on passe au secours
-            if e.code == 503:
-                time.sleep(0.5)
+            if e.code >= 500:                          # panne passagere chez Google (500, 502, 503...) :
+                time.sleep(0.5)                        # on reessaie sur l'autre serveur, puis le secours
                 continue
-            raise
+            break                                      # autre refus (400, 403...) : directement le secours
         except (urllib.error.URLError, OSError, ValueError) as e:
             # coupure reseau, delai depasse, reponse tronquee : on reessaie aussi
             last_err = e
@@ -833,6 +941,7 @@ def _google(text, target, source="auto", timeout=8):
             continue
         out = "".join(seg[0] for seg in data[0] if seg and seg[0])
         lang = data[2] if len(data) > 2 and isinstance(data[2], str) else "?"
+        svc_count("google")
         with _gt_lock:
             if len(_gt_cache) > 500:
                 _gt_cache.clear()
@@ -840,8 +949,11 @@ def _google(text, target, source="auto", timeout=8):
         return out, lang
     if getattr(last_err, "code", None) == 429:
         _gt_pause[0] = time.time() + GT_PAUSE
+        svc_event("Google bloque (trop de demandes, erreur 429) : pause de %d min" % (GT_PAUSE // 60))
         raise RuntimeError("Google limite les requetes (429), pause de %d s" % GT_PAUSE)
-    raise RuntimeError("Google ne repond pas (%s)" % (getattr(last_err, "reason", None) or last_err))
+    code = getattr(last_err, "code", None)
+    raise RuntimeError("Google ne repond pas (%s)" % ("erreur %s" % code if code else
+                                                      getattr(last_err, "reason", None) or last_err))
 
 
 def _mymemory(text, target, source, timeout=8):
@@ -892,17 +1004,33 @@ def _lingva(text, target, source, timeout=4):
     raise RuntimeError("aucun serveur ne repond (%s)" % last if last else "serveurs en pause")
 
 
+def _svc_reason(e):
+    """Raison courte pour l'historique : "Google en panne (erreur 500)", "Google bloque (429)"..."""
+    m = re.search(r"\b(4\d\d|5\d\d)\b", str(e))
+    if "en pause" in str(e) or (m and m.group(1) == "429"):
+        return "Google en pause (bloque)"
+    return "Google en panne (erreur %s)" % m.group(1) if m else "Google ne repond pas"
+
+
 def google_translate(text, target, source="auto", timeout=8):
     """Google ; s'il bloque (429) ou ne repond pas : Lingva, puis MyMemory."""
     try:
         return _google(text, target, source, timeout)
     except RuntimeError as e:
+        paused = "en pause" in str(e) or "429" in str(e)    # Google bloque : deja note, pas un incident par message
         try:
             res = _lingva(text, target, source)
+            svc_count("lingva")
+            if not paused:
+                svc_event("%s -> traduit par Lingva" % _svc_reason(e))
         except Exception as e1:  # noqa
             try:
                 res = _mymemory(text, target, source, 5)
+                svc_count("mymemory")
+                svc_event("%s, Lingva aussi -> traduit par MyMemory" % _svc_reason(e))
             except Exception as e2:  # noqa
+                svc_count("echec")
+                svc_event("ECHEC : Google, Lingva et MyMemory ne repondent pas (%s)" % _svc_reason(e))
                 raise RuntimeError("%s ; Lingva : %s ; MyMemory : %s" % (e, e1, e2))
         with _gt_lock:
             _gt_cache[(text, target, source)] = res
@@ -2059,6 +2187,7 @@ class App:
         self.root.after(300, lambda: self.set_noactivate(True))
         self.show_welcome()                          # tout en haut, avant les messages
         self.root.after(1500, self.show_news)
+        self.root.after(30000, self._svc_tick)       # historique des services : enregistre toutes les 30 s
         if os.environ.get("WOWTRAD_UPDATED"):        # relance juste apres une mise a jour en un clic
             self.root.after(300, self.show_updated)
         threading.Thread(target=self.reader, daemon=True).start()
@@ -2247,6 +2376,8 @@ class App:
         self.text.tag_configure("err", foreground=T["err"])
         for unit in COIN_COLORS:                 # texte "po" / "pa" / "pc" cache derriere son icone
             self.text.tag_configure("coin_" + unit, elide=True)
+        for i in PING_SHAPES:                    # symbole du ping cache derriere son image
+            self.text.tag_configure("pingimg_%d" % i, elide=True)
         self.text.tag_configure("me", foreground=T["me"])
         self.text.tag_configure("name", foreground=T["name"],    # apres les canaux : la couleur du pseudo prime
                                 font=("Segoe UI", int(self.cfg["font_size"]), "bold"))
@@ -2335,11 +2466,29 @@ class App:
             cache[key] = tk.PhotoImage(data=data, format="png")
         return cache[key]
 
+    def _ping_image(self, index):
+        """Losange du ping (Menace, Par ici), a la taille du texte."""
+        cache = self.__dict__.setdefault("_ping_imgs", {})
+        try:
+            px = int(self.cfg["font_size"]) * self.root.winfo_fpixels("1i") / 72.0
+        except Exception:  # noqa
+            px = int(self.cfg["font_size"]) * 4 / 3.0
+        size = max(12, int(round(px * 1.15)))
+        key = (index, size)
+        if key not in cache:
+            cache[key] = tk.PhotoImage(data=base64.b64encode(ping_png(index, size)).decode("ascii"), format="png")
+        return cache[key]
+
     def _insert_with_coins(self, text, tags):
         """Insere du texte ; dans les messages du jeu, po / pa / pc deviennent une icone de piece.
         Le texte reste la (cache) : il revient au copier-coller et au changement de theme."""
         t = self.text
         tags = tuple(tags)
+        ping_tag = next((g for g in tags if g.startswith("pingimg_")), None)
+        if ping_tag:                             # losange du ping (et son symbole cache, pour le copier-coller)
+            t.image_create("end", image=self._ping_image(int(ping_tag[8:])), padx=1, align="center")
+            t.insert("end", text, tags)
+            return
         unit_tag = next((g for g in tags if g.startswith("coin_")), None)
         if unit_tag:                             # restauration (changement de theme) : remettre l'icone
             t.image_create("end", image=self._coin_image(unit_tag[5:]), padx=1, align="baseline")
@@ -2485,6 +2634,9 @@ class App:
                 c = "#ffffff"
             else:
                 c = "#e8e8e8"
+            if COIN_RE.search(COIN_WORDS_RE.sub(lambda m: " " + COIN_WORDS[m.group(1).lower()], ln)):
+                self._tip_coin_line(f, ln, c, fs)       # "Prix de vente : 11 pa 36 pc" -> pieces, comme dans WoW
+                continue
             tk.Label(f, text=ln, bg="#0a0d1c", fg=c, font=("Segoe UI", fs), anchor="w",
                      justify="left", wraplength=340).pack(fill="x")
         more = tk.Label(f, text=_("Voir sur Wowhead \u2197"), bg="#0a0d1c", fg="#6fa8ff", cursor="hand2",
@@ -2525,6 +2677,27 @@ class App:
         px = min(max(0, x + 14), sw - tw)
         py = y + 14 if y + 14 + th <= sh else max(0, y - th - 10)
         w.geometry("+%d+%d" % (px, py))
+
+    def _tip_coin_line(self, parent, ln, color, fs):
+        """Ligne de fiche avec un prix : le texte, et une petite piece a la place de po / pa / pc."""
+        row = tk.Frame(parent, bg="#0a0d1c")
+        row.pack(fill="x", anchor="w")
+        text = COIN_WORDS_RE.sub(lambda m: " " + COIN_WORDS[m.group(1).lower()], ln)
+        pos = 0
+        for m in COIN_RE.finditer(text):
+            part = text[pos:m.start()]
+            if part:
+                tk.Label(row, text=part, bg="#0a0d1c", fg=color, font=("Segoe UI", fs),
+                         padx=0).pack(side="left", padx=(1 if pos == 0 else 0, 0))
+            tk.Label(row, image=self._coin_image(m.group(2)), bg="#0a0d1c", padx=0,
+                     bd=0).pack(side="left", padx=(2, 1))      # piece collee au chiffre, comme dans WoW
+            pos = m.end()
+        if text[pos:].strip():
+            tk.Label(row, text=text[pos:], bg="#0a0d1c", fg=color, font=("Segoe UI", fs),
+                     padx=0).pack(side="left")
+        for wdg in [row] + row.winfo_children():           # clic dessus : ferme la fiche, comme le reste
+            wdg.bind("<ButtonRelease-1>", lambda e: self.close_tip())
+        return row
 
     def set_reply_to(self, name, quiet=False):
         """Destinataire des reponses : "Traduire + copier" copiera "/w Nom texte"."""
@@ -3342,7 +3515,12 @@ class App:
         coin = ("coins",) if kind in COIN_KINDS else ()
         icon = ping_icon(text) if kind == "ping" else None
         if icon:                                       # "Avertissement" -> "⚠ Avertissement", comme dans le jeu
-            parts.append((icon[0] + " ", *marks, icon[1]))
+            idx = int(icon[1][5:])
+            if idx in PING_SHAPES:                     # Menace, Par ici : petit losange dessine, comme dans le jeu
+                parts.append((icon[0], *marks, icon[1], "pingimg_%d" % idx))
+                parts.append((" ", *marks))
+            else:
+                parts.append((icon[0] + " ", *marks, icon[1]))
         for seg, code in spans:
             if code and code.startswith("cls_"):
                 parts.append((seg, *marks, code))
@@ -3638,9 +3816,14 @@ class App:
         self.cfg["geometry"] = geo
         save_config(self.cfg)
 
+    def _svc_tick(self):
+        threading.Thread(target=svc_save, daemon=True).start()
+        self.root.after(30000, self._svc_tick)
+
     def on_close(self):
         self.stop = True
         self.save_tips()
+        svc_save()
         try:
             self.cfg["geometry"] = getattr(self, "_rolled", None) or self.root.geometry()
         except tk.TclError:
