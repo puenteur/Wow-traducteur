@@ -1,5 +1,7 @@
 # WoW Traducteur (+ addon ChatFR)
 
+> **Projet de fan, non officiel.** WoW Traducteur et ChatFR ne sont ni créés, ni soutenus, ni approuvés par Blizzard Entertainment. World of Warcraft est une marque de Blizzard Entertainment. Outil fourni tel quel, sans garantie : **utilisation sous ta responsabilité** (voir « Limites »).
+
 Traduction en direct du tchat de **World of Warcraft: Forever** vers le français (ou une autre langue), avec réponse dans la langue de ton interlocuteur.
 
 ### ⬇️ [Télécharger WoW Traducteur](https://github.com/puenteur/Wow-traducteur/releases/latest/download/WoW-Traducteur.zip) (dernière version, en un clic)
@@ -167,8 +169,8 @@ Alt+Z (masquer l'interface) cache aussi la bande : le traducteur ne reçoit plus
 
 - Traductions de Google Traduction : correctes sur les phrases simples, approximatives sur l'argot et les abréviations.
 - Un message reste 0,4 s dans la bande : lors d'une très grosse rafale, un message peut être perdu. Au-delà d'environ 280 octets, il est coupé.
-- Le texte des messages à traduire et ce que tu écris dans « Écrire (FR) » est envoyé à Google Traduction. Rien d'autre ne quitte ton ordinateur.
-- L'addon n'utilise que des fonctions normales de WoW, et le traducteur ne fait que lire une partie de ton propre écran ; il ne touche ni au clavier ni à la souris et n'envoie rien dans le tchat. Ce n'est toutefois pas une méthode prévue par Blizzard : utilisation sous ta responsabilité.
+- Le texte des messages à traduire et ce que tu écris dans « Écrire (FR) » est envoyé à Google Traduction, ou à un service de traduction de secours quand Google ne répond pas. Rien d'autre ne quitte ton ordinateur.
+- L'addon n'utilise que des fonctions normales de WoW, et le traducteur ne fait que lire une partie de ton propre écran ; il ne touche ni au clavier ni à la souris et n'envoie rien dans le tchat. Ce n'est toutefois pas une méthode prévue par Blizzard, et il n'y a pas encore de confirmation officielle de Blizzard à ce sujet. Projet non officiel, fourni tel quel, sans garantie : utilisation sous ta responsabilité.
 
 ## Désinstallation
 
