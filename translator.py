@@ -61,7 +61,7 @@ enchanting engineering cooking fishing mining herbalism skinning jewelcrafting i
 # Nouveautes affichees une fois dans la fenetre apres une mise a jour (pas au premier lancement).
 NEWS = {
     "fr": ["WoW Traducteur %s" % VERSION,
-           "- Nouveau en %s : correctif. La barre d'\u00e9criture ne se d\u00e9forme plus quand la souris passe dessus (fen\u00eatre aux coins arrondis faite autrement) ; boutons qui s'\u00e9claircissent au survol ; la barre ne saute plus quand l'aide s'affiche ; rectangle cache-bande carr\u00e9 (l'arrondi g\u00eanait la lecture de la bande) ; \u00ab ops \u00bb traduit par \u00ab oups \u00bb." % VERSION,
+           "- Nouveau en %s : correctif, la barre d'\u00e9criture ne se d\u00e9forme plus quand la souris passe dessus ; boutons qui s'\u00e9claircissent au survol ; plus de ligne d'info sous la barre : explications en info-bulles (d\u00e9sactivables dans les R\u00e9glages) et messages dans une petite bulle ; le tchat descend jusqu'\u00e0 la barre, sans ligne vide ; bouton \u00ab Nouveaut\u00e9s des versions \u00bb dans l'aide \u00ab ? \u00bb ; rectangle cache-bande carr\u00e9 ; meilleures traductions (\u00ab ops \u00bb = oups, \u00ab tips optional \u00bb = pourboire facultatif). Mets aussi ChatFR \u00e0 jour." % VERSION,
            "- 1.9.8 : bouton \u2713 ABC pour corriger ton orthographe avant d'envoyer (en b\u00eata) ; barre d'\u00e9criture sur une ligne, fen\u00eatre et boutons aux coins arrondis, R\u00e9glages relook\u00e9s ; 7 th\u00e8mes retravaill\u00e9s et nouveaux embl\u00e8mes Alliance et Horde, le th\u00e8me change d\u00e8s qu'on le choisit ; option pour cacher la bande de cases color\u00e9es (R\u00e9glages, essai) ; quand Google bloque, Bing prend le relais et Google se repose plus longtemps ; moins de demandes \u00e0 Google ; \u00ab slt \u00bb, \u00ab lu \u00bb, \u00ab tlm \u00bb... bien traduits dans tes r\u00e9ponses ; la touche Entr\u00e9e ne traduit plus par accident ; meilleures traductions (La Prison, LFW, Arme flamboyante, Crois\u00e9, +2 Endurance, in IF = Forgefer).",
            "- 1.9.7 : si Google tombe en panne, les traducteurs de secours prennent maintenant toujours le relais ; prix des fiches d'objets avec les pi\u00e8ces, comme dans le jeu ; pings \u00ab Menace \u00bb et \u00ab Par ici \u00bb avec leur losange ; un fichier services.txt (dossier des r\u00e9glages) note quel service a traduit les messages et les pannes, sans jamais le texte des messages.",
            "- 1.9.6 : correction importante, le traducteur ne s'arr\u00eate plus d'afficher les messages apr\u00e8s une annonce de qu\u00eate de Questie ; s'il plante sur un message, il continue avec les suivants et note l'erreur dans erreurs.txt ; noms des joueurs \u00e0 la couleur de leur classe, comme dans le jeu (ton pseudo en gras) ; \u00e9motes en orange, exp\u00e9rience en bleu, changements de r\u00f4le en groupe ; la fen\u00eatre se cache quand la carte est ouverte en grand ; avertissement si ChatFR et le traducteur n'ont pas la m\u00eame version ; liens de qu\u00eate Questie nettoy\u00e9s ; \u00ab salty \u00bb traduit par \u00ab vex\u00e9 \u00bb.",
@@ -75,7 +75,7 @@ NEWS = {
            "- Fen\u00eatre des nouveaut\u00e9s apr\u00e8s chaque mise \u00e0 jour (celle-ci !).",
            "- Meilleures traductions : lfg/lfm, wts/wtb, Deadmines, jargon russe (\u041b\u0424\u0413), mots coll\u00e9s aux liens, petits messages en espagnol ou en letton, moins d'appels inutiles \u00e0 Google."],
     "en": ["WoW Traducteur %s" % VERSION,
-           "- New in %s: hotfix. The write bar no longer gets garbled when the mouse moves over it (rounded window made another way); buttons light up on hover; the bar no longer jumps when a hint shows; square strip cover (the rounded one prevented reading the strip); \"ops\" translated as \"oops\"." % VERSION,
+           "- New in %s: hotfix, the write bar no longer gets garbled when the mouse moves over it; buttons light up on hover; no more info line under the bar: explanations in tooltips (can be turned off in Settings) and messages in a small bubble; the chat goes down to the bar, without an empty line; \"What's new\" button in the \"?\" help; square strip cover; better translations (\"ops\" = oops, \"tips optional\" = tip optional). Update ChatFR too." % VERSION,
            "- 1.9.8: \u2713 ABC button to fix your French spelling before sending (beta); write bar on one line, rounded window and buttons, restyled Settings; 7 reworked themes and new Alliance and Horde emblems, the theme changes as soon as you pick it; option to hide the strip of colored squares (Settings, test); when Google blocks, Bing takes over and Google rests longer; fewer requests to Google; Enter no longer translates by accident; better translations (The Stockade, LFW, Fiery Weapon, Crusader, +2 Stamina, in IF = Ironforge).",
            "- 1.9.7: if Google goes down, the backup translators now always take over; item tooltip prices shown with coins, like in the game; \"Threat\" and \"Look here\" pings with their diamond icon; a services.txt file (settings folder) records which service translated the messages and any outages, never the message text.",
            "- 1.9.6: important fix, the translator no longer stops showing messages after a Questie quest announcement; if it fails on a message, it carries on with the next ones and writes the error to erreurs.txt; player names in their class color, like in the game (your name in bold); emotes in orange, experience in blue, group role changes; the window hides when the world map is open full size; warning if ChatFR and the translator are not the same version; cleaner Questie quest links; \"salty\" handled in French translations.",
@@ -195,6 +195,7 @@ DEFAULTS = {
     "locked": False,                # cadenas : fenetre verrouillee (ni deplacement ni redimensionnement)
     "help_seen": False,             # fenetre d'aide deja montree une fois (premier lancement)
     "ui_lang": "",                  # langue de l'interface : "fr" ou "en" (choisie au premier lancement)
+    "hints": True,                  # info-bulles au survol des boutons
     "cover_band": False,            # rectangle par-dessus la bande de cases (invisible pour la capture)
 }
 
@@ -236,6 +237,8 @@ EN = {
     "ABC (b\u00eata) : corrige et copie en fran\u00e7ais, SANS traduire. Correcteur en d\u00e9veloppement : relis avant d'envoyer.":
         "ABC (beta): corrects and copies in French, WITHOUT translating. Checker still in development: read it before sending.",
     "Cacher la bande de cases color\u00e9es (essai)": "Hide the strip of colored squares (test)",
+    "Info-bulles au survol des boutons": "Tooltips when hovering buttons",
+    "Nouveaut\u00e9s des versions": "What's new (all versions)",
     "Cache-bande d\u00e9sactiv\u00e9 : il emp\u00eachait de lire la bande de cases color\u00e9es.":
         "Strip cover turned off: it prevented reading the strip of colored squares.",
     "\u2713 Corriger": "\u2713 Correct",
@@ -428,6 +431,130 @@ def coin_png(unit, size, ss=4):
         return struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xffffffff)
     return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", size, size, 8, 6, 0, 0, 0))
             + chunk(b"IDAT", zlib.compress(bytes(raw), 9)) + chunk(b"IEND", b""))
+
+
+def make_bubble(app, text, fg, anchor_widget, wrap=420):
+    """Petite bulle (fenetre sans bordure) juste au-dessus de `anchor_widget`, aux couleurs du theme.
+    Ne prend jamais le clavier (WoW le garde)."""
+    T = app.T
+    r = 8                                   # rayon des coins arrondis
+    w = tk.Toplevel(app.root)
+    w.withdraw()                            # placee AVANT d'apparaitre (sinon elle surgissait en haut a gauche)
+    w.overrideredirect(True)
+    w.attributes("-topmost", True)
+    w.configure(bg=T["bar"])
+    cv = tk.Canvas(w, bg=T["bar"], highlightthickness=0, bd=0)
+    lab = tk.Label(cv, text=text, bg=T["bar"], fg=fg, font=("Segoe UI", 9), justify="left", anchor="w",
+                   wraplength=wrap, padx=0, pady=0)
+    lab.update_idletasks()
+    W, H = lab.winfo_reqwidth() + 2 * (r + 2), lab.winfo_reqheight() + 2 * 6
+    cv.configure(width=W, height=H)
+    cv.pack()
+    pts = []                                # contour arrondi (4 quarts de cercle) + liseré du theme
+    for cx, cy, a0 in ((W - 1 - r, r, -90), (W - 1 - r, H - 1 - r, 0), (r, H - 1 - r, 90), (r, r, 180)):
+        for k in range(7):
+            a = math.radians(a0 + k * 15)
+            pts += [cx + (r - 0.5) * math.cos(a), cy + (r - 0.5) * math.sin(a)]
+    cv.create_polygon(pts, fill=T["bar"], outline=T["border"], width=1)
+    cv.create_window(r + 2, 6, window=lab, anchor="nw")
+    for wid in (w, cv, lab):
+        wid.bind("<Button-1>", lambda e: w.destroy())
+    try:
+        ax, ay = anchor_widget.winfo_rootx(), anchor_widget.winfo_rooty()
+        x = ax
+        y = ay - H - 4
+        right = app.root.winfo_rootx() + app.root.winfo_width()     # ne deborde pas a droite de la fenetre
+        x = max(0, min(x, right - W, w.winfo_screenwidth() - W))
+        band = getattr(app, "_band_rect", None)                     # jamais sur la bande de cases colorees
+        if y < 0 or (band and x < band[0] + band[2] + 6 and x + W > band[0] - 6
+                     and y < band[1] + band[3] + 6 and y + H > band[1] - 6):
+            y = ay + anchor_widget.winfo_height() + 4               # -> en dessous du bouton
+        w.geometry("%dx%d+%d+%d" % (W, H, x, max(0, y)))
+    except tk.TclError:
+        pass
+    w.deiconify()
+    if os.name == "nt":                     # jamais le clavier, pas de bouton dans la barre des taches
+        try:
+            u = ctypes.windll.user32
+            get = getattr(u, "GetWindowLongPtrW", None) or u.GetWindowLongW
+            put = getattr(u, "SetWindowLongPtrW", None) or u.SetWindowLongW
+            get.restype, get.argtypes = ctypes.c_ssize_t, [ctypes.c_void_p, ctypes.c_int]
+            put.restype, put.argtypes = ctypes.c_ssize_t, [ctypes.c_void_p, ctypes.c_int, ctypes.c_ssize_t]
+            u.GetParent.restype, u.GetParent.argtypes = ctypes.c_void_p, [ctypes.c_void_p]
+            h = u.GetParent(w.winfo_id()) or w.winfo_id()
+            put(h, -20, get(h, -20) | 0x08000000 | 0x80)
+            g = ctypes.windll.gdi32                       # forme arrondie (decoupe, pas "en couches")
+            g.CreateRoundRectRgn.restype = ctypes.c_void_p
+            u.SetWindowRgn.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
+            u.SetWindowRgn(h, g.CreateRoundRectRgn(0, 0, W + 1, H + 1, 2 * r, 2 * r), 1)
+        except Exception:  # noqa
+            pass
+    return w
+
+
+class InfoBubble:
+    """Remplace l'ancienne ligne d'info sous la barre d'ecriture (meme config(text=, fg=) / cget()).
+    Le message s'affiche dans une bulle au-dessus de la barre quelques secondes, seulement si tu es
+    en train d'utiliser le traducteur (souris dessus ou case d'ecriture active) : en pleine partie,
+    rien ne surgit a l'ecran."""
+
+    def __init__(self, app):
+        self.app, self._text, self._fg, self._win, self._job = app, "", None, None, None
+
+    def _hide(self):
+        if self._job:
+            try:
+                self.app.root.after_cancel(self._job)
+            except Exception:  # noqa
+                pass
+            self._job = None
+        if self._win is not None:
+            try:
+                self._win.destroy()
+            except tk.TclError:
+                pass
+            self._win = None
+
+    def _in_use(self):
+        app = self.app
+        try:
+            if app.root.focus_get() is getattr(app, "out_entry", None):
+                return True
+            px, py = app.root.winfo_pointerxy()
+            x0, y0 = app.root.winfo_rootx(), app.root.winfo_rooty()
+            return x0 <= px < x0 + app.root.winfo_width() and y0 <= py < y0 + app.root.winfo_height()
+        except Exception:  # noqa
+            return False
+
+    def configure(self, cnf=None, **kw):
+        if cnf:
+            kw.update(cnf)
+        if "fg" in kw:
+            self._fg = kw["fg"]
+        if "text" not in kw:
+            return
+        self._text = kw["text"] or ""
+        self._hide()
+        if not self._text.strip() or not self._in_use():
+            return
+        bar = getattr(self.app, "_outbar", None)
+        if bar is None:
+            return
+        try:
+            self._win = make_bubble(self.app, self._text, self._fg or self.app.T["muted"], bar)
+        except tk.TclError:
+            return
+        if not self._text.rstrip().endswith("..."):         # "Traduction en cours..." reste jusqu'au resultat
+            self._job = self.app.root.after(6000, self._hide)
+
+    config = configure
+
+    def cget(self, key):
+        if key == "text":
+            return self._text
+        if key == "fg":
+            return self._fg or self.app.T["muted"]
+        return ""
 
 
 class FlatButton(tk.Label):
@@ -692,7 +819,7 @@ HELP_TEXT = """# Comment ça marche
 - Passe la souris sur un objet ou une quête en lien : sa fiche s'affiche (stats, niveau, prix), comme dans WoW.
 - Les messages déjà en français ne passent pas par Google.
 # Répondre
-- Écris en français dans « Écrire (FR) » puis clique sur « Traduire + copier » : la traduction est copiée. Dans WoW : Entrée, Ctrl+V, Entrée.
+- Écris en français dans la case du bas puis clique sur « Traduire + copier » : la traduction est copiée. Dans WoW : Entrée, Ctrl+V, Entrée.
 - Clique sur un message : la langue de réponse se règle sur celle du joueur.
 - Clique sur un pseudo : ta réponse est copiée avec /w Pseudo devant, pour lui chuchoter. La croix à côté du pseudo annule.
 - Le traducteur n'envoie jamais rien au jeu : c'est toujours toi qui colles.
@@ -732,7 +859,7 @@ HELP_TEXT_EN = """# How it works
 - Hover an item or quest link: its details show up (stats, level, price), like in WoW.
 - Messages already in your language are not sent to Google.
 # Replying
-- Write in English in "Write (EN)" then click "Translate + copy": the translation is copied. In WoW: Enter, Ctrl+V, Enter.
+- Write in English in the box at the bottom then click "Translate + copy": the translation is copied. In WoW: Enter, Ctrl+V, Enter.
 - Click a message: the reply language switches to that player's language. You can also pick it in the list next to the button.
 - Click a name: your reply is copied with /w Name in front, to whisper them. The cross next to the name cancels.
 - The translator never sends anything to the game: you always paste yourself.
@@ -1509,6 +1636,14 @@ LEX_KEEP = {"tank": "tank", "tanks": "tanks", "heal": "heal", "heals": "heals",
             "rush": "rush", "rushes": "rushs"}   # "prison rush" : traversee rapide du donjon par un haut niveau   # chasseur, pas "chasse"   # "full for boss" -> "full pour le boss"
 # Classes que Google traduit mal ("rogue" -> "voyou", "warlock" -> "sorcier") : nom francais du jeu.
 LEX_CLASSES = {"rogue": "voleur", "rogues": "voleurs", "warlock": "démoniste", "warlocks": "démonistes"}
+# "tips" = pourboire (Commerce : "tips optional") ; Google donnait "conseils facultatifs"
+LEX_TIPS = {}
+for _t in ("tip", "tips"):
+    LEX_TIPS.update({_t + " optional": "pourboire facultatif", _t + " appreciated": "pourboire apprécié",
+                     _t + " welcome": "pourboire bienvenu", _t + " accepted": "pourboire accepté",
+                     _t + " not needed": "pas besoin de pourboire", "no " + _t + " needed": "pas besoin de pourboire",
+                     _t + " not required": "pourboire pas obligatoire", "no " + _t + " required": "pourboire pas obligatoire",
+                     _t + " are welcome": "pourboire bienvenu", _t + " are appreciated": "pourboire apprécié"})
 # Enchantements et stats : nom francais du jeu ("Got FIERY WEP" restait en anglais, "+2 End" donnait "+2 Fin")
 LEX_ENCHANTS = {"fiery weapon": "Arme flamboyante", "fiery weapons": "Arme flamboyante", "crusader": "Croisé",
                 "stamina": "Endurance", "stam": "Endurance"}
@@ -1542,6 +1677,7 @@ def _protected(target):
         d.update(LEX_KEEP)
         d.update(LEX_CLASSES)
         d.update(LEX_ENCHANTS)
+        d.update(LEX_TIPS)
     return dict(sorted(d.items(), key=lambda kv: len(kv[0]), reverse=True))
 
 
@@ -2913,7 +3049,7 @@ class App:
             w.bind("<ButtonRelease-1>", lambda e: self._save_geometry())
 
         mid = tk.Frame(r, bg=T["bg"])
-        mid.pack(fill="both", expand=True, padx=8, pady=(2, 4))
+        mid.pack(fill="both", expand=True, padx=8, pady=(2, 0))     # le tchat descend jusqu'a la barre
         self.text = tk.Text(mid, bg=T["bg"], fg=T["fg"], wrap="word", relief="flat", state="disabled",
                             font=("Segoe UI", int(self.cfg["font_size"])), cursor="arrow",
                             insertbackground=T["fg"], spacing1=3, padx=2, height=4, highlightthickness=0, bd=0)
@@ -2971,7 +3107,8 @@ class App:
         # une seule barre (1.9.8) : [FR -> EN] [ta phrase] [x] | [ABC] [Traduire + copier], sur fond de case
         E = T["entry"]
         bar = tk.Frame(out, bg=E, highlightthickness=0)
-        bar.grid(row=0, column=0, sticky="ew", padx=4, pady=(4, 3))
+        self._outbar = bar
+        bar.grid(row=0, column=0, sticky="ew", padx=4, pady=(3, 3))
         out.columnconfigure(0, weight=1)
         bar.columnconfigure(1, weight=1)
         B = T["btn"]
@@ -3040,11 +3177,12 @@ class App:
             tk.Label(bar, image=img, bd=0, padx=0, pady=0, highlightthickness=0).place(
                 relx=rx, rely=ry, anchor={"nw": "nw", "sw": "sw", "ne": "ne", "se": "se"}[corner])
         self._add_hint(tb, _("Traduit ta phrase dans la langue choisie et copie la traduction."))
-        self.out_result = tk.Label(out, text=_("Clique sur un message pour repondre dans sa langue."),
-                                   bg=P, fg=T["muted"], anchor="w", justify="left", wraplength=0,
-                                   height=1)   # toujours UNE ligne (texte trop long coupe a droite) : avant, une aide
-        # d'une ligne remplacait un message de 2 lignes et la barre sautait sous la souris
-        self.out_result.grid(row=1, column=0, sticky="ew", padx=4, pady=(0, 3))
+        # plus de ligne d'info sous la barre : les messages ("Copie !", erreurs...) s'affichent dans une
+        # petite bulle au-dessus de la barre, et les explications des boutons en info-bulle au survol
+        old_info = getattr(self, "out_result", None)
+        self.out_result = InfoBubble(self)
+        if isinstance(old_info, InfoBubble):
+            self.out_result._text, self.out_result._fg = old_info._text, old_info._fg
         # Entree ne fait rien : on clique sur "Traduire + copier" ou "ABC" (par reflexe, ca traduisait sans le vouloir)
         self.out_entry.bind("<Button-1>", self.take_keyboard, add="+")
         self.out_entry.bind("<Escape>", lambda e: self.clear_out())
@@ -3124,8 +3262,16 @@ class App:
         # "end-2l" : debut du dernier message (la toute derniere ligne, vide, n'est pas toujours affichee)
         at_end = t.yview()[1] >= 0.999 or t.dlineinfo("end-2l") is not None or t.dlineinfo("end-1c") is not None
         t.configure(state="normal")
+        # le retour a la ligne final d'un message est mis seulement quand le suivant arrive : sinon une
+        # ligne vide restait toujours affichee entre le dernier message et la barre d'ecriture
+        if getattr(self, "_nl_pending", False):
+            t.insert("end", "\n")
+            self._nl_pending = False
         for p in parts:
             self._insert_with_coins(p[0], p[1:])
+        if t.get("end-2c", "end-1c") == "\n":
+            t.delete("end-2c", "end-1c")
+            self._nl_pending = True
         t.configure(state="disabled")
         if at_end:
             t.see("end")
@@ -3198,7 +3344,7 @@ class App:
         self.text.configure(state="disabled")
         self.text.see("end")
         self.out_lang.set(out_lang)
-        self.out_result.config(text=out_msg)
+        self.out_result._text = out_msg                 # garde le message sans rouvrir de bulle
         if upd:
             self.update_btn.config(text=upd)
             self.update_btn.pack(side="left", padx=3, pady=4, after=self._clear_btn)
@@ -3208,6 +3354,7 @@ class App:
         self.text.delete("1.0", "end")
         self.text.configure(state="disabled")
         self.line_lang = {}
+        self._nl_pending = False
 
     def save_tips(self):
         self._tips_dirty = False
@@ -3451,15 +3598,17 @@ class App:
         self.add((_("\u2713 Mise \u00e0 jour termin\u00e9e : %s \u2192 %s. Pense aussi \u00e0 mettre ChatFR \u00e0 jour (CurseForge).")
                   % (old, VERSION) + "\n", "news"))
 
-    def show_news(self):
+    def show_news(self, force=False):
         """Apres une mise a jour (jamais au premier lancement, qui montre deja l'aide) :
-        une petite fenetre avec les nouveautes, une seule fois."""
-        if self.cfg.get("last_version") == VERSION:
-            return
-        self.cfg["last_version"] = VERSION
-        save_config(self.cfg)
-        if self._first_run:
-            return
+        une petite fenetre avec les nouveautes, une seule fois. force=True : bouton de l'aide "?",
+        pour relire les notes de version quand on veut."""
+        if not force:
+            if self.cfg.get("last_version") == VERSION:
+                return
+            self.cfg["last_version"] = VERSION
+            save_config(self.cfg)
+            if self._first_run:
+                return
         T = self.T
         lines = NEWS["en" if UI == "en" else "fr"]
         w = tk.Toplevel(self.root)
@@ -3513,9 +3662,15 @@ class App:
         fs = int(self.cfg["font_size"])
         t = tk.Text(w, bg=T["bg"], fg=T["fg"], wrap="word", relief="flat", padx=12, pady=10,
                     font=("Segoe UI", fs), highlightthickness=0, bd=0, spacing1=2, spacing3=2, cursor="arrow")
-        tk.Button(w, text=_("Fermer"), command=w.destroy, bg=T["accent"], fg=T["accent_fg"],
-                  activebackground=T["accent_act"], activeforeground=T["accent_fg"],
-                  relief="flat", bd=0, padx=12, pady=3).pack(side="bottom", pady=8)
+        row = tk.Frame(w, bg=T["panel"])
+        row.pack(side="bottom", pady=8)
+        # relire les notes de version a tout moment (avant : seulement une fois, apres une mise a jour)
+        nb = FlatButton(row, text=_("Nouveaut\u00e9s des versions"), command=lambda: self.show_news(force=True), bg=T["btn"], fg=T["btn_fg"],
+                        activebackground=T["btn_act"], activeforeground=T["btn_fg"], padx=12, pady=3)
+        nb.pack(side="left", padx=6)
+        cb_ = FlatButton(row, text=_("Fermer"), command=w.destroy, bg=T["accent"], fg=T["accent_fg"],
+                         activebackground=T["accent_act"], activeforeground=T["accent_fg"], padx=12, pady=3)
+        cb_.pack(side="left", padx=6)
         sb = ttk.Scrollbar(w, orient="vertical", command=t.yview, style="Dark.Vertical.TScrollbar")
         t.configure(yscrollcommand=sb.set)
         sb.pack(side="right", fill="y")
@@ -3581,7 +3736,8 @@ class App:
                  (_("Se cacher quand un menu du jeu s'ouvre (menu du tchat, clic droit)"), "hide_on_menu"),
                  (_("Mises a jour automatiques (au lancement)"), "auto_update"),
                  (_("Bouton \u2713 ABC (correcteur d'orthographe, b\u00eata)"), "correcteur"),
-                 (_("Cacher la bande de cases color\u00e9es (essai)"), "cover_band")]
+                 (_("Cacher la bande de cases color\u00e9es (essai)"), "cover_band"),
+                 (_("Info-bulles au survol des boutons"), "hints")]
         bv = {}
         row = len(fields)
         for lab, key in bools:
@@ -4205,7 +4361,7 @@ class App:
         tag = kind          # tes messages aussi : couleur du canal, comme dans WoW (groupe = bleu)
         badge = "[%s] " % lang.upper() if lang not in ("?", "") and not mine else ""
         tail = chan if kind in ("channel", "lfg") else KIND_LABEL.get(kind, ("", ""))[UI == "en"]
-        start_line = int(self.text.index("end-1c").split(".")[0])
+        start_line = int(self.text.index("end-1c").split(".")[0]) + (1 if getattr(self, "_nl_pending", False) else 0)
         parts = [(hhmm + " ", "badge")]
         if badge:
             parts.append((badge, "badge"))
@@ -4747,22 +4903,37 @@ class App:
         save_config(self.cfg)
 
     def _add_hint(self, widget, text):
-        """Au survol d'un bouton : explication sur la ligne d'info (une ligne), puis on remet l'ancien message."""
-        def on(_e):
-            self._hint_prev = (self.out_result.cget("text"), self.out_result.cget("fg"))
-            self.out_result.config(text=text, fg=self.T["muted"])
+        """Info-bulle au survol d'un bouton (apres un court instant), au-dessus du bouton."""
+        state = {"job": None, "win": None}
 
-        def off(_e):
-            try:                                     # vraiment sortie ? (evite un clignotement si la fenetre bouge)
-                if self.root.winfo_containing(*self.root.winfo_pointerxy()) is widget:
+        def show():
+            state["job"] = None
+            if not self.cfg.get("hints", True):            # desactivees dans les Reglages
+                return
+            try:
+                if self.root.winfo_containing(*self.root.winfo_pointerxy()) is not widget:
                     return
             except Exception:  # noqa
-                pass
-            prev = getattr(self, "_hint_prev", None)
-            if prev and self.out_result.cget("text") == text:
-                self.out_result.config(text=prev[0], fg=prev[1])
+                return
+            state["win"] = make_bubble(self, text, self.T["fg"], widget, wrap=300)
+
+        def on(_e):
+            if state["job"] is None and state["win"] is None:
+                state["job"] = self.root.after(450, show)
+
+        def off(_e):
+            if state["job"]:
+                self.root.after_cancel(state["job"])
+                state["job"] = None
+            if state["win"] is not None:
+                try:
+                    state["win"].destroy()
+                except tk.TclError:
+                    pass
+                state["win"] = None
         widget.bind("<Enter>", on, add="+")
         widget.bind("<Leave>", off, add="+")
+        widget.bind("<ButtonPress-1>", off, add="+")
 
     def _ph_update(self):
         """Affiche le texte d'aide gris quand la case "Ecrire" est vide et qu'on n'y ecrit pas."""

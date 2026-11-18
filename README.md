@@ -125,9 +125,12 @@ Le bouton **Réglages** de la fenêtre permet de :
 - Choisir un thème pour la fenêtre : Sombre, Alliance, Horde, Parchemin, Ombre, Forge, Druide, Arcane, Sables, Marais, Clair de lune, Aube dorée (clair) ou Givre (appliqué tout de suite).
 - **Bouton ✓ ABC** (correcteur d'orthographe, **en bêta**) : corrige ta phrase en français et la copie **sans la traduire**, pour écrire à un joueur français. Il passe par le correcteur en ligne LanguageTool (sans compte). Relis le résultat avant d'envoyer.
 - **Cacher la bande de cases colorées (essai, décoché par défaut)** : pose un petit rectangle « ChatFR » par-dessus la bande. Le traducteur la lit toujours à travers. Il faut Windows 10 à jour ou Windows 11 : sinon, le rectangle est retiré tout seul.
+- **Info-bulles au survol des boutons** (activé par défaut) : une petite explication apparaît quand la souris reste sur un bouton. Les messages du traducteur (« Copié ! », erreurs…) s'affichent dans une petite bulle au-dessus de la barre d'écriture.
 - **Se cacher quand WoW n'est pas la fenêtre active** (activé par défaut) : la fenêtre disparaît quand tu passes sur une autre application et revient quand tu retournes dans WoW.
 
 Dans la barre du haut, le **cadenas** verrouille la fenêtre : un clic et elle ne peut plus être déplacée ni redimensionnée, un autre clic la libère.
+
+Pour relire les nouveautés de chaque version, ouvre l'aide **« ? »** puis **« Nouveautés des versions »**.
 
 Pour **chuchoter une réponse**, clique sur le pseudo d'un joueur dans la fenêtre : « FR → » devient « À Pseudo (FR) → », et « Traduire + copier » copie `/w Pseudo ta réponse`. La croix à côté du pseudo revient à une réponse normale. Pour un ami Battle.net, la touche **R** de WoW reste plus fiable.
 
