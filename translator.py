@@ -3041,9 +3041,9 @@ class App:
                 relx=rx, rely=ry, anchor={"nw": "nw", "sw": "sw", "ne": "ne", "se": "se"}[corner])
         self._add_hint(tb, _("Traduit ta phrase dans la langue choisie et copie la traduction."))
         self.out_result = tk.Label(out, text=_("Clique sur un message pour repondre dans sa langue."),
-                                   bg=P, fg=T["muted"], anchor="nw", justify="left", wraplength=520,
-                                   height=2)   # hauteur fixe (2 lignes) : au survol d'un bouton, l'aide d'une ligne
-        # remplacait un message de 2 lignes, la barre bougeait sous la souris et clignotait
+                                   bg=P, fg=T["muted"], anchor="w", justify="left", wraplength=0,
+                                   height=1)   # toujours UNE ligne (texte trop long coupe a droite) : avant, une aide
+        # d'une ligne remplacait un message de 2 lignes et la barre sautait sous la souris
         self.out_result.grid(row=1, column=0, sticky="ew", padx=4, pady=(0, 3))
         # Entree ne fait rien : on clique sur "Traduire + copier" ou "ABC" (par reflexe, ca traduisait sans le vouloir)
         self.out_entry.bind("<Button-1>", self.take_keyboard, add="+")
