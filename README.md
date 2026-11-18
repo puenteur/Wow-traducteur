@@ -31,7 +31,7 @@ Le détail de chaque étape est plus bas.
 - Les messages déjà en français ne passent pas par Google.
 
 **Répondre**
-- Écris en français dans « Écrire (FR) », clique sur « Traduire + copier » : la traduction est copiée, tu la colles dans WoW (Entrée, Ctrl+V, Entrée).
+- Écris en français dans la case du bas, clique sur « Traduire + copier » : la traduction est copiée, tu la colles dans WoW (Entrée, Ctrl+V, Entrée).
 - Clique sur un message pour répondre dans la langue de ce joueur (ou active la langue de réponse automatique dans les Réglages).
 - Clique sur un **pseudo** : ta réponse est copiée avec `/w Pseudo` devant, pour lui chuchoter directement.
 - Le traducteur n'envoie jamais rien au jeu lui-même : c'est toujours toi qui colles.
@@ -94,7 +94,7 @@ Pourquoi une bande de couleurs ? Un addon WoW n'a pas accès à Internet, et le 
 1. Lance WoW et entre en jeu : une bande de cases colorées apparaît près du coin haut-gauche. C'est normal, ne la recouvre pas.
 2. Double-clique sur **Lancer le traducteur.bat**.
 3. La barre de statut doit afficher **« Pont image : OK (N messages reçus) »**. Les messages arrivent traduits en 1 à 2 secondes, avec un badge de langue (`[EN]`, `[DE]`, `[RU]`…).
-4. Pour répondre : tape en français dans **« Écrire (FR) → »**, appuie sur Entrée, puis **Ctrl+V** dans le tchat de WoW. Pour répondre dans la langue d'un joueur, clique d'abord sur son message (ou choisis la langue dans la liste à côté du bouton).
+4. Pour répondre : tape en français dans la case du bas (**« Écris ici en français… »**), clique sur **« Traduire + copier »**, puis **Ctrl+V** dans le tchat de WoW. Pour répondre dans la langue d'un joueur, clique d'abord sur son message (ou choisis la langue dans la liste à côté du bouton).
 
 Un petit lexique de joueur traduit directement les messages courts (« who » → qui, « ty » → merci, « gg » → bien joué, « lfg » → cherche groupe…) et développe les abréviations anglaises avant Google (« where r u » → « where are you »). Les abréviations de donjons, raids, zones et villes sont remplacées par leur nom français (« SFK » → Donjon d'Ombrecroc, « STV » → Vallée de Strangleronce, « UC » → Fossoyeuse…). Le jargon « tank », « heal », « healer » et « DPS » reste tel quel. Tu peux ajouter tes mots dans `LEX_FULL` et `LEX_EXPAND`, et les noms de monstres ou de lieux que Google traduit à tort (« Hogger » → « porc ») dans `LEX_NAMES`, et tes abréviations de lieux dans `LEX_PLACES`, dans `translator.py`. Les prix en pièces (« 100 po », « 2 pa 50 pc ») ne sont jamais traduits.
 
@@ -123,11 +123,13 @@ Le bouton **Réglages** de la fenêtre permet de :
 - **Ne voir que les messages étrangers** : décoche « Afficher aussi les messages déjà en français ».
 - Régler l'opacité et la taille du texte, garder la fenêtre au premier plan, couper le son, désactiver la fermeture automatique avec WoW.
 - Choisir un thème pour la fenêtre : Sombre, Alliance, Horde, Parchemin, Ombre, Forge, Druide, Arcane, Sables, Marais, Clair de lune, Aube dorée (clair) ou Givre (appliqué tout de suite).
+- **Bouton ✓ ABC** (correcteur d'orthographe, **en bêta**) : corrige ta phrase en français et la copie **sans la traduire**, pour écrire à un joueur français. Il passe par le correcteur en ligne LanguageTool (sans compte). Relis le résultat avant d'envoyer.
+- **Cacher la bande de cases colorées (essai, décoché par défaut)** : pose un petit rectangle « ChatFR » par-dessus la bande. Le traducteur la lit toujours à travers. Il faut Windows 10 à jour ou Windows 11 : sinon, le rectangle est retiré tout seul.
 - **Se cacher quand WoW n'est pas la fenêtre active** (activé par défaut) : la fenêtre disparaît quand tu passes sur une autre application et revient quand tu retournes dans WoW.
 
 Dans la barre du haut, le **cadenas** verrouille la fenêtre : un clic et elle ne peut plus être déplacée ni redimensionnée, un autre clic la libère.
 
-Pour **chuchoter une réponse**, clique sur le pseudo d'un joueur dans la fenêtre : « Écrire (FR) » devient « À Pseudo (FR) », et « Traduire + copier » copie `/w Pseudo ta réponse`. La croix à côté du pseudo revient à une réponse normale. Pour un ami Battle.net, la touche **R** de WoW reste plus fiable.
+Pour **chuchoter une réponse**, clique sur le pseudo d'un joueur dans la fenêtre : « FR → » devient « À Pseudo (FR) → », et « Traduire + copier » copie `/w Pseudo ta réponse`. La croix à côté du pseudo revient à une réponse normale. Pour un ami Battle.net, la touche **R** de WoW reste plus fiable.
 
 ### Options de l'addon pour le traducteur
 
@@ -169,7 +171,7 @@ Alt+Z (masquer l'interface) cache aussi la bande : le traducteur ne reçoit plus
 
 - Traductions de Google Traduction : correctes sur les phrases simples, approximatives sur l'argot et les abréviations.
 - Un message reste 0,4 s dans la bande : lors d'une très grosse rafale, un message peut être perdu. Au-delà d'environ 280 octets, il est coupé.
-- Le texte des messages à traduire et ce que tu écris dans « Écrire (FR) » est envoyé à Google Traduction, ou à un service de traduction de secours quand Google ne répond pas. Rien d'autre ne quitte ton ordinateur.
+- Le texte des messages à traduire et ce que tu écris dans la case du bas est envoyé à Google Traduction, ou à un service de traduction de secours quand Google ne répond pas. Avec le bouton ✓ ABC, ta phrase est envoyée au correcteur LanguageTool. Rien d'autre ne quitte ton ordinateur.
 - L'addon n'utilise que des fonctions normales de WoW, et le traducteur ne fait que lire une partie de ton propre écran ; il ne touche ni au clavier ni à la souris et n'envoie rien dans le tchat. Ce n'est toutefois pas une méthode prévue par Blizzard, et il n'y a pas encore de confirmation officielle de Blizzard à ce sujet. Projet non officiel, fourni tel quel, sans garantie : utilisation sous ta responsabilité.
 
 ## Désinstallation

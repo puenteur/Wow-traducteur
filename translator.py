@@ -35,13 +35,14 @@ import webbrowser
 from ctypes import wintypes
 import tkinter as tk
 from tkinter import ttk
+from tkinter import font as tkfont
 
 try:
     import winsound
 except ImportError:  # pas sous Windows
     winsound = None
 
-VERSION = "1.9.7"
+VERSION = "1.9.8"
 # Verification de mise a jour : le fichier version.txt du depot contient le numero de la derniere version.
 VERSION_URL = "https://raw.githubusercontent.com/puenteur/Wow-traducteur/main/version.txt"
 KOFI_URL = "https://ko-fi.com/puenteur"
@@ -60,7 +61,8 @@ enchanting engineering cooking fishing mining herbalism skinning jewelcrafting i
 # Nouveautes affichees une fois dans la fenetre apres une mise a jour (pas au premier lancement).
 NEWS = {
     "fr": ["WoW Traducteur %s" % VERSION,
-           "- Nouveau en %s : si Google tombe en panne, les traducteurs de secours (Lingva, MyMemory) prennent maintenant toujours le relais ; prix des fiches d'objets avec les pi\u00e8ces, comme dans le jeu ; pings \u00ab Menace \u00bb et \u00ab Par ici \u00bb avec leur losange ; un fichier services.txt (dossier des r\u00e9glages) note quel service a traduit les messages et les pannes, sans jamais le texte des messages. Mets aussi ChatFR \u00e0 jour." % VERSION,
+           "- Nouveau en %s : bouton \u2713 ABC pour corriger ton orthographe avant d'envoyer (en b\u00eata) ; barre d'\u00e9criture sur une ligne, fen\u00eatre et boutons aux coins arrondis, R\u00e9glages relook\u00e9s ; 7 th\u00e8mes retravaill\u00e9s et nouveaux embl\u00e8mes Alliance et Horde, le th\u00e8me change d\u00e8s qu'on le choisit ; option pour cacher la bande de cases color\u00e9es (R\u00e9glages, essai) ; quand Google bloque, Bing prend le relais et Google se repose plus longtemps ; moins de demandes \u00e0 Google ; \u00ab slt \u00bb, \u00ab lu \u00bb, \u00ab tlm \u00bb... bien traduits dans tes r\u00e9ponses ; la touche Entr\u00e9e ne traduit plus par accident ; meilleures traductions (La Prison, LFW, Arme flamboyante, Crois\u00e9, +2 Endurance, in IF = Forgefer). Mets aussi ChatFR \u00e0 jour." % VERSION,
+           "- 1.9.7 : si Google tombe en panne, les traducteurs de secours prennent maintenant toujours le relais ; prix des fiches d'objets avec les pi\u00e8ces, comme dans le jeu ; pings \u00ab Menace \u00bb et \u00ab Par ici \u00bb avec leur losange ; un fichier services.txt (dossier des r\u00e9glages) note quel service a traduit les messages et les pannes, sans jamais le texte des messages.",
            "- 1.9.6 : correction importante, le traducteur ne s'arr\u00eate plus d'afficher les messages apr\u00e8s une annonce de qu\u00eate de Questie ; s'il plante sur un message, il continue avec les suivants et note l'erreur dans erreurs.txt ; noms des joueurs \u00e0 la couleur de leur classe, comme dans le jeu (ton pseudo en gras) ; \u00e9motes en orange, exp\u00e9rience en bleu, changements de r\u00f4le en groupe ; la fen\u00eatre se cache quand la carte est ouverte en grand ; avertissement si ChatFR et le traducteur n'ont pas la m\u00eame version ; liens de qu\u00eate Questie nettoy\u00e9s ; \u00ab salty \u00bb traduit par \u00ab vex\u00e9 \u00bb.",
            "- 1.9.5 : le traducteur se met \u00e0 jour tout seul au lancement (avec un compte \u00e0 rebours) ; s'il manque Python, \u00ab Lancer le traducteur.bat \u00bb propose de l'installer ; symboles des pings Menace et Par ici ; marques de raid reconnues dans toutes les langues du jeu ; annonces de Questie non traduites ; la fen\u00eatre ne redescend plus quand tu lis plus haut ; case \u00ab \u00c9crire \u00bb corrig\u00e9e dans une petite fen\u00eatre ; meilleures traductions (La Prison, \u00c9olide, Comt\u00e9-du-Nord, chevalet de tannage, BS / LW + niveau, q = qu\u00eate, yo, dr, dobro do\u0161li). Mets aussi ChatFR \u00e0 jour.",
            "- 1.9.4 : mise \u00e0 jour en un clic (bouton \u00ab Mettre \u00e0 jour \u00bb) ; tes r\u00e9glages sont maintenant rang\u00e9s \u00e0 part (%APPDATA%\\WoW-Traducteur) et ne se perdent plus ; la fen\u00eatre se place sur le tchat de WoW (premier lancement, ou bouton dans les R\u00e9glages) et se cache quand un menu du jeu s'ouvre ; \u00ab \u2014 \u00bb replie la fen\u00eatre sur sa barre ; messages de l'h\u00f4tel des ventes ; meilleures traductions (WTB/WTS, prix, COD, unstuck).",
@@ -72,7 +74,8 @@ NEWS = {
            "- Fen\u00eatre des nouveaut\u00e9s apr\u00e8s chaque mise \u00e0 jour (celle-ci !).",
            "- Meilleures traductions : lfg/lfm, wts/wtb, Deadmines, jargon russe (\u041b\u0424\u0413), mots coll\u00e9s aux liens, petits messages en espagnol ou en letton, moins d'appels inutiles \u00e0 Google."],
     "en": ["WoW Traducteur %s" % VERSION,
-           "- New in %s: if Google goes down, the backup translators (Lingva, MyMemory) now always take over; item tooltip prices shown with coins, like in the game; \"Threat\" and \"Look here\" pings with their diamond icon; a services.txt file (settings folder) records which service translated the messages and any outages, never the message text. Update ChatFR too." % VERSION,
+           "- New in %s: \u2713 ABC button to fix your French spelling before sending (beta); write bar on one line, rounded window and buttons, restyled Settings; 7 reworked themes and new Alliance and Horde emblems, the theme changes as soon as you pick it; option to hide the strip of colored squares (Settings, test); when Google blocks, Bing takes over and Google rests longer; fewer requests to Google; Enter no longer translates by accident; better translations (The Stockade, LFW, Fiery Weapon, Crusader, +2 Stamina, in IF = Ironforge). Update ChatFR too." % VERSION,
+           "- 1.9.7: if Google goes down, the backup translators now always take over; item tooltip prices shown with coins, like in the game; \"Threat\" and \"Look here\" pings with their diamond icon; a services.txt file (settings folder) records which service translated the messages and any outages, never the message text.",
            "- 1.9.6: important fix, the translator no longer stops showing messages after a Questie quest announcement; if it fails on a message, it carries on with the next ones and writes the error to erreurs.txt; player names in their class color, like in the game (your name in bold); emotes in orange, experience in blue, group role changes; the window hides when the world map is open full size; warning if ChatFR and the translator are not the same version; cleaner Questie quest links; \"salty\" handled in French translations.",
            "- 1.9.5: the translator now updates itself at launch (with a countdown); if Python is missing, \"Lancer le traducteur.bat\" offers to install it; Threat and Look ping symbols; raid marks recognized in every game language; Questie announcements no longer translated; the window no longer jumps down while you read older messages; \"Write\" box fixed in a small window; better translations (BS / LW + skill, q = quest, Skyborne, Northshire, Tanning Rack). Update ChatFR too.",
            "- 1.9.4: one-click update (\"Update\" button); your settings are now stored separately (%APPDATA%\\WoW-Traducteur) and are no longer lost; the window places itself over the WoW chat (first launch, or button in Settings) and hides when a game menu opens; \"\u2014\" rolls the window up to its bar; auction house messages; better translations (WTB/WTS, prices, COD, unstuck).",
@@ -190,6 +193,7 @@ DEFAULTS = {
     "locked": False,                # cadenas : fenetre verrouillee (ni deplacement ni redimensionnement)
     "help_seen": False,             # fenetre d'aide deja montree une fois (premier lancement)
     "ui_lang": "",                  # langue de l'interface : "fr" ou "en" (choisie au premier lancement)
+    "cover_band": False,            # rectangle par-dessus la bande de cases (invisible pour la capture)
 }
 
 BG = "#101418"
@@ -226,6 +230,21 @@ EN = {
     "Demarrage...": "Starting...",
     "Bienvenue dans WoW Traducteur %s !": "Welcome to WoW Traducteur %s!",
     "Le traducteur est gratuit. Pour me soutenir : ": "The translator is free. To support me: ",
+    "Bouton \u2713 ABC (correcteur d'orthographe, b\u00eata)": "\u2713 ABC button (spell checker, beta)",
+    "ABC (b\u00eata) : corrige et copie en fran\u00e7ais, SANS traduire. Correcteur en d\u00e9veloppement : relis avant d'envoyer.":
+        "ABC (beta): corrects and copies in French, WITHOUT translating. Checker still in development: read it before sending.",
+    "Cacher la bande de cases color\u00e9es (essai)": "Hide the strip of colored squares (test)",
+    "Cache-bande d\u00e9sactiv\u00e9 : Windows ne permet pas de le cacher \u00e0 la capture (Windows trop ancien ?).":
+        "Strip cover turned off: Windows can't hide it from the capture (Windows too old?).",
+    "\u2713 Corriger": "\u2713 Correct",
+    "ABC : corrige et copie en fran\u00e7ais, SANS traduire.":
+        "ABC: corrects and copies in English, WITHOUT translating.",
+    "\u2713 %d correction(s). Copi\u00e9 en fran\u00e7ais, sans traduction (Ctrl+V dans WoW)":
+        "\u2713 %d correction(s). Copied in English, not translated (Ctrl+V in WoW)",
+    "\u2713 Aucune faute. Copi\u00e9 en fran\u00e7ais, sans traduction (Ctrl+V dans WoW)":
+        "\u2713 No mistakes. Copied in English, not translated (Ctrl+V in WoW)",
+    "\u2713 %d correction(s) de base (correcteur en ligne indisponible). Copi\u00e9 en fran\u00e7ais, sans traduction":
+        "\u2713 %d basic correction(s) (online checker unavailable). Copied in English, not translated",
     "\u26a0 ChatFR est en %s, le traducteur en %s : mets ChatFR \u00e0 jour (CurseForge), puis relance le jeu.":
         "\u26a0 ChatFR is %s, the translator is %s: update ChatFR (CurseForge), then restart the game.",
     "\u26a0 ChatFR est en %s, le traducteur en %s : mets le traducteur \u00e0 jour (bouton dans les R\u00e9glages).":
@@ -236,6 +255,10 @@ EN = {
     "Autre langue…": "Other language…",
     "À %s (%s) →": "To %s (%s) →",
     "Ecrire (%s) →": "Write (%s) →",
+    "\u00c9cris ici en fran\u00e7ais\u2026": "Type here in English\u2026",
+    "\u2715 : efface ta phrase (touche \u00c9chap aussi).": "\u2715: clears your sentence (Esc key too).",
+    "Langue dans laquelle ta phrase sera traduite (clique pour la changer).": "Language your sentence will be translated into (click to change it).",
+    "Traduit ta phrase dans la langue choisie et copie la traduction.": "Translates your sentence into the chosen language and copies it.",
     "Chuchotement à %s : ta reponse sera copiee avec /w %s": "Whisper to %s: your reply will be copied with /w %s",
     "Reponse normale (sans /w).": "Normal reply (no /w).",
     "(haut fait : le détail est sur Wowhead)": "(achievement: details are on Wowhead)",
@@ -405,6 +428,48 @@ def coin_png(unit, size, ss=4):
             + chunk(b"IDAT", zlib.compress(bytes(raw), 9)) + chunk(b"IEND", b""))
 
 
+def corner_png(r, inside, outside, corner, ring=None, ring_w=0, hard_out=False, ss=4):
+    """PNG (octets) d'un coin arrondi r x r, bord lisse : `inside` dans l'arrondi, `outside` autour.
+    corner = "nw", "ne", "sw" ou "se" (coin haut-gauche, haut-droit...). `ring` : liseré de `ring_w` px
+    le long de l'arrondi (cadre de la fenetre). `hard_out` : bord exterieur net, sans melange avec
+    `outside` (couleur rendue transparente : un melange donnerait un halo)."""
+    def rgb(h):
+        h = h.lstrip("#")
+        return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+    ci, co = rgb(inside), rgb(outside)
+    cr = rgb(ring) if ring else ci
+    cx = r if corner[1] == "w" else 0
+    cy = r if corner[0] == "n" else 0
+    rin = (r - ring_w) if ring else r
+    raw = bytearray()
+    for y in range(r):
+        raw.append(0)
+        for x in range(r):
+            n_out = n_ring = n_in = 0
+            for sy in range(ss):
+                for sx in range(ss):
+                    d2 = (x + (sx + 0.5) / ss - cx) ** 2 + (y + (sy + 0.5) / ss - cy) ** 2
+                    if d2 > r * r:
+                        n_out += 1
+                    elif d2 > rin * rin:
+                        n_ring += 1
+                    else:
+                        n_in += 1
+            tot = ss * ss
+            if hard_out:
+                if n_out * 2 >= tot:
+                    raw += bytes(co)
+                    continue
+                tot = n_ring + n_in
+                n_out = 0
+            raw += bytes(round((ci[k] * n_in + cr[k] * n_ring + co[k] * n_out) / tot) for k in range(3))
+
+    def chunk(t, d):
+        return struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xffffffff)
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", r, r, 8, 2, 0, 0, 0))
+            + chunk(b"IDAT", zlib.compress(bytes(raw), 9)) + chunk(b"IEND", b""))
+
+
 def wow_grammar(text):
     """Codes de grammaire du client WoW : "|2 Stormwind" = "de Stormwind" / "d'Orgrimmar"."""
     if "|2" not in text:
@@ -412,6 +477,7 @@ def wow_grammar(text):
     text = re.sub(r"\|2\s*(?=[AEIOUYHaeiouyh\u00c0-\u00c6\u00c8-\u00cf\u00d2-\u00d6\u00d9-\u00dc\u00e0-\u00e6\u00e8-\u00ef\u00f2-\u00f6\u00f9-\u00fc])", "d'", text)
     return re.sub(r"\|2\s*", "de ", text)
 TRANS_COLOR = "#6fd3ff"
+WIN_HOLE = "#010203"   # couleur rendue transparente (coins arrondis de la fenetre)
 NAME_COLOR = "#e8b964"      # pseudo des autres joueurs
 ALERT_BG = "#5a4a00"
 
@@ -502,6 +568,40 @@ THEMES = {
                   scroll="#204257", scroll_act="#2c5873"),
 }
 
+# 1.9.8 : themes retravailles pour qu'ils ne se ressemblent plus (une couleur dominante chacun)
+_THEMES_198 = {
+ "Ombre": dict(bg="#050505", fg="#f2f2f2", bar="#000000", btn="#1a1a1a", btn_act="#2b2b2b", btn_fg="#f2f2f2",
+      accent="#f2f2f2", accent_act="#ffffff", accent_fg="#000000", border="#3a3a3a", border_w=1, icon="#d0d0d0",
+      status="#8a8a8a", panel="#0d0d0d", entry="#141414", muted="#9a9a9a", trans="#cfcfcf", name="#ffffff",
+      badge="#8a8a8a", scroll="#2b2b2b", scroll_act="#3d3d3d"),
+ "Horde": dict(bg="#170505", fg="#f5e3dc", bar="#0d0202", btn="#3a0d0b", btn_act="#561410", btn_fg="#f5d0b8",
+      accent="#b01e16", accent_act="#cc271d", accent_fg="#fff0e6", border="#b01e16", border_w=2, icon="#e2a24a",
+      status="#b08478", panel="#0d0202", entry="#2a0807", muted="#b08478", trans="#ff9a7a", name="#e8b04a",
+      badge="#b08478", scroll="#561410", scroll_act="#72201a"),
+ "Parchemin": dict(bg="#2a2420", fg="#ece2d0", bar="#1e1915", btn="#3b332c", btn_act="#4f453b", btn_fg="#e0d2b8",
+      accent="#6b5a45", accent_act="#7f6c54", accent_fg="#f5ecdc", border="#8c7a62", border_w=2, icon="#d8c8a8",
+      status="#a09078", panel="#1e1915", entry="#3b332c", muted="#a09078", trans="#e6cfa0", name="#f0c070",
+      badge="#a09078", scroll="#4f453b", scroll_act="#635749"),
+ "Sables": dict(bg="#3a2c14", fg="#fff4d8", bar="#2c2010", btn="#55401c", btn_act="#6e5426", btn_fg="#ffe39a",
+      accent="#d9a530", accent_act="#ebb83e", accent_fg="#2c2010", border="#e8bd55", border_w=2, icon="#ffe39a",
+      status="#cdb383", panel="#2c2010", entry="#55401c", muted="#cdb383", trans="#ffd768", name="#ff9f4a",
+      badge="#cdb383", scroll="#6e5426", scroll_act="#86682f"),
+ "Marais": dict(bg="#0c1c1c", fg="#d8ece6", bar="#071313", btn="#163030", btn_act="#204444", btn_fg="#9fd8c8",
+      accent="#2d7a6a", accent_act="#36917e", accent_fg="#e6faf4", border="#3f8f7c", border_w=2, icon="#9fd8c8",
+      status="#76a39a", panel="#071313", entry="#163030", muted="#76a39a", trans="#7fe0c8", name="#e8d070",
+      badge="#76a39a", scroll="#204444", scroll_act="#2c5a5a"),
+ "Arcane": dict(bg="#22092a", fg="#f8e6ff", bar="#16051c", btn="#3a1046", btn_act="#521862", btn_fg="#f0b8ff",
+      accent="#b03ad0", accent_act="#c64ce6", accent_fg="#fff0ff", border="#d060f0", border_w=2, icon="#f0b8ff",
+      status="#b08cc0", panel="#16051c", entry="#3a1046", muted="#b08cc0", trans="#ff9cf0", name="#ffd37a",
+      badge="#b08cc0", scroll="#521862", scroll_act="#6a2280"),
+ "Clair de lune": dict(bg="#1a1b26", fg="#eceef8", bar="#121320", btn="#2a2c3e", btn_act="#383b52", btn_fg="#d0d4ec",
+      accent="#7a7fb8", accent_act="#8d92cc", accent_fg="#0f1020", border="#c0c4dc", border_w=2, icon="#d0d4ec",
+      status="#9a9db8", panel="#121320", entry="#2a2c3e", muted="#9a9db8", trans="#c8ccff", name="#f2e0a0",
+      badge="#9a9db8", scroll="#383b52", scroll_act="#484c68"),
+}
+for _k, _v in _THEMES_198.items():
+    THEMES[_k] = dict(THEMES[_k], **_v)
+
 
 # Fenetre "?" : ce que font le traducteur et l'addon. "# " = titre, "- " = puce.
 HELP_TEXT = """# Comment ça marche
@@ -541,6 +641,8 @@ HELP_TEXT = """# Comment ça marche
 # Soutenir le projet
 - WoW Traducteur et ChatFR sont et resteront gratuits, sans fonction réservée aux donateurs.
 - Si ces outils te rendent service et que tu veux me soutenir : https://ko-fi.com/puenteur
+# Avertissement
+- Projet de fan non officiel : ni créé, ni soutenu, ni approuvé par Blizzard Entertainment (World of Warcraft est une marque de Blizzard). Ce n'est pas une méthode prévue par Blizzard, et il n'y a pas encore de confirmation officielle de Blizzard à ce sujet. Fourni tel quel, sans garantie : utilisation sous ta responsabilité.
 """
 
 HELP_TEXT_EN = """# How it works
@@ -578,25 +680,88 @@ HELP_TEXT_EN = """# How it works
 # Support the project
 - WoW Traducteur and ChatFR are and will stay free, with no donor-only features.
 - If these tools help you and you'd like to support me: https://ko-fi.com/puenteur
+# Disclaimer
+- Unofficial fan project: not made, supported or endorsed by Blizzard Entertainment (World of Warcraft is a trademark of Blizzard). This is not a method intended by Blizzard, and there is no official confirmation from Blizzard yet. Provided as is, without warranty: use at your own risk.
 """
 
 
-def draw_emblem(cv, kind):
-    """Petit emblème original dessine dans un Canvas de 18x21 (coordonnees d'origine 84x96)."""
-    k = 18 / 84.0
+def _thick(x1, y1, x2, y2, w):
+    """Trait epais -> polygone (4 coins)."""
+    dx, dy = x2 - x1, y2 - y1
+    n = math.hypot(dx, dy) or 1.0
+    ox, oy = -dy / n * w / 2, dx / n * w / 2
+    return [x1 + ox, y1 + oy, x2 + ox, y2 + oy, x2 - ox, y2 - oy, x1 - ox, y1 - oy]
 
-    def pts(seq):
-        return [v * k for v in seq]
-    if kind == "shield":
-        cv.create_polygon(pts([8, 8, 76, 8, 76, 44, 72, 62, 60, 77, 42, 90, 24, 77, 12, 62, 8, 44]), fill="#c9a227", outline="")
-        cv.create_polygon(pts([14, 14, 70, 14, 70, 44, 66, 60, 56, 72, 42, 83, 28, 72, 18, 60, 14, 44]), fill="#1d3a6e", outline="")
-        cv.create_polygon(pts([42, 30, 46.5, 42.5, 59, 44, 49, 52, 52.5, 64.5, 42, 57, 31.5, 64.5, 35, 52, 25, 44, 37.5, 42.5]),
-                          fill="#e8c55a", outline="")
-    elif kind == "banner":
-        cv.create_polygon(pts([16, 6, 68, 6, 68, 90, 42, 74, 16, 90]), fill="#b0702e", outline="")
-        cv.create_polygon(pts([21, 11, 63, 11, 63, 81, 42, 68, 21, 81]), fill="#8e2219", outline="")
-        cv.create_polygon(pts([42, 24, 50, 34, 53, 44, 51, 54, 46, 60, 42, 62, 38, 60, 33, 54, 32, 46, 35, 40, 38, 36,
-                               40, 43, 42, 46, 41, 36]), fill="#e2913f", outline="", smooth=True)
+
+# Emblèmes ORIGINAUX (pas les logos officiels de Blizzard) : formes en coordonnees 84 x 96, du fond vers le dessus.
+EMBLEMS = {
+    # ecu bleu borde d'or, chevron et etoile d'or (heraldique generique)
+    "shield": [
+        ([6, 6, 78, 6, 78, 46, 73, 64, 60, 79, 42, 92, 24, 79, 11, 64, 6, 46], "#d4ad3a"),
+        ([13, 13, 71, 13, 71, 46, 67, 61, 56, 73, 42, 84, 28, 73, 17, 61, 13, 46], "#173a7a"),
+        (_thick(21, 20, 63, 20, 3), "#2c5aa8"),
+        ([13, 46, 42, 30, 71, 46, 71, 58, 42, 42, 13, 58], "#d4ad3a"),
+        ([42, 50, 45.5, 59, 55, 60, 47.5, 66, 50, 75, 42, 70, 34, 75, 36.5, 66, 29, 60, 38.5, 59], "#f0d070"),
+    ],
+    # etendard de guerre rouge a queue fendue, haches croisees (motif generique)
+    "banner": [
+        ([4, 3, 80, 3, 80, 10, 4, 10], "#6a4a2a"),
+        ([12, 9, 72, 9, 72, 92, 42, 74, 12, 92], "#c9a06a"),
+        ([17, 13, 67, 13, 67, 83, 42, 67, 17, 83], "#9c1f16"),
+        (_thick(27, 60, 57, 22, 6), "#3a2414"),
+        (_thick(57, 60, 27, 22, 6), "#3a2414"),
+        ([50, 17, 65, 13, 67, 29, 58, 33], "#e8d2a8"),
+        ([34, 17, 19, 13, 17, 29, 26, 33], "#e8d2a8"),
+    ],
+}
+
+
+def _in_poly(x, y, poly):
+    inside = False
+    n = len(poly) // 2
+    j = n - 1
+    for i in range(n):
+        xi, yi, xj, yj = poly[2 * i], poly[2 * i + 1], poly[2 * j], poly[2 * j + 1]
+        if (yi > y) != (yj > y) and x < (xj - xi) * (y - yi) / ((yj - yi) or 1e-9) + xi:
+            inside = not inside
+        j = i
+    return inside
+
+
+def emblem_png(kind, bg, w=20, ss=4):
+    """PNG lisse (bords adoucis) de l'emblème, sur le fond `bg`."""
+    shapes = EMBLEMS[kind]
+    h = int(round(w * 96 / 84.0))
+    sx, sy = 84.0 / w, 96.0 / h
+
+    def rgb(c):
+        c = c.lstrip("#")
+        return tuple(int(c[i:i + 2], 16) for i in (0, 2, 4))
+    cols = [rgb(c) for _p, c in shapes]
+    back = rgb(bg)
+    raw = bytearray()
+    for y in range(h):
+        raw.append(0)
+        for x in range(w):
+            acc = [0, 0, 0]
+            for j in range(ss):
+                for i in range(ss):
+                    px, py = (x + (i + .5) / ss) * sx, (y + (j + .5) / ss) * sy
+                    c = back
+                    for k in range(len(shapes) - 1, -1, -1):
+                        if _in_poly(px, py, shapes[k][0]):
+                            c = cols[k]
+                            break
+                    acc[0] += c[0]
+                    acc[1] += c[1]
+                    acc[2] += c[2]
+            raw += bytes(round(v / (ss * ss)) for v in acc)
+
+    def chunk(t, d):
+        return struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xffffffff)
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0))
+            + chunk(b"IDAT", zlib.compress(bytes(raw), 9)) + chunk(b"IEND", b""))
+
 
 # Liens du tchat (envoyes par l'addon sous la forme \x02 code \x03 [Nom] \x04) :
 # couleurs comme dans le tchat officiel de WoW.
@@ -840,7 +1005,11 @@ _gt_lock = threading.Lock()
 _gt_last = [0.0]
 _gt_cache = {}
 _gt_pause = [0.0]          # apres un 429 : plus aucune requete jusqu'a cette heure (sinon Google prolonge le blocage)
-GT_PAUSE = 120             # secondes
+GT_PAUSE = 120             # secondes (1er blocage)
+# Pause qui s'allonge si Google rebloque peu apres (il "n'oublie" pas en 2 min) : 2, 5, 10, puis 20 min.
+# Une heure sans blocage : on repart a 2 min. Pendant la pause, les secours (Bing...) traduisent.
+GT_PAUSES = (120, 300, 600, 1200)
+_gt_level = [-1, 0.0]      # palier de pause actuel (-1 = aucun blocage recent), heure du dernier blocage
 
 
 # ---- Historique des services de traduction (services.txt) --------------------
@@ -859,7 +1028,7 @@ except Exception:  # noqa
 
 
 def svc_count(service):
-    """Un message traduit par ce service ("google", "lingva", "mymemory") ou "echec"."""
+    """Un message traduit par ce service ("google", "bing", "reverso", "yandex", "mymemory") ou "echec"."""
     day = time.strftime("%Y-%m-%d")
     with _svc_lock:
         d = _svc["days"].setdefault(day, {})
@@ -887,7 +1056,8 @@ def svc_save():
     try:
         with open(SERVICES_JSON, "w", encoding="utf-8") as f:
             json.dump(data, f)
-        names = (("google", "Google"), ("lingva", "Lingva"), ("mymemory", "MyMemory"), ("echec", "Echecs"))
+        names = (("google", "Google"), ("bing", "Bing"), ("reverso", "Reverso"), ("yandex", "Yandex"),
+                 ("mymemory", "MyMemory"), ("echec", "Echecs"))
         lines = ["WoW Traducteur %s - services de traduction utilises" % VERSION,
                  "(seulement des chiffres et des heures, jamais le texte des messages)", "",
                  "Messages traduits par jour :"]
@@ -948,9 +1118,17 @@ def _google(text, target, source="auto", timeout=8):
             _gt_cache[key] = (out, lang)
         return out, lang
     if getattr(last_err, "code", None) == 429:
-        _gt_pause[0] = time.time() + GT_PAUSE
-        svc_event("Google bloque (trop de demandes, erreur 429) : pause de %d min" % (GT_PAUSE // 60))
-        raise RuntimeError("Google limite les requetes (429), pause de %d s" % GT_PAUSE)
+        now = time.time()
+        lvl, last = _gt_level
+        if lvl < 0 or now - last > 3600:              # 1er blocage, ou une heure calme : 2 min
+            lvl = 0
+        elif now - _gt_pause[0] <= 900:               # rebloque moins de 15 min apres la fin de la pause
+            lvl = min(lvl + 1, len(GT_PAUSES) - 1)    # -> pause plus longue
+        pause = GT_PAUSES[lvl]
+        _gt_level[0], _gt_level[1] = lvl, now
+        _gt_pause[0] = now + pause
+        svc_event("Google bloque (trop de demandes, erreur 429) : pause de %d min" % (pause // 60))
+        raise RuntimeError("Google limite les requetes (429), pause de %d s" % pause)
     code = getattr(last_err, "code", None)
     raise RuntimeError("Google ne repond pas (%s)" % ("erreur %s" % code if code else
                                                       getattr(last_err, "reason", None) or last_err))
@@ -977,31 +1155,137 @@ def _mymemory(text, target, source, timeout=8):
     raise RuntimeError("MyMemory a refuse la requete (%s)" % status)
 
 
-# Lingva : serveurs publics gratuits, sans compte, qui interrogent Google a notre place
-# (ils passent donc meme quand Google bloque notre adresse). Serveurs de benevoles : ils tombent parfois.
-LINGVA_HOSTS = ["lingva.ml", "lingva.lunar.icu", "translate.plausibility.cloud"]
-_lingva_dead = {}          # serveur -> heure jusqu'a laquelle on ne l'essaie plus
+# Secours quand Google bloque (1.9.8, essai) : Bing, Reverso, Yandex, puis MyMemory.
+# Tous sans compte ni cle : on passe par l'acces qu'utilise leur propre site (comme pour Google).
+# Fragile : si un service change son site ou demande un captcha, il echoue et on l'oublie 10 min.
+# (Lingva retire : ses serveurs n'obtenaient plus rien de Google. Microsoft/Edge : ferme en 2026.)
+import http.cookiejar
+_MS_LANG = {"zh": "zh-Hans", "zh-cn": "zh-Hans", "zh-tw": "zh-Hant", "no": "nb", "iw": "he", "tl": "fil"}
+_bing = {"opener": None, "ig": "", "iid": "", "key": "", "token": "", "at": 0.0, "n": 0}
+_bing_lock = threading.Lock()
 
 
-def _lingva(text, target, source, timeout=4):
-    last = None
-    for host in LINGVA_HOSTS:
-        if _lingva_dead.get(host, 0) > time.time():
-            continue
-        url = "https://%s/api/v1/%s/%s/%s" % (host, source, target, urllib.parse.quote(text, safe=""))
+def _bing_setup(timeout):
+    cj = http.cookiejar.CookieJar()
+    op = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+    req = urllib.request.Request("https://www.bing.com/translator", headers={"User-Agent": _GT_UA,
+                                 "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8"})
+    with op.open(req, timeout=timeout) as r:
+        page = r.read().decode("utf-8", "replace")
+    ig = re.search(r'IG:"([^"]+)"', page)
+    iid = re.search(r'data-iid="([^"]+)"', page)
+    ab = re.search(r'params_AbusePreventionHelper\s*=\s*\[\s*(\d+)\s*,\s*"([^"]+)"', page)
+    if not (ig and ab):
+        raise RuntimeError("page Bing inattendue (captcha ?)")
+    _bing.update(opener=op, ig=ig.group(1), iid=(iid.group(1) if iid else "translator.5028"),
+                 key=ab.group(1), token=ab.group(2), at=time.time(), n=0)
+
+
+def _bing_translate(text, target, source, timeout=5):
+    """Bing Traduction (moteur Microsoft) -> (traduction, langue_detectee)."""
+    with _bing_lock:
+        if not _bing["opener"] or time.time() - _bing["at"] > 1500:      # codes du site : refaits toutes les 25 min
+            _bing_setup(timeout)
+        _bing["n"] += 1
+        url = "https://www.bing.com/ttranslatev3?isVertical=1&IG=%s&IID=%s.%d" % (_bing["ig"], _bing["iid"], _bing["n"])
+        data = urllib.parse.urlencode({
+            "fromLang": "auto-detect" if source in ("", "auto") else _MS_LANG.get(source, source),
+            "to": _MS_LANG.get(target, target), "text": text, "token": _bing["token"], "key": _bing["key"],
+        }).encode("utf-8")
+        req = urllib.request.Request(url, data=data, headers={
+            "User-Agent": _GT_UA, "Content-Type": "application/x-www-form-urlencoded",
+            "Referer": "https://www.bing.com/translator", "Origin": "https://www.bing.com"})
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": _GT_UA, "Accept": "application/json"})
+            with _bing["opener"].open(req, timeout=timeout) as r:
+                raw = r.read().decode("utf-8", "replace")
+        except Exception:
+            _bing["opener"] = None                   # on recharge la page la prochaine fois
+            raise
+    try:
+        data = json.loads(raw)
+    except ValueError:
+        _bing["opener"] = None
+        raise RuntimeError("reponse illisible (captcha ?)")
+    if isinstance(data, dict):                       # {"statusCode": 400...} : codes perimes
+        _bing["opener"] = None
+        raise RuntimeError("refus %s" % data.get("statusCode", "?"))
+    item = data[0] if data else {}
+    out = ((item.get("translations") or [{}])[0].get("text") or "").strip()
+    if not out:
+        raise RuntimeError("reponse vide")
+    det = (item.get("detectedLanguage") or {}).get("language") or (source if source != "auto" else "?")
+    return out, str(det).lower().split("-")[0]
+
+
+# Reverso : codes de langue a 3 lettres, et seulement ces langues-la
+_REV_LANG = {"en": "eng", "fr": "fra", "de": "ger", "es": "spa", "it": "ita", "pt": "por", "ru": "rus",
+             "pl": "pol", "nl": "dut", "sv": "swe", "tr": "tur", "uk": "ukr", "ro": "rum", "ar": "ara",
+             "he": "heb", "iw": "heb", "ja": "jpn", "ko": "kor", "zh": "chi", "zh-cn": "chi"}
+_REV_BACK = {v: k for k, v in _REV_LANG.items()}
+
+
+def _reverso(text, target, source, timeout=5):
+    to = _REV_LANG.get(target)
+    if not to:
+        raise RuntimeError("langue %s non geree" % target)
+    src = _REV_LANG.get(source) if source not in ("", "auto") else ("fra" if to == "eng" else "eng")
+    if not src:
+        raise RuntimeError("langue %s non geree" % source)
+    body = json.dumps({"format": "text", "from": src, "to": to, "input": text,
+                       "options": {"sentenceSplitter": True, "origin": "translation.web",
+                                   "contextResults": False, "languageDetection": True}}).encode("utf-8")
+    req = urllib.request.Request("https://api.reverso.net/translate/v1/translation", data=body, headers={
+        "User-Agent": _GT_UA, "Content-Type": "application/json", "Accept": "application/json",
+        "Origin": "https://www.reverso.net", "Referer": "https://www.reverso.net/"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        data = json.loads(r.read().decode("utf-8", "replace"))
+    out = " ".join(t for t in (data.get("translation") or []) if t).strip()
+    if not out:
+        raise RuntimeError("reponse vide")
+    det = ((data.get("languageDetection") or {}).get("detectedLanguage") or src)
+    return out, _REV_BACK.get(det, det[:2])
+
+
+_yandex = {"sid": "", "at": 0.0}
+_yandex_lock = threading.Lock()
+
+
+def _yandex_translate(text, target, source, timeout=5):
+    with _yandex_lock:
+        if not _yandex["sid"] or time.time() - _yandex["at"] > 1500:
+            req = urllib.request.Request("https://translate.yandex.com/", headers={"User-Agent": _GT_UA})
             with urllib.request.urlopen(req, timeout=timeout) as r:
-                data = json.loads(r.read().decode("utf-8"))
-            out = (data.get("translation") or "").strip()
-            if not out:
-                raise ValueError(data.get("error") or "reponse vide")
-            det = (data.get("info") or {}).get("detectedSource") or (source if source != "auto" else "?")
-            return out, str(det).lower().split("-")[0]
-        except Exception as e:  # noqa
-            last = e
-            _lingva_dead[host] = time.time() + 600      # serveur en panne : on l'oublie 10 min
-    raise RuntimeError("aucun serveur ne repond (%s)" % last if last else "serveurs en pause")
+                page = r.read().decode("utf-8", "replace")
+            m = re.search(r"SID:\s*'([^']+)'", page) or re.search(r'"SID"\s*:\s*"([^"]+)"', page)
+            if not m:
+                raise RuntimeError("page Yandex inattendue (captcha ?)")
+            _yandex["sid"] = ".".join(w[::-1] for w in m.group(1).split("."))
+            _yandex["at"] = time.time()
+        sid = _yandex["sid"]
+    lang = target if source in ("", "auto") else "%s-%s" % (source, target)
+    url = "https://translate.yandex.net/api/v1/tr.json/translate?" + urllib.parse.urlencode(
+        {"id": sid + "-0-0", "srv": "tr-text", "lang": lang, "reason": "auto", "format": "text"})
+    req = urllib.request.Request(url, data=urllib.parse.urlencode({"text": text, "options": "4"}).encode("utf-8"),
+                                 headers={"User-Agent": _GT_UA, "Content-Type": "application/x-www-form-urlencoded",
+                                          "Referer": "https://translate.yandex.com/"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            data = json.loads(r.read().decode("utf-8", "replace"))
+    except Exception:
+        _yandex["sid"] = ""
+        raise
+    if data.get("code") != 200:
+        _yandex["sid"] = ""
+        raise RuntimeError("refus %s" % data.get("code"))
+    out = " ".join(data.get("text") or []).strip()
+    if not out:
+        raise RuntimeError("reponse vide")
+    det = str(data.get("lang") or "").split("-")[0] or (source if source != "auto" else "?")
+    return out, det
+
+
+_BACKUPS = (("bing", "Bing", _bing_translate), ("reverso", "Reverso", _reverso), ("yandex", "Yandex", _yandex_translate))
+_backup_dead = {}      # service -> heure jusqu'a laquelle on ne l'essaie plus (10 min apres un echec)
 
 
 def _svc_reason(e):
@@ -1013,25 +1297,34 @@ def _svc_reason(e):
 
 
 def google_translate(text, target, source="auto", timeout=8):
-    """Google ; s'il bloque (429) ou ne repond pas : Lingva, puis MyMemory."""
+    """Google ; s'il bloque (429) ou ne repond pas : Bing, Reverso, Yandex, puis MyMemory."""
     try:
         return _google(text, target, source, timeout)
     except RuntimeError as e:
         paused = "en pause" in str(e) or "429" in str(e)    # Google bloque : deja note, pas un incident par message
-        try:
-            res = _lingva(text, target, source)
-            svc_count("lingva")
-            if not paused:
-                svc_event("%s -> traduit par Lingva" % _svc_reason(e))
-        except Exception as e1:  # noqa
+        res, fails = None, []
+        for key, name, fn in _BACKUPS:
+            if _backup_dead.get(key, 0) > time.time():
+                continue
+            try:
+                res = fn(text, target, source)
+                svc_count(key)
+                if not paused or fails:
+                    svc_event("%s%s -> traduit par %s" % (_svc_reason(e), "".join(fails), name))
+                break
+            except Exception as eb:  # noqa
+                _backup_dead[key] = time.time() + 600       # en panne / captcha : on l'oublie 10 min
+                fails.append(", %s echoue (%s)" % (name, str(eb)[:50]))
+        if res is None:
             try:
                 res = _mymemory(text, target, source, 5)
                 svc_count("mymemory")
-                svc_event("%s, Lingva aussi -> traduit par MyMemory" % _svc_reason(e))
+                if not paused or fails:
+                    svc_event("%s%s -> traduit par MyMemory" % (_svc_reason(e), "".join(fails)))
             except Exception as e2:  # noqa
                 svc_count("echec")
-                svc_event("ECHEC : Google, Lingva et MyMemory ne repondent pas (%s)" % _svc_reason(e))
-                raise RuntimeError("%s ; Lingva : %s ; MyMemory : %s" % (e, e1, e2))
+                svc_event("ECHEC : aucun service ne repond (%s%s)" % (_svc_reason(e), "".join(fails)))
+                raise RuntimeError("%s ; MyMemory : %s" % (e, e2))
         with _gt_lock:
             _gt_cache[(text, target, source)] = res
         return res
@@ -1142,9 +1435,13 @@ LEX_KEEP = {"tank": "tank", "tanks": "tanks", "heal": "heal", "heals": "heals",
             "proc": "proc", "procs": "procs",   # "procs" -> "procédures" sinon
             "hunt": "hunt", "hunts": "hunts",
             "craft": "craft", "crafts": "crafts", "crafted": "crafté", "crafting": "craft",   # "artisanat" sinon
-            "mob": "mob", "mobs": "mobs", "pull": "pull", "pulls": "pulls", "pulled": "pull"}   # chasseur, pas "chasse"   # "full for boss" -> "full pour le boss"
+            "mob": "mob", "mobs": "mobs", "pull": "pull", "pulls": "pulls", "pulled": "pull",
+            "rush": "rush", "rushes": "rushs"}   # "prison rush" : traversee rapide du donjon par un haut niveau   # chasseur, pas "chasse"   # "full for boss" -> "full pour le boss"
 # Classes que Google traduit mal ("rogue" -> "voyou", "warlock" -> "sorcier") : nom francais du jeu.
 LEX_CLASSES = {"rogue": "voleur", "rogues": "voleurs", "warlock": "démoniste", "warlocks": "démonistes"}
+# Enchantements et stats : nom francais du jeu ("Got FIERY WEP" restait en anglais, "+2 End" donnait "+2 Fin")
+LEX_ENCHANTS = {"fiery weapon": "Arme flamboyante", "fiery weapons": "Arme flamboyante", "crusader": "Croisé",
+                "stamina": "Endurance", "stam": "Endurance"}
 # "dm me" / "dm pls" = message prive, pas les Mortemines.
 _PLACE_NOT_BEFORE = {"dm": r"(?!\s*(?:me|him|her|them|u|you|pls|plz)\b)"}
 
@@ -1174,6 +1471,7 @@ def _protected(target):
         d.update(LEX_PLACES)
         d.update(LEX_KEEP)
         d.update(LEX_CLASSES)
+        d.update(LEX_ENCHANTS)
     return dict(sorted(d.items(), key=lambda kv: len(kv[0]), reverse=True))
 
 
@@ -1268,6 +1566,138 @@ def _out_key(w):
 
 _OUT_RE = re.compile(r"(?<![\w'])(" + "|".join(_loose(n) for n in sorted(list(OUT_PLACES) + OUT_JARGON, key=len, reverse=True))
                      + r")(?![\w'])", re.I)
+
+
+LANGUAGETOOL_URL = "https://api.languagetool.org/v2/check"
+
+# Fautes "au son" frequentes que le correcteur en ligne ne retrouve pas bien (mot trop loin du vrai).
+# Seulement des mots SANS ambiguite : "sa" -> "ca" n'y est pas ("sa quete" est juste).
+PHONETIC_FR = {
+    # mots de tous les jours
+    "ojourdui": "aujourd'hui", "ojourd'hui": "aujourd'hui", "aujourdui": "aujourd'hui", "ajourdui": "aujourd'hui",
+    "aujourdhui": "aujourd'hui", "aujourd hui": "aujourd'hui",
+    "kel": "quel", "kelle": "quelle", "kels": "quels", "kelles": "quelles", "ke": "que", "ki": "qui",
+    "koi": "quoi", "keske": "qu'est-ce que", "kesk": "qu'est-ce que", "kesque": "qu'est-ce que",
+    "kan": "quand", "koman": "comment", "coman": "comment", "coment": "comment", "pourkoi": "pourquoi",
+    "pourquoit": "pourquoi", "conbien": "combien", "kombien": "combien",
+    "quelqun": "quelqu'un", "kelkun": "quelqu'un", "quelquun": "quelqu'un", "quelquechose": "quelque chose",
+    "kelke chose": "quelque chose",
+    "jsui": "je suis", "jsuis": "je suis", "chui": "je suis", "chuis": "je suis", "jesui": "je suis",
+    "jvais": "je vais", "jveux": "je veux", "jpeux": "je peux", "jsais": "je sais",
+    "chépa": "je sais pas", "chepa": "je sais pas", "chaipa": "je sais pas", "chaipas": "je sais pas",
+    "bocou": "beaucoup", "boucou": "beaucoup", "bocoup": "beaucoup", "beaucou": "beaucoup", "beaucoups": "beaucoup",
+    "tanpi": "tant pis", "tempi": "tant pis", "sava": "\u00e7a va", "sa va": "\u00e7a va",
+    "sa vas": "\u00e7a va", "\u00e7a vas": "\u00e7a va", "ca vas": "\u00e7a va", "dormie": "dormi",
+    # "sa" devant un pronom ou "fait" ne peut pas etre "sa" (sa quete) : c'est "ca"
+    "sa me": "\u00e7a me", "sa te": "\u00e7a te", "sa nous": "\u00e7a nous", "sa vous": "\u00e7a vous",
+    "sa fait": "\u00e7a fait", "sai": "sais", "apel": "appelle", "apelle": "appelle", "apeler": "appeler",
+    # verbe apres "tu" / "je" : jamais "peu" (tu peux), "appel moi" -> "appelle-moi" (exemples reels)
+    "tu peu": "tu peux", "je peu": "je peux", "peuc": "peux", "des que": "d\u00e8s que",
+    "tu va": "tu vas", "pigpompe": "ping-pong", "pingpong": "ping-pong", "pinpong": "ping-pong",
+    "aux ping-pong": "au ping-pong", "aux ping pong": "au ping-pong",
+    "je les depuis": "je les ai depuis", "depuis de moi": "depuis un mois", "depuis de mois": "depuis un mois",
+    "apel mois": "appelle-moi", "apel moi": "appelle-moi", "apelle mois": "appelle-moi", "apelle moi": "appelle-moi",
+    "appel mois": "appelle-moi", "appel moi": "appelle-moi", "appelle mois": "appelle-moi", "appelle moi": "appelle-moi",
+    "mintenan": "maintenant", "maintenan": "maintenant", "maintenent": "maintenant", "mintenant": "maintenant",
+    "dacor": "d'accord", "dacord": "d'accord", "daccord": "d'accord",
+    "vraimen": "vraiment", "vrément": "vraiment", "vrèment": "vraiment",
+    "parske": "parce que", "parsk": "parce que", "parceque": "parce que", "pasque": "parce que",
+    "jamé": "jamais", "jamai": "jamais", "pluto": "plut\u00f4t", "toujour": "toujours", "toujoure": "toujours",
+    "peutetre": "peut-\u00eatre", "peut etre": "peut-\u00eatre", "petetre": "peut-\u00eatre",
+    "ossi": "aussi", "osi": "aussi", "oci": "aussi", "tro": "trop", "mieu": "mieux", "apré": "apr\u00e8s",
+    "deja": "d\u00e9j\u00e0", "déja": "d\u00e9j\u00e0", "labas": "l\u00e0-bas", "bientot": "bient\u00f4t",
+    "abientot": "\u00e0 bient\u00f4t", "orevoir": "au revoir", "aurevoir": "au revoir",
+    "toutalheure": "tout \u00e0 l'heure", "enfaite": "en fait", "enfète": "en fait", "malgrès": "malgr\u00e9",
+    "parmis": "parmi", "lontemps": "longtemps", "longtant": "longtemps", "bezoin": "besoin",
+    "escuse": "excuse", "mersi": "merci", "desole": "d\u00e9sol\u00e9",
+    # mots du jeu
+    "kete": "qu\u00eate", "kète": "qu\u00eate", "kête": "qu\u00eate", "ketes": "qu\u00eates",
+    "nivo": "niveau", "nivos": "niveaux", "armur": "armure", "donjont": "donjon",
+}
+# pas colle a une lettre, une apostrophe ou un tiret : "Ki-Ra" (un nom) reste tel quel
+_PHONETIC_RE = re.compile(r"(?<![\w'-])(" + "|".join(sorted(map(re.escape, PHONETIC_FR), key=len, reverse=True))
+                          + r")(?![\w'-])", re.I)
+
+
+def phonetic_fix(text, done=None):
+    """Remplace les fautes "au son" de la liste. -> (texte, nombre de remplacements).
+    `done` (liste) recoit les mots mis a la place, pour que le correcteur en ligne n'y touche plus."""
+    count = [0]
+
+    def sub(m):
+        count[0] += 1
+        new = PHONETIC_FR[m.group(1).lower()]
+        if done is not None:
+            done.append(new)
+        return new[:1].upper() + new[1:] if m.group(1)[:1].isupper() else new
+    text = _PHONETIC_RE.sub(sub, text)
+    return _PHONETIC_RE.sub(sub, text), count[0]     # 2e passage : "aux pigpompe" -> "aux ping-pong" -> "au ping-pong"
+
+
+# Regles du correcteur en ligne qu'on ignore : la majuscule en debut de phrase (dans un tchat, personne
+# n'en met, et ca n'aide pas a se faire comprendre).
+_LT_SKIP_RULES = ("UPPERCASE_SENTENCE_START",)
+
+
+def _wow_words():
+    """Mots a ne jamais "corriger" : noms des zones, villes et donjons (francais et anglais)."""
+    words = set()
+    # abreviations de tchat : tapees expres, ce ne sont pas des fautes
+    words.update(w.lower() for w in OUT_JARGON)
+    words.update(("lol", "mdr", "ptdr", "xd", "gg", "wp", "ty", "thx", "np", "ok", "omg", "jsp", "stp", "svp",
+                  "slt", "bcp", "tkt", "dsl", "cc", "bjr", "bsr", "pk", "pq", "mp", "inv", "grp", "pt", "lvl",
+                  "up", "rez", "buff", "loot", "quest", "afk", "brb", "re", "wb", "bg", "pvp", "pve", "hs"))
+    words.update(FR_SLANG)                 # argot francais (cv, tlm, mtn...) : "cv" devenait "cavé"
+    for src in (LEX_PLACES.keys(), LEX_PLACES.values(), OUT_PLACES.keys(), OUT_PLACES.values(), LEX_NAMES):
+        for v in src:
+            for w in re.split(r"[\s:()]+", str(v).lower()):
+                if len(w) > 2:
+                    words.add(w)
+    return words
+
+
+_WOW_WORDS = None
+
+
+def correct_text(text, lang="fr", timeout=8, keep=(), keep_phrases=()):
+    """Correction d'orthographe et de grammaire (LanguageTool, gratuit, sans compte ni cle).
+    Ne touche pas aux noms propres (mot avec une majuscule : Hurlevent, Ki-Ra), aux noms du jeu (meme
+    ecrits en minuscules) ni aux pseudos de `keep`. -> (texte corrige, nombre de corrections)."""
+    global _WOW_WORDS
+    if _WOW_WORDS is None:
+        _WOW_WORDS = _wow_words()
+    protect = _WOW_WORDS | {k.lower() for k in keep if k}
+    data = urllib.parse.urlencode({"text": text, "language": lang}).encode("utf-8")
+    req = urllib.request.Request(LANGUAGETOOL_URL, data=data, headers={"User-Agent": "WoW-Traducteur"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        res = json.loads(r.read().decode("utf-8"))
+    # passages deja corriges par la liste "au son" ("ça va") : on n'y touche plus ("ça va je" -> "cavé-je")
+    locked = []
+    for ph in set(p for p in keep_phrases if p):
+        locked += [(x.start(), x.end()) for x in re.finditer(r"(?<!\w)" + re.escape(ph) + r"(?!\w)", text, re.I)]
+    fixes = 0
+    for m in sorted(res.get("matches", []), key=lambda m: m["offset"], reverse=True):   # de la fin au debut
+        reps = m.get("replacements") or []
+        if not reps:
+            continue
+        rule = m.get("rule") or {}
+        if rule.get("id") in _LT_SKIP_RULES:
+            continue
+        a, n = m["offset"], m["length"]
+        orig, new = text[a:a + n], reps[0]["value"]
+        words = [w.lower() for w in re.findall(r"[\w'-]+", orig)]
+        if rule.get("issueType") == "misspelling":
+            if any(c.isupper() for c in orig):          # nom propre (Hurlevent, Ki-Ra, un pseudo) : on laisse
+                continue
+            if new[:1].isupper():                       # "sav" -> "Save" : proposition de nom propre, on laisse
+                continue
+        if any(w in protect for w in words):            # nom du jeu ou pseudo, meme en minuscules
+            continue
+        if any(a < e and a + n > b0 for b0, e in locked):   # chevauche un passage garde
+            continue
+        text = text[:a] + new + text[a + n:]
+        fixes += 1
+    return text, fixes
 
 
 def translate_out(text, target, source):
@@ -1496,6 +1926,7 @@ def locate_bridge(buf, width, height):
 
 # Couleur de classe des joueurs, envoyee par ChatFR ("say#C69B6D") : pseudo -> "#c69b6d"
 NAME_COLS = {}
+OWN_NAMES = set()      # tes propres pseudos (messages "Vous") : le correcteur ne les touche pas
 
 
 def parse_bridge_record(payload):
@@ -1612,6 +2043,22 @@ def wow_client_origin():
     if not u.ClientToScreen(hwnd, ctypes.byref(pt)) or pt.x < -10000:
         return None
     return pt.x, pt.y
+
+
+def wow_or_me_in_front():
+    """True si la fenetre au premier plan est WoW ou le traducteur (pour montrer le cache-bande)."""
+    try:
+        u = ctypes.windll.user32
+        fg = u.GetForegroundWindow()
+        if not fg:
+            return False
+        if fg == (u.FindWindowW("GxWindowClass", None) or u.FindWindowW(None, "World of Warcraft")):
+            return True
+        pid = wintypes.DWORD()
+        u.GetWindowThreadProcessId(fg, ctypes.byref(pid))
+        return pid.value == os.getpid()
+    except Exception:  # noqa
+        return True
 
 
 def wow_client_height():
@@ -1890,6 +2337,7 @@ LEX_EXPAND = {
     "pt": "group", "grp": "group",
     "any1": "anyone", "some1": "someone", "every1": "everyone",
     "mats": "materials", "mat": "material",
+    "lfw": "looking for work", "wep": "weapon", "weap": "weapon",   # "Enchanter in SW LFW. Got FIERY WEP."
     "los": "line of sight",          # seulement pour l'anglais (en espagnol, "los" = "les")
 }
 
@@ -1898,7 +2346,16 @@ LEX_EXPAND = {
 LEX_PHRASES = [
     (r"(?<![\w/])w/\s*(?=now\b|for inv)", "whisper "),     # "w/ now for inv" = chuchote-moi, pas "with"
     (r"\blfm(?:\s+for)?\b", "looking for more players for"),
+    # "last tank prison rush" en debut de message = il manque un dernier tank (Google : "derniere ruee...")
+    (r"(^|\]\s*)last\s+(tank|heal|healer|dps|spot)\b(?!\s+for\b)", r"\1need one last \2 for"),
+    # "prison rush" / "stocks run" = la Prison (le donjon), pas une prison : "rush of the stockade"
+    (r"\b(?:prison|stockades?|stocks)\s+(rush(?:es)?|runs?|boosts?)\b", r"\1 of the stockade"),
     (r"\blf(\d)m\b", r"looking for \1 more players"),
+    # "in IF" en fin de message = a Forgefer (Ironforge) : "lf enchanter ... in if" donnait "... si"
+    (r"\bin\s+if\b(?=\s*(?:$|[.!?,;:]|(?:pst|pm|w|whisper|plz|pls|please)\b))", "in Ironforge"),
+    # "End" = Endurance (stat) apres "+2" ou colle a "stam" : Google donnait "+2 Fin"
+    (r"(\+\s*\d+\s*)(?:end|stam|stamina)(?:\s*/\s*(?:end|stam|stamina))?\b", r"\1stamina"),
+    (r"\b(?:end|stam|stamina)\s*/\s*(?:end|stam|stamina)\b", "stamina"),
     (r"\b(?:whisp|wisp|whis|whisper|pst|pm|w/)\s+(?:me\s+)?for\s+(?:an?\s+)?(?:inv|invite|invites)\b",
      "whisper me for an invite"),
     (r"\bfor\s+inv\b", "for an invite"),
@@ -2152,6 +2609,11 @@ class App:
         self.root.title("WoW Traducteur")
         self.root.configure(bg=self.T["bg"])
         self.root.overrideredirect(True)      # pas de barre de titre Windows : on a la notre
+        # coins arrondis de la fenetre : cette couleur (jamais utilisee ailleurs) devient transparente
+        try:
+            self.root.wm_attributes("-transparentcolor", WIN_HOLE)
+        except tk.TclError:          # hors Windows : les coins restent presque noirs
+            pass
         geo = str(self.cfg.get("geometry", ""))
         # premier lancement : la fenetre se placera sur le tchat de WoW des que ChatFR en donne la place
         self.geo_auto, self.last_geo = not re.match(r"^\d+x\d+\+-?\d+\+-?\d+$", geo), None
@@ -2308,21 +2770,27 @@ class App:
                    activeforeground=T["btn_fg"], cursor="hand2", font=("Segoe UI", 9), highlightthickness=0)
         drag = [bar]
         if T["emblem"]:
-            cv = tk.Canvas(bar, width=18, height=21, bg=BAR, highlightthickness=0, bd=0)
-            draw_emblem(cv, T["emblem"])
-            cv.pack(side="left", padx=(6, 2), pady=3)
+            self._emblem_img = tk.PhotoImage(data=base64.b64encode(emblem_png(T["emblem"], BAR)).decode("ascii"),
+                                             format="png")
+            cv = tk.Label(bar, image=self._emblem_img, bg=BAR, bd=0, highlightthickness=0)
+            cv.pack(side="left", padx=(6, 2), pady=2)
             drag.append(cv)
         if T["label"]:
             lab = tk.Label(bar, text=T["label"], bg=BAR, fg=T["label_fg"], font=("Segoe UI", 9, "bold"))
             lab.pack(side="left", padx=(2, 2))
             drag.append(lab)
-        tk.Button(bar, text=_("\u2699 R\u00e9glages"), command=self.open_settings, **btn).pack(side="left", padx=(6, 3), pady=4)
+        setb = tk.Button(bar, text=_("\u2699 R\u00e9glages"), command=self.open_settings, **btn)
+        setb.pack(side="left", padx=(6, 3), pady=4)
         self._clear_btn = tk.Button(bar, text=_("Effacer"), command=self.clear, **btn)
         self._clear_btn.pack(side="left", padx=3, pady=4)
-        tk.Button(bar, text="?", command=self.open_help, **dict(btn, padx=7)).pack(side="left", padx=3, pady=4)
+        helpb = tk.Button(bar, text="?", command=self.open_help, **dict(btn, padx=7))
+        helpb.pack(side="left", padx=3, pady=4)
+        for b in (setb, self._clear_btn, helpb):        # boutons aux coins arrondis
+            self._round(b, 5, T["btn"], BAR)
         # bouton cache, affiche seulement si une nouvelle version existe sur GitHub
         self.update_btn = tk.Button(bar, text="", command=self.do_update,
                                     **dict(btn, bg=T["accent"], fg=T["accent_fg"], activebackground=T["accent_act"]))
+        self._round(self.update_btn, 5, T["accent"], BAR)
         closeb = tk.Button(bar, text="\u2715", command=self.on_close, bg=BAR, fg=T["icon"], relief="flat", bd=0,
                            padx=10, pady=2, activebackground="#c0392b", activeforeground="white",
                            cursor="hand2", font=("Segoe UI", 10), highlightthickness=0)
@@ -2339,8 +2807,35 @@ class App:
         self.draw_lock()
         self._minimized = False
         r.bind("<Map>", self._on_map)
-        stat = tk.Label(bar, textvariable=self.status, bg=BAR, fg=T["status"], anchor="e", font=("Segoe UI", 8))
+        # texte d'etat : raccourci quand la fenetre est etroite ("OK · 12 msg"), au lieu d'etre coupe au debut
+        stat = tk.Label(bar, text="", bg=BAR, fg=T["status"], anchor="e", font=("Segoe UI", 8), width=1)
         stat.pack(side="right", fill="x", expand=True, padx=6)
+        self._stat_lbl = stat
+
+        def fit_status(*a):
+            try:
+                full = self.status.get()
+                room = stat.winfo_width() - 4
+                f = tkfont.Font(font=stat.cget("font"))
+                txt = full
+                if room > 20 and f.measure(txt) > room:
+                    m = re.search(r"OK\D*?(\d+)", full)
+                    txt = ("OK \u00b7 %s msg" % m.group(1)) if m else full
+                    while len(txt) > 2 and f.measure(txt + "\u2026") > room:
+                        txt = txt[:-1]
+                    if txt != full and not txt.endswith("msg"):
+                        txt = txt.rstrip() + "\u2026"
+                stat.config(text=txt)
+            except tk.TclError:
+                pass
+        if getattr(self, "_stat_trace", None):
+            try:
+                self.status.trace_remove("write", self._stat_trace)
+            except tk.TclError:
+                pass
+        self._stat_trace = self.status.trace_add("write", fit_status)
+        stat.bind("<Configure>", fit_status)
+        fit_status()
         # glisser la barre pour deplacer la fenetre
         for w in drag + [stat]:
             w.bind("<ButtonPress-1>", self._drag_start)
@@ -2403,40 +2898,82 @@ class App:
         P = T["panel"]
         out = tk.Frame(r, bg=P)
         out.pack(side="bottom", fill="x", padx=8, pady=(0, 8), before=mid)
-        lf = tk.Frame(out, bg=P)
-        lf.grid(row=0, column=0, padx=4, pady=3)
+        # une seule barre (1.9.8) : [FR -> EN] [ta phrase] [x] | [ABC] [Traduire + copier], sur fond de case
+        E = T["entry"]
+        bar = tk.Frame(out, bg=E, highlightthickness=0)
+        bar.grid(row=0, column=0, sticky="ew", padx=4, pady=(4, 3))
+        out.columnconfigure(0, weight=1)
+        bar.columnconfigure(1, weight=1)
+        B = T["btn"]
+        lf = tk.Frame(bar, bg=B)
+        lf.grid(row=0, column=0, sticky="ns")
         # destinataire du chuchotement (clic sur un pseudo) : "A Nom (FR) ->" + croix pour annuler
-        self.reply_lbl = tk.Label(lf, text=_("Ecrire (%s) \u2192") % UI.upper(), bg=P, fg=T["fg"])
-        self.reply_lbl.pack(side="left")
-        self.reply_x = tk.Button(lf, text="\u2715", command=lambda: self.set_reply_to(None), bg=P, fg=T["muted"],
-                                 activebackground=P, activeforeground=T["fg"], relief="flat", bd=0,
+        self.reply_lbl = tk.Label(lf, text=("%s \u2192" % UI.upper()), bg=B, fg=T["name"],
+                                  font=("Segoe UI", 9, "bold"), padx=0)
+        self.reply_lbl.pack(side="left", padx=(8, 0))
+        self.reply_x = tk.Button(lf, text="\u2715", command=lambda: self.set_reply_to(None), bg=B, fg=T["muted"],
+                                 activebackground=B, activeforeground=T["fg"], relief="flat", bd=0,
                                  highlightthickness=0, padx=2, pady=0, cursor="hand2", font=("Segoe UI", 8))
         # width=1 : la case prend juste la place restante (avec sa largeur par defaut, dans une petite
         # fenetre, une partie passait sous les boutons et le curseur sortait de la partie visible)
-        self.out_entry = tk.Entry(out, bg=T["entry"], fg=T["fg"], insertbackground=T["fg"], relief="flat",
+        self.out_entry = tk.Entry(bar, bg=T["entry"], fg=T["fg"], insertbackground=T["fg"], relief="flat",
                                   highlightthickness=0, width=1)
-        self.out_entry.grid(row=0, column=1, sticky="ew", padx=(2, 0))
+        self.out_entry.grid(row=0, column=1, sticky="ew", padx=(8, 0), ipady=4)
+        # texte d'aide en gris DANS la case vide (pas du vrai texte : il n'est jamais traduit ni copie)
+        self.out_ph = tk.Label(self.out_entry, text=_("\u00c9cris ici en fran\u00e7ais\u2026"), bg=T["entry"],
+                               fg=T["muted"], anchor="w", padx=0, pady=0, bd=0, cursor="xterm")
+        self.out_ph.bind("<Button-1>", lambda e: (self.out_entry.focus_set(), self.take_keyboard()))
+        if not getattr(self, "_ph_loop", False):        # une seule boucle, meme si la fenetre est refaite
+            self._ph_loop = True
+            self.root.after(150, self._ph_update)
         # croix : efface vite le texte a traduire et le dernier resultat (touche Echap aussi)
-        tk.Button(out, text="\u2715", command=self.clear_out, bg=T["entry"], fg=T["err"],
+        xb = tk.Button(bar, text="\u2715", command=self.clear_out, bg=T["entry"], fg=T["muted"],
                   activebackground=T["btn_act"], activeforeground=T["err"], relief="flat", bd=0,
-                  highlightthickness=0, padx=6, pady=0, cursor="hand2",
-                  font=("Segoe UI", 10, "bold")).grid(row=0, column=2, sticky="ns", padx=(0, 2))
+                  highlightthickness=0, padx=2, pady=0, cursor="hand2",
+                  font=("Segoe UI", 8))
+        xb.grid(row=0, column=2, sticky="ns", padx=(0, 4))    # petite croix
+        self._add_hint(xb, _("\u2715 : efface ta phrase (touche \u00c9chap aussi)."))
         self.out_lang = tk.StringVar(value=self.cfg["out_lang"])
         # langue de reponse : bouton "EN ▴" qui ouvre une liste VERS LE HAUT (la fenetre est souvent en bas)
-        self.out_lang_btn = tk.Button(out, text="", command=self.open_lang_menu, bg=T["entry"], fg=T["fg"],
-                                      activebackground=T["btn_act"], activeforeground=T["fg"], relief="flat", bd=0,
-                                      highlightthickness=0, padx=6, cursor="hand2")
-        self.out_lang_btn.grid(row=0, column=3, padx=3, sticky="ns")
+        self.out_lang_btn = tk.Button(lf, text="", command=self.open_lang_menu, bg=B, fg=T["name"],
+                                      activebackground=T["btn_act"], activeforeground=T["name"], relief="flat", bd=0,
+                                      highlightthickness=0, padx=6, cursor="hand2", font=("Segoe UI", 9, "bold"))
+        self.out_lang_btn.pack(side="left", fill="y", padx=(2, 2))
+        self._add_hint(self.out_lang_btn, _("Langue dans laquelle ta phrase sera traduite (clique pour la changer)."))
+        # correcteur (orthographe / grammaire) : corrige le texte de la case, sans le traduire.
+        # Active par defaut seulement en francais (lexique de fautes teste en francais) ;
+        # en anglais, il faut l'activer soi-meme ("correcteur": true dans les reglages).
+        if self.cfg.get("correcteur", UI == "fr"):
+            # petit bouton "ABC✓" (symbole des correcteurs) : la case Ecrire garde presque toute sa place
+            tk.Frame(bar, bg=T["btn_act"], width=1).grid(row=0, column=3, sticky="ns")   # petit trait
+            cb = tk.Button(bar, text="\u2713 ABC", command=self.correct_out, bg=T["entry"], fg=T["fg"],
+                           activebackground=T["btn_act"], activeforeground=T["fg"], relief="flat", bd=0,
+                           highlightthickness=0, padx=8, cursor="hand2", font=("Segoe UI", 8, "bold"))
+            cb.grid(row=0, column=4, sticky="ns")
+            self._add_hint(cb, _("ABC (b\u00eata) : corrige et copie en fran\u00e7ais, SANS traduire. Correcteur en d\u00e9veloppement : relis avant d'envoyer."))
         self.out_lang.trace_add("write", lambda *a: self._show_lang())
         self._show_lang()
-        tk.Button(out, text=_("Traduire + copier"), command=self.send_out, bg=T["accent"], fg=T["accent_fg"],
-                  activebackground=T["accent_act"], activeforeground=T["accent_fg"],
-                  relief="flat", highlightthickness=0, bd=0, padx=8).grid(row=0, column=4, padx=3)
-        out.columnconfigure(1, weight=1)
+        tb = tk.Button(bar, text=_("Traduire + copier"), command=self.send_out, bg=T["accent"], fg=T["accent_fg"],
+                       activebackground=T["accent_act"], activeforeground=T["accent_fg"],
+                       relief="flat", highlightthickness=0, bd=0, padx=12, font=("Segoe UI", 9, "bold"))
+        tb.grid(row=0, column=5, sticky="ns")
+        # coins arrondis de la barre : 4 petites images posees par-dessus les coins (tkinter n'arrondit pas)
+        self._corner_imgs = []
+        for corner, inside, rx, ry in (("nw", B, 0, 0), ("sw", B, 0, 1),
+                                       ("ne", T["accent"], 1, 0), ("se", T["accent"], 1, 1)):
+            try:
+                img = tk.PhotoImage(data=base64.b64encode(corner_png(9, inside, P, corner)).decode("ascii"),
+                                    format="png")
+            except tk.TclError:
+                continue
+            self._corner_imgs.append(img)
+            tk.Label(bar, image=img, bd=0, padx=0, pady=0, highlightthickness=0).place(
+                relx=rx, rely=ry, anchor={"nw": "nw", "sw": "sw", "ne": "ne", "se": "se"}[corner])
+        self._add_hint(tb, _("Traduit ta phrase dans la langue choisie et copie la traduction."))
         self.out_result = tk.Label(out, text=_("Clique sur un message pour repondre dans sa langue."),
                                    bg=P, fg=T["muted"], anchor="w", justify="left", wraplength=520)
-        self.out_result.grid(row=1, column=0, columnspan=5, sticky="ew", padx=4, pady=(0, 3))
-        self.out_entry.bind("<Return>", lambda e: self.send_out())
+        self.out_result.grid(row=1, column=0, sticky="ew", padx=4, pady=(0, 3))
+        # Entree ne fait rien : on clique sur "Traduire + copier" ou "ABC" (par reflexe, ca traduisait sans le vouloir)
         self.out_entry.bind("<Button-1>", self.take_keyboard, add="+")
         self.out_entry.bind("<Escape>", lambda e: self.clear_out())
         self.out_entry.bind("<KeyRelease>", self._follow_cursor, add="+")
@@ -2447,7 +2984,8 @@ class App:
             grip.configure(cursor="size_nw_se")
         except tk.TclError:
             pass
-        grip.place(relx=1.0, rely=1.0, anchor="se")
+        grip.place(relx=1.0, rely=1.0, x=-3, y=-2, anchor="se")    # decale : laisse la place au coin arrondi
+        self._round_window()
         grip.bind("<ButtonPress-1>", self._resize_start)
         grip.bind("<B1-Motion>", self._resize_move)
         grip.bind("<ButtonRelease-1>", lambda e: self._save_geometry())
@@ -2558,6 +3096,13 @@ class App:
     def apply_theme(self, name):
         """Change de theme tout de suite : reconstruit la fenetre en gardant le tchat affiche."""
         self.T = THEMES.get(name, _SOMBRE)
+        cov = getattr(self, "_cover", None)          # cache-bande refait aux couleurs du nouveau theme
+        if cov is not None:
+            try:
+                cov.destroy()
+            except tk.TclError:
+                pass
+            self._cover, self._cover_shown = None, False
         dump = self.text.dump("1.0", "end-1c", text=True, tag=True)
         out_lang = self.out_lang.get()
         out_msg = self.out_result.cget("text")
@@ -2704,13 +3249,13 @@ class App:
         self.reply_to = name or None
         if self.reply_to:
             self.reply_lbl.config(text=_("\u00c0 %s (%s) \u2192") % (self.reply_to, UI.upper()), fg=self.T["name"])
-            self.reply_x.pack(side="left", padx=(3, 0))
+            self.reply_x.pack(side="left", padx=(3, 0), after=self.reply_lbl)
             if not quiet:
                 self.out_result.config(text=_("Chuchotement \u00e0 %s : ta reponse sera copiee avec /w %s")
                                        % (self.reply_to, self.reply_to), fg=self.T["muted"])
                 self.take_keyboard()
         else:
-            self.reply_lbl.config(text=_("Ecrire (%s) \u2192") % UI.upper(), fg=self.T["fg"])
+            self.reply_lbl.config(text=("%s \u2192" % UI.upper()), fg=self.T["name"])
             self.reply_x.pack_forget()
             if not quiet:
                 self.out_result.config(text=_("Reponse normale (sans /w)."), fg=self.T["muted"])
@@ -2938,6 +3483,7 @@ class App:
         P = T["panel"]
         w.configure(bg=P)
         w.attributes("-topmost", True)
+        self._color_titlebar(w)
         fields = [
             (_("Source (pont ou log)"), "source", 8),
             (_("Fichier de log (si source=log)"), "log_path", 52),
@@ -2951,44 +3497,82 @@ class App:
             tk.Label(w, text=lab, bg=P, fg=T["fg"]).grid(row=i, column=0, sticky="w", padx=6, pady=3)
             v = tk.StringVar(value=str(self.cfg[key]))
             vars_[key] = v
-            tk.Entry(w, textvariable=v, width=wd, bg=T["entry"], fg=T["fg"],
-                     insertbackground=T["fg"], relief="flat").grid(row=i, column=1, sticky="w", padx=6)
+            ent = tk.Entry(w, textvariable=v, width=wd, bg=T["entry"], fg=T["fg"],
+                           insertbackground=T["fg"], relief="flat", highlightthickness=0)
+            ent.grid(row=i, column=1, sticky="w", padx=6, pady=2, ipady=2)
+            self._round(ent, 4, T["entry"], P)
         bools = [(_("Son pour les alertes"), "sound"), (_("Toujours au premier plan"), "topmost"),
                  (_("Afficher aussi les messages deja dans ta langue"), "show_french"),
                  (_("Se fermer quand WoW se ferme"), "autoclose"),
                  (_("Se cacher quand WoW n'est pas la fenetre active"), "follow_wow"),
                  (_("Langue de reponse automatique (dernier message etranger)"), "reply_lang_auto"),
                  (_("Se cacher quand un menu du jeu s'ouvre (menu du tchat, clic droit)"), "hide_on_menu"),
-                 (_("Mises a jour automatiques (au lancement)"), "auto_update")]
+                 (_("Mises a jour automatiques (au lancement)"), "auto_update"),
+                 (_("Bouton \u2713 ABC (correcteur d'orthographe, b\u00eata)"), "correcteur"),
+                 (_("Cacher la bande de cases color\u00e9es (essai)"), "cover_band")]
         bv = {}
         row = len(fields)
         for lab, key in bools:
-            v = tk.BooleanVar(value=bool(self.cfg.get(key, DEFAULTS.get(key, True))))
+            dflt = (UI == "fr") if key == "correcteur" else DEFAULTS.get(key, True)   # correcteur : coche d'office en francais seulement
+            v = tk.BooleanVar(value=bool(self.cfg.get(key, dflt)))
             bv[key] = v
             tk.Checkbutton(w, text=lab, variable=v, bg=P, fg=T["fg"], selectcolor=T["entry"],
                            activebackground=P, activeforeground=T["fg"], highlightthickness=0).grid(
                 row=row, column=0, columnspan=2, sticky="w", padx=6)
             row += 1
+        # curseurs aux couleurs du theme (avant : gris de Windows)
+        st = ttk.Style()
+        st.configure("Theme.Horizontal.TScale", background=T["accent"], troughcolor=T["btn_act"],
+                     bordercolor=P, lightcolor=T["accent"], darkcolor=T["accent"], gripcount=0)
+        st.map("Theme.Horizontal.TScale", background=[("active", T["accent_act"])])
+
+        def slider(var, lo, hi, fmt, step):
+            """Curseur aux couleurs du theme + sa valeur a droite (arrondie au pas)."""
+            fr = tk.Frame(w, bg=P)
+            val = tk.Label(fr, bg=P, fg=T["fg"], width=5, anchor="w")
+
+            def show(*a):
+                x = round(float(var.get()) / step) * step
+                val.config(text=fmt % x)
+            sc = ttk.Scale(fr, from_=lo, to=hi, orient="horizontal", variable=var, length=200,
+                           style="Theme.Horizontal.TScale", command=show)
+            sc.pack(side="left", pady=4)
+            val.pack(side="left", padx=(8, 0))
+            show()
+            return fr
         av = tk.DoubleVar(value=float(self.cfg["alpha"]))
         tk.Label(w, text=_("Opacite"), bg=P, fg=T["fg"]).grid(row=row, column=0, sticky="w", padx=6)
-        tk.Scale(w, from_=0.3, to=1.0, resolution=0.05, orient="horizontal", variable=av, length=200,
-                 bg=P, fg=T["fg"], highlightthickness=0).grid(row=row, column=1, sticky="w")
+        slider(av, 0.3, 1.0, "%.2f", 0.05).grid(row=row, column=1, sticky="w", padx=6)
         row += 1
-        fv = tk.IntVar(value=int(self.cfg["font_size"]))
+        fv = tk.DoubleVar(value=int(self.cfg["font_size"]))
         tk.Label(w, text=_("Taille du texte"), bg=P, fg=T["fg"]).grid(row=row, column=0, sticky="w", padx=6)
-        tk.Scale(w, from_=8, to=20, orient="horizontal", variable=fv, length=200,
-                 bg=P, fg=T["fg"], highlightthickness=0).grid(row=row, column=1, sticky="w")
+        slider(fv, 8, 20, "%d", 1).grid(row=row, column=1, sticky="w", padx=6)
         row += 1
         tv = tk.StringVar(value=str(self.cfg.get("theme", "Sombre")) if self.cfg.get("theme") in THEMES else "Sombre")
         tk.Label(w, text=_("Theme"), bg=P, fg=T["fg"]).grid(row=row, column=0, sticky="w", padx=6, pady=3)
         theme_names = {_(k): k for k in THEMES}
         tshow = tk.StringVar(value=_(tv.get()))
         tshow.trace_add("write", lambda *a: tv.set(theme_names.get(tshow.get(), tv.get())))
+
+        def theme_now(*a):
+            """Theme applique des qu'on le choisit (avant : seulement apres "Enregistrer")."""
+            name = tv.get()
+            if name in THEMES and name != self.cfg.get("theme"):
+                self.cfg["theme"] = name
+                save_config(self.cfg)
+                self.apply_theme(name)
+                self._update_cover()
+                try:
+                    w.lift()                      # la fenetre Reglages reste devant
+                except tk.TclError:
+                    pass
+        tv.trace_add("write", theme_now)
         om = tk.OptionMenu(w, tshow, *theme_names.keys())
         om.configure(bg=T["entry"], fg=T["fg"], activebackground=T["btn_act"], activeforeground=T["fg"],
                      relief="flat", highlightthickness=0, bd=0)
         om["menu"].configure(bg=T["entry"], fg=T["fg"], activebackground=T["btn_act"], activeforeground=T["fg"])
         om.grid(row=row, column=1, sticky="w", padx=6)
+        self._round(om, 4, T["entry"], P)
         row += 1
         # langue de l'interface
         uv = tk.StringVar(value="English" if UI == "en" else "Fran\u00e7ais")
@@ -2998,23 +3582,25 @@ class App:
                      relief="flat", highlightthickness=0, bd=0)
         um["menu"].configure(bg=T["entry"], fg=T["fg"], activebackground=T["btn_act"], activeforeground=T["fg"])
         um.grid(row=row, column=1, sticky="w", padx=6)
+        self._round(um, 4, T["entry"], P)
         row += 1
 
         def ok():
             global UI
             new_ui = "en" if uv.get() == "English" else "fr"
             ui_changed = new_ui != UI
+            corr_changed = bool(bv["correcteur"].get()) != bool(self.cfg.get("correcteur", UI == "fr"))
             for k, v in vars_.items():
                 self.cfg[k] = v.get().strip()
             for k, v in bv.items():
                 self.cfg[k] = bool(v.get())
-            self.cfg["alpha"] = float(av.get())
-            self.cfg["font_size"] = int(fv.get())
+            self.cfg["alpha"] = round(round(float(av.get()) / 0.05) * 0.05, 2)
+            self.cfg["font_size"] = int(round(float(fv.get())))
             self.cfg["target"] = self.cfg["target"] or UI
             if ui_changed:
                 self.set_ui_lang(new_ui)
                 UI = new_ui
-            new_theme = tv.get() != self.cfg.get("theme", "Sombre") or ui_changed
+            new_theme = tv.get() != self.cfg.get("theme", "Sombre") or ui_changed or corr_changed   # refait la fenetre
             self.cfg["theme"] = tv.get()
             self.text.configure(font=("Segoe UI", self.cfg["font_size"]))
             self.text.tag_configure("name", font=("Segoe UI", self.cfg["font_size"], "bold"))
@@ -3028,21 +3614,27 @@ class App:
             w.destroy()
             if new_theme:
                 self.apply_theme(self.cfg["theme"])
+            self._update_cover()
 
         def on_chat():
             if self.place_on_chat():
                 place_lbl.config(text="")
             else:
                 place_lbl.config(text=_("Pas encore recu de ChatFR (1.9.4 ou plus) : reessaie dans 30 s."))
-        tk.Button(w, text=_("Placer sur le tchat de WoW"), command=on_chat, bg=T["entry"], fg=T["fg"],
-                  activebackground=T["entry"], activeforeground=T["fg"], relief="flat").grid(
-            row=row, column=0, sticky="w", padx=6, pady=(6, 0))
+        pb = tk.Button(w, text=_("Placer sur le tchat de WoW"), command=on_chat, bg=T["entry"], fg=T["fg"],
+                       activebackground=T["entry"], activeforeground=T["fg"], relief="flat", bd=0,
+                       highlightthickness=0, padx=10, pady=4, cursor="hand2")
+        pb.grid(row=row, column=0, sticky="w", padx=6, pady=(6, 0))
+        self._round(pb, 5, T["entry"], P)
         place_lbl = tk.Label(w, text="", bg=P, fg=T["muted"], wraplength=300, justify="left")
         place_lbl.grid(row=row, column=1, sticky="w", padx=6, pady=(6, 0))
         row += 1
-        tk.Button(w, text=_("Enregistrer"), command=ok, bg=T["accent"], fg=T["accent_fg"],
-                  activebackground=T["accent_act"], activeforeground=T["accent_fg"],
-                  relief="flat").grid(row=row, column=0, columnspan=2, pady=8)
+        sb_ = tk.Button(w, text=_("Enregistrer"), command=ok, bg=T["accent"], fg=T["accent_fg"],
+                        activebackground=T["accent_act"], activeforeground=T["accent_fg"],
+                        relief="flat", bd=0, highlightthickness=0, padx=16, pady=5, cursor="hand2",
+                        font=("Segoe UI", 9, "bold"))
+        sb_.grid(row=row, column=0, columnspan=2, pady=10)
+        self._round(sb_, 5, T["accent"], P)
 
     # ---- lecture du log (thread) ------------------------------------------
     def reader(self):
@@ -3105,6 +3697,7 @@ class App:
         if os.name != "nt":
             return
         off, last_seq, seen_first, bad, nmsg, last_status, stuck = None, None, False, 0, 0, 0.0, 0
+        band_rect = None          # place de la bande sur l'ecran (pour le cache-bande)
         while not self.stop:
             if str(self.cfg.get("source", "pont")).strip().lower() != "pont":
                 time.sleep(1)
@@ -3112,6 +3705,9 @@ class App:
             try:
                 org = wow_client_origin()
                 if org is None:
+                    if band_rect is not None:
+                        band_rect = None
+                        self.outq.put(("bandrect", None))
                     self.outq.put(("status", _("Pont image : fenetre WoW introuvable")))
                     off = None
                     time.sleep(1)
@@ -3138,6 +3734,24 @@ class App:
                 res = decode_bridge(buf, bw, ox - gx, oy - gy, p)
                 if res is None:
                     bad += 1
+                    if bad > 25 and getattr(self, "_cover_shown", False):
+                        # illisible juste apres la pose du cache-bande : Windows ne l'ignore pas a la capture
+                        since = time.time() - getattr(self, "_cover_since", 0)
+                        if since < 8 and not getattr(self, "_cover_ok", False):           # ce que la capture a vu (noir ? le rectangle ?) pour comprendre
+                            try:
+                                save_bmp(os.path.join(os.path.dirname(ERROR_LOG), "debug_cache_bande.bmp"),
+                                         buf, bw, bh)
+                                pct, avg = capture_stats(buf)
+                                log_error("cache-bande : capture illisible", "%d%% non noir, moyenne %s"
+                                          % (pct, avg), tb=False)
+                            except Exception:  # noqa
+                                pass
+                        # "fail" seulement si le rectangle n'a JAMAIS marche dans la session : un ecran de chargement
+                        # ou un /reload juste apres sa pose le desactivait a tort
+                        broken = since < 8 and not getattr(self, "_cover_ok", False)
+                        self.outq.put(("bandrect", "fail" if broken else None))
+                        self._cover_shown = False
+                        band_rect = None
                     if bad > 25:        # bande illisible, deplacee ou disparue : on la recherche (et on remesure les cases)
                         off, bad = None, 0
                         stuck += 1
@@ -3147,6 +3761,14 @@ class App:
                     continue
                 stuck = 0
                 bad = 0
+                if getattr(self, "_cover_shown", False) and time.time() - getattr(self, "_cover_since", 0) > 2:
+                    self._cover_ok = True       # lu a travers le rectangle : Windows le gere bien
+                rect = (int(round(x + ox)), int(round(y + oy)), int(round(B_COLS * p)), int(round(B_ROWS * p)))
+                # le rectangle reste meme quand un autre programme passe devant WoW ;
+                # il ne part que si WoW est reduit ou ferme
+                if rect != band_rect:
+                    band_rect = rect
+                    self.outq.put(("bandrect", rect))
                 seq, payload = res
                 if seq != last_seq:
                     last_seq = seq
@@ -3246,6 +3868,8 @@ class App:
             return
         me = cfg["my_name"].strip().lower()
         mine = me_mark or (bool(me) and author.lower() == me)
+        if mine and author:
+            OWN_NAMES.add(author)
         low = text.lower()
         alert = False
         if not mine:
@@ -3304,8 +3928,17 @@ class App:
                 src_text = ru_slang(gtext)
                 if cfg["target"].lower() != "fr":
                     src_text = fr_slang(src_text)      # argot francais ("pex", "slt", "tlm") avant Google
-                trans, lang = google_translate(fr_mix_fix(src_text), cfg["target"])
-                if lang == "en" and cfg["target"].lower() == "fr":
+                if cfg["target"].lower() == "fr" and sure_english(judge):
+                    # clairement anglais : abreviations developpees et noms proteges DES la 1re demande
+                    # (avant : une demande pour apprendre "c'est de l'anglais", puis une 2e : 2x plus de 429)
+                    trans, _x = google_translate_safe(lexicon_expand(gtext), cfg["target"], source="en")
+                    lang, one_call = "en", True
+                else:
+                    trans, lang = google_translate(fr_mix_fix(src_text), cfg["target"])
+                    one_call = False
+                if one_call:
+                    pass                               # deja traduit proprement en une seule demande
+                elif lang == "en" and cfg["target"].lower() == "fr":
                     exp = lexicon_expand(gtext)
                     if exp != gtext or has_protected_name(gtext, cfg["target"]):
                         # abreviations / noms propres : on retraduit la phrase developpee
@@ -3447,8 +4080,12 @@ class App:
             self.show_out(*item[1:])
         elif item[0] == "geo":
             self.on_geo(*item[1:])
+        elif item[0] == "bandrect":
+            self.on_bandrect(item[1])
         elif item[0] == "wowmenu":
             self.on_wow_menu(item[1])
+        elif item[0] == "corrected":
+            self.on_corrected(*item[1:])
         elif item[0] == "chatfr_ver":
             self.on_chatfr_ver(item[1])
         elif item[0] == "tip":
@@ -3585,6 +4222,47 @@ class App:
         self.out_result.config(text="", fg=self.T["muted"])
         self.out_entry.focus_set()
 
+    def correct_out(self):
+        """Bouton "Corriger" : remplace le texte de la case par sa version corrigee (pas de traduction)."""
+        txt = self.out_entry.get().strip()
+        if not txt:
+            return
+        self.out_result.config(text=_("Correction en cours..."), fg=self.T["muted"])
+
+        def run():
+            done = []
+            base, n0 = phonetic_fix(txt, done) if UI == "fr" else (txt, 0)   # 1) fautes "au son" de la liste
+            try:
+                keep = list(NAME_COLS) + [getattr(self, "reply_to", None) or ""]  # pseudos vus dans le tchat
+                keep += list(OWN_NAMES) + [self.cfg.get("my_name", "").strip()]        # + ton propre pseudo
+                fixed, n = correct_text(base, UI, keep=keep, keep_phrases=done)   # 2) correcteur en ligne
+                self.outq.put(("corrected", txt, fixed, n0 + n, True))
+            except Exception:  # noqa
+                self.outq.put(("corrected", txt, base if n0 else None, n0, False))
+        threading.Thread(target=run, daemon=True).start()
+
+    def on_corrected(self, before, fixed, n, online=True):
+        if fixed is None:
+            self.out_result.config(text=_("Correcteur indisponible pour le moment."), fg=self.T["err"])
+            return
+        if self.out_entry.get().strip() != before:      # on a retape entre-temps : on ne touche a rien
+            return
+        self.out_entry.delete(0, "end")
+        self.out_entry.insert(0, fixed)
+        # la phrase corrigee est aussi copiee : pour un joueur francais, il n'y a plus qu'a coller.
+        # (pour un etranger, "Traduire + copier" remplacera ensuite la copie par la traduction)
+        to = getattr(self, "reply_to", None)
+        self.root.clipboard_clear()
+        self.root.clipboard_append("/w %s %s" % (to, fixed) if to else fixed)
+        self.root.update()
+        if not online:
+            msg = _("\u2713 %d correction(s) de base (correcteur en ligne indisponible). Copi\u00e9 en fran\u00e7ais, sans traduction") % n
+        elif n:
+            msg = _("\u2713 %d correction(s). Copi\u00e9 en fran\u00e7ais, sans traduction (Ctrl+V dans WoW)") % n
+        else:
+            msg = _("\u2713 Aucune faute. Copi\u00e9 en fran\u00e7ais, sans traduction (Ctrl+V dans WoW)")
+        self.out_result.config(text=msg, fg=self.T["ok"])
+
     def send_out(self):
         txt = self.out_entry.get().strip()
         lang = (self.out_lang.get() or "en").strip().lower()
@@ -3603,20 +4281,25 @@ class App:
                     res = ("Hi" if txt.strip()[:1].isupper() else "hi") + m.group(1)
                     self.outq.put(("out", txt, res, lang, None))
                     return
+                # argot francais remis en mots normaux avant Google ("slt" donnait "pls", "lu" donnait "read")
+                src = txt
+                if UI == "fr" and not sure_english(txt):
+                    m = re.fullmatch(r"(?i)\s*lu+\s*([!.?]*)\s*", txt)   # "lu" seul = salut (pas dans "j'ai lu")
+                    src = ("salut" + m.group(1)) if m else fr_slang(txt)
                 # tu ecris en francais : on le dit a Google (sinon "bonjour" seul est pris pour de l'anglais).
                 # Mais une phrase clairement dans une autre langue (allemand recopie...) : detection auto,
                 # sinon Google la lit comme du francais et invente une traduction.
                 res = None
-                native = looks_french(txt) if UI == "fr" else sure_english(txt)
-                if not native and len(re.findall(r"\w+", txt)) >= 3:
+                native = looks_french(src) if UI == "fr" else sure_english(src)
+                if not native and len(re.findall(r"\w+", src)) >= 3:
                     try:
-                        r2, det = google_translate(txt, lang)
+                        r2, det = google_translate(src, lang)
                         if (det or "").lower().split("-")[0] not in ("", "?", UI):
                             res = r2
                     except Exception:  # noqa
                         res = None
                 if res is None:
-                    res, _x = translate_out(txt, lang, UI)
+                    res, _x = translate_out(src, lang, UI)
                 check = None
                 if res.strip().lower() == txt.strip().lower():
                     res, _x = google_translate(txt, lang)   # pas dans ta langue finalement : detection auto
@@ -3678,6 +4361,171 @@ class App:
                 self.root.deiconify()
                 self.apply_window_cfg()
 
+    def _corner_img(self, *args, **kw):
+        cache = self.__dict__.setdefault("_corner_cache", {})
+        key = (args, tuple(sorted(kw.items())))
+        if key not in cache:
+            cache[key] = tk.PhotoImage(data=base64.b64encode(corner_png(*args, **kw)).decode("ascii"),
+                                       format="png")
+        return cache[key]
+
+    def _round(self, w, r, inside, outside):
+        """Arrondit les 4 coins d'un bouton : 4 petites images posees dans ses coins (tkinter n'arrondit pas)."""
+        for c in ("nw", "ne", "sw", "se"):
+            try:
+                img = self._corner_img(r, inside, outside, c)
+            except tk.TclError:
+                return
+            # image posee PAR-DESSUS le bouton (a cote de lui, pas dedans) : sous Windows, un vrai bouton
+            # se dessine au-dessus de ce qu'il contient, les coins mis dedans restaient invisibles
+            lab = tk.Label(w.master, image=img, bd=0, padx=0, pady=0, highlightthickness=0, cursor="hand2")
+            lab.place(in_=w, relx=1 if c[1] == "e" else 0, rely=1 if c[0] == "s" else 0, anchor=c)
+            lab.lift(w)
+            if isinstance(w, tk.Button):
+                lab.bind("<ButtonRelease-1>", lambda e, b=w: b.invoke())
+
+    # ---- cache-bande : rectangle par-dessus la bande de cases colorees ---------
+    def on_bandrect(self, rect):
+        if rect == "fail":
+            self._cover_broken = True
+            self._band_rect = None
+            self._update_cover()
+            try:
+                self.out_result.config(text=_("Cache-bande d\u00e9sactiv\u00e9 : Windows ne permet pas de le cacher \u00e0 la capture (Windows trop ancien ?)."),
+                                       fg=self.T["muted"])
+            except tk.TclError:
+                pass
+            return
+        self._band_rect = rect
+        self._update_cover()
+
+    def _update_cover(self):
+        """Pose, deplace ou retire le rectangle. Il est invisible pour la capture d'ecran
+        (SetWindowDisplayAffinity, Windows 10 2004+) : le traducteur lit la bande a travers."""
+        cov = getattr(self, "_cover", None)
+        rect = getattr(self, "_band_rect", None)
+        want = (os.name == "nt" and rect and self.cfg.get("cover_band", False)
+                and not getattr(self, "_cover_broken", False))
+        if not want:
+            if cov is not None:
+                try:
+                    cov.withdraw()
+                except tk.TclError:
+                    pass
+            self._cover_shown = False
+            return
+        x, y, w, h = rect
+        if cov is None or not cov.winfo_exists():
+            T = self.T
+            cov = tk.Toplevel(self.root)
+            cov.overrideredirect(True)
+            cov.configure(bg=T["bar"], highlightthickness=0)
+            # dessin : rectangle aux coins arrondis + "ChatFR" (refait quand la taille change)
+            cv = tk.Canvas(cov, bg=T["bar"], highlightthickness=0, bd=0)
+            cv.pack(fill="both", expand=True)
+            cov._cv = cv
+            cov.attributes("-topmost", True)
+            cov.geometry("%dx%d+%d+%d" % (w + 4, h + 4, x - 2, y - 2))
+            cov.update_idletasks()
+            ok = False
+            try:
+                u = ctypes.windll.user32
+                u.GetParent.restype, u.GetParent.argtypes = ctypes.c_void_p, [ctypes.c_void_p]
+                hwnd = u.GetParent(cov.winfo_id()) or cov.winfo_id()
+                get = getattr(u, "GetWindowLongPtrW", None) or u.GetWindowLongW
+                put = getattr(u, "SetWindowLongPtrW", None) or u.SetWindowLongW
+                get.restype, get.argtypes = ctypes.c_ssize_t, [ctypes.c_void_p, ctypes.c_int]
+                put.restype, put.argtypes = ctypes.c_ssize_t, [ctypes.c_void_p, ctypes.c_int, ctypes.c_ssize_t]
+                # jamais le clavier, pas de bouton dans la barre des taches.
+                # (2e essai : plus de fenetre "en couches" / clics au travers, qui peuvent empecher Windows
+                # de la retirer de la capture)
+                put(hwnd, -20, get(hwnd, -20) | 0x08000000 | 0x80)
+                u.SetWindowDisplayAffinity.argtypes = [ctypes.c_void_p, ctypes.c_uint]
+                ok = bool(u.SetWindowDisplayAffinity(hwnd, 0x11))      # WDA_EXCLUDEFROMCAPTURE
+                cov._hwnd = hwnd
+            except Exception:  # noqa
+                ok = False
+            if not ok:                      # Windows trop ancien : on n'insiste pas
+                cov.destroy()
+                self._cover, self._cover_broken, self._cover_shown = None, True, False
+                return
+            self._cover = cov
+        else:
+            cov.geometry("%dx%d+%d+%d" % (w + 4, h + 4, x - 2, y - 2))
+        self._draw_cover(cov, w + 4, h + 4)
+        if not getattr(self, "_cover_shown", False):
+            cov.deiconify()
+            cov.lift()
+            self._cover_since = time.time()
+            self._cover_shown = True
+
+    def _draw_cover(self, cov, W, H):
+        """Coins arrondis du cache-bande : forme de la fenetre arrondie (SetWindowRgn, pas une fenetre
+        "en couches" qui empecherait de la cacher a la capture) + liseré dessine le long de l'arrondi."""
+        if getattr(cov, "_drawn", None) == (W, H):
+            return
+        cov._drawn = (W, H)
+        T, r = self.T, 10
+        cv = cov._cv
+        cv.delete("all")
+        pts = []                       # contour : 4 quarts de cercle de rayon r, reperes par leurs centres
+        for cx, cy, a0 in ((W - 1 - r, r, -90), (W - 1 - r, H - 1 - r, 0), (r, H - 1 - r, 90), (r, r, 180)):
+            for k in range(7):
+                a = math.radians(a0 + k * 15)
+                pts += [cx + (r - 0.5) * math.cos(a), cy + (r - 0.5) * math.sin(a)]
+        cv.create_polygon(pts, fill=T["bar"], outline=T["border"], width=1)
+        cv.create_text(W // 2, H // 2, text="ChatFR", fill=T["status"], font=("Segoe UI", 8))
+        try:
+            g, u = ctypes.windll.gdi32, ctypes.windll.user32
+            g.CreateRoundRectRgn.restype = ctypes.c_void_p
+            rgn = g.CreateRoundRectRgn(0, 0, W + 1, H + 1, 2 * r, 2 * r)
+            u.SetWindowRgn.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
+            u.SetWindowRgn(cov._hwnd, rgn, 1)          # Windows garde la forme (pas a liberer)
+        except Exception:  # noqa
+            pass
+
+    def _color_titlebar(self, win):
+        """Barre de titre Windows aux couleurs du theme (Windows 11 ; ailleurs, rien ne change)."""
+        if not sys.platform.startswith("win"):
+            return
+        try:
+            win.update_idletasks()
+            hwnd = ctypes.windll.user32.GetParent(win.winfo_id())
+            dwm = ctypes.windll.dwmapi
+            def bgr(h):
+                h = h.lstrip("#")
+                return int(h[4:6] + h[2:4] + h[0:2], 16)
+            light = sum(int(self.T["bar"].lstrip("#")[i:i + 2], 16) for i in (0, 2, 4)) > 384
+            dark = ctypes.c_int(0 if light else 1)
+            dwm.DwmSetWindowAttribute(hwnd, 20, ctypes.byref(dark), ctypes.sizeof(dark))   # mode sombre
+            for attr, col in ((35, self.T["bar"]), (36, self.T["fg"]), (34, self.T["border"])):
+                c = ctypes.c_uint(bgr(col))                  # 35 fond, 36 texte, 34 bordure
+                dwm.DwmSetWindowAttribute(hwnd, attr, ctypes.byref(c), ctypes.sizeof(c))
+        except Exception:  # noqa  (Windows 10 ou plus ancien : barre normale)
+            pass
+
+    def _round_window(self):
+        """Coins arrondis de la fenetre (cadre compris). Bas : couleur du fond, ou de la barre si repliee."""
+        T = self.T
+        bw = int(T["border_w"])
+        rolled = bool(getattr(self, "_rolled", None))
+        for lab in getattr(self, "_win_corners", []):
+            try:
+                lab.destroy()
+            except tk.TclError:
+                pass
+        self._win_corners = []
+        for c in ("nw", "ne", "sw", "se"):
+            inside = T["bar"] if (c[0] == "n" or rolled) else T["bg"]
+            try:
+                img = self._corner_img(10, inside, WIN_HOLE, c, ring=T["border"], ring_w=bw, hard_out=True)
+            except tk.TclError:
+                return
+            lab = tk.Label(self.root, image=img, bd=0, padx=0, pady=0, highlightthickness=0)
+            lab.place(relx=1 if c[1] == "e" else 0, rely=1 if c[0] == "s" else 0,
+                      x=bw if c[1] == "e" else -bw, y=bw if c[0] == "s" else -bw, anchor=c)
+            self._win_corners.append(lab)
+
     def minimize(self):
         """Bouton "—" : replie la fenetre sur sa seule barre du haut ; un 2e clic la deplie.
         (Avant : reduction dans la barre des taches. Mais une fenetre qui ne prend pas le clavier a WoW
@@ -3687,6 +4535,7 @@ class App:
             self.root.minsize(MIN_W, MIN_H)
             self.root.geometry(geo)
             self._minb.config(text="\u2014")
+            self._round_window()
             self._save_geometry()
             return
         self._save_geometry()
@@ -3697,6 +4546,7 @@ class App:
         self.root.minsize(MIN_W, 1)
         self.root.geometry("%dx%d" % (self.root.winfo_width(), max(h, 20)))
         self._minb.config(text="\u25a2")
+        self._round_window()
 
     def _on_map(self, e):
         # remettre le cadre Windows fait reapparaitre la fenetre un instant, juste avant la reduction :
@@ -3815,6 +4665,36 @@ class App:
     def _force_save_geometry(self, geo):
         self.cfg["geometry"] = geo
         save_config(self.cfg)
+
+    def _add_hint(self, widget, text):
+        """Au survol d'un bouton : explication sur la ligne d'info (une ligne), puis on remet l'ancien message."""
+        def on(_e):
+            self._hint_prev = (self.out_result.cget("text"), self.out_result.cget("fg"))
+            self.out_result.config(text=text, fg=self.T["muted"])
+
+        def off(_e):
+            try:                                     # vraiment sortie ? (evite un clignotement si la fenetre bouge)
+                if self.root.winfo_containing(*self.root.winfo_pointerxy()) is widget:
+                    return
+            except Exception:  # noqa
+                pass
+            prev = getattr(self, "_hint_prev", None)
+            if prev and self.out_result.cget("text") == text:
+                self.out_result.config(text=prev[0], fg=prev[1])
+        widget.bind("<Enter>", on, add="+")
+        widget.bind("<Leave>", off, add="+")
+
+    def _ph_update(self):
+        """Affiche le texte d'aide gris quand la case "Ecrire" est vide et qu'on n'y ecrit pas."""
+        try:
+            show = not self.out_entry.get() and self.root.focus_get() is not self.out_entry
+            if show and not self.out_ph.winfo_ismapped():
+                self.out_ph.place(x=2, rely=0.5, anchor="w")
+            elif not show and self.out_ph.winfo_ismapped():
+                self.out_ph.place_forget()
+        except Exception:  # noqa  (fenetre refaite : nouvelle case, on continue)
+            pass
+        self.root.after(150, self._ph_update)
 
     def _svc_tick(self):
         threading.Thread(target=svc_save, daemon=True).start()
