@@ -42,7 +42,7 @@ try:
 except ImportError:  # pas sous Windows
     winsound = None
 
-VERSION = "1.9.8"
+VERSION = "1.9.9"
 # Verification de mise a jour : le fichier version.txt du depot contient le numero de la derniere version.
 VERSION_URL = "https://raw.githubusercontent.com/puenteur/Wow-traducteur/main/version.txt"
 KOFI_URL = "https://ko-fi.com/puenteur"
@@ -61,7 +61,8 @@ enchanting engineering cooking fishing mining herbalism skinning jewelcrafting i
 # Nouveautes affichees une fois dans la fenetre apres une mise a jour (pas au premier lancement).
 NEWS = {
     "fr": ["WoW Traducteur %s" % VERSION,
-           "- Nouveau en %s : bouton \u2713 ABC pour corriger ton orthographe avant d'envoyer (en b\u00eata) ; barre d'\u00e9criture sur une ligne, fen\u00eatre et boutons aux coins arrondis, R\u00e9glages relook\u00e9s ; 7 th\u00e8mes retravaill\u00e9s et nouveaux embl\u00e8mes Alliance et Horde, le th\u00e8me change d\u00e8s qu'on le choisit ; option pour cacher la bande de cases color\u00e9es (R\u00e9glages, essai) ; quand Google bloque, Bing prend le relais et Google se repose plus longtemps ; moins de demandes \u00e0 Google ; \u00ab slt \u00bb, \u00ab lu \u00bb, \u00ab tlm \u00bb... bien traduits dans tes r\u00e9ponses ; la touche Entr\u00e9e ne traduit plus par accident ; meilleures traductions (La Prison, LFW, Arme flamboyante, Crois\u00e9, +2 Endurance, in IF = Forgefer). Mets aussi ChatFR \u00e0 jour." % VERSION,
+           "- Nouveau en %s : correctif. La barre d'\u00e9criture ne se d\u00e9forme plus quand la souris passe dessus (fen\u00eatre aux coins arrondis faite autrement) ; boutons qui s'\u00e9claircissent au survol ; la barre ne saute plus quand l'aide s'affiche ; rectangle cache-bande carr\u00e9 (l'arrondi g\u00eanait la lecture de la bande) ; \u00ab ops \u00bb traduit par \u00ab oups \u00bb." % VERSION,
+           "- 1.9.8 : bouton \u2713 ABC pour corriger ton orthographe avant d'envoyer (en b\u00eata) ; barre d'\u00e9criture sur une ligne, fen\u00eatre et boutons aux coins arrondis, R\u00e9glages relook\u00e9s ; 7 th\u00e8mes retravaill\u00e9s et nouveaux embl\u00e8mes Alliance et Horde, le th\u00e8me change d\u00e8s qu'on le choisit ; option pour cacher la bande de cases color\u00e9es (R\u00e9glages, essai) ; quand Google bloque, Bing prend le relais et Google se repose plus longtemps ; moins de demandes \u00e0 Google ; \u00ab slt \u00bb, \u00ab lu \u00bb, \u00ab tlm \u00bb... bien traduits dans tes r\u00e9ponses ; la touche Entr\u00e9e ne traduit plus par accident ; meilleures traductions (La Prison, LFW, Arme flamboyante, Crois\u00e9, +2 Endurance, in IF = Forgefer).",
            "- 1.9.7 : si Google tombe en panne, les traducteurs de secours prennent maintenant toujours le relais ; prix des fiches d'objets avec les pi\u00e8ces, comme dans le jeu ; pings \u00ab Menace \u00bb et \u00ab Par ici \u00bb avec leur losange ; un fichier services.txt (dossier des r\u00e9glages) note quel service a traduit les messages et les pannes, sans jamais le texte des messages.",
            "- 1.9.6 : correction importante, le traducteur ne s'arr\u00eate plus d'afficher les messages apr\u00e8s une annonce de qu\u00eate de Questie ; s'il plante sur un message, il continue avec les suivants et note l'erreur dans erreurs.txt ; noms des joueurs \u00e0 la couleur de leur classe, comme dans le jeu (ton pseudo en gras) ; \u00e9motes en orange, exp\u00e9rience en bleu, changements de r\u00f4le en groupe ; la fen\u00eatre se cache quand la carte est ouverte en grand ; avertissement si ChatFR et le traducteur n'ont pas la m\u00eame version ; liens de qu\u00eate Questie nettoy\u00e9s ; \u00ab salty \u00bb traduit par \u00ab vex\u00e9 \u00bb.",
            "- 1.9.5 : le traducteur se met \u00e0 jour tout seul au lancement (avec un compte \u00e0 rebours) ; s'il manque Python, \u00ab Lancer le traducteur.bat \u00bb propose de l'installer ; symboles des pings Menace et Par ici ; marques de raid reconnues dans toutes les langues du jeu ; annonces de Questie non traduites ; la fen\u00eatre ne redescend plus quand tu lis plus haut ; case \u00ab \u00c9crire \u00bb corrig\u00e9e dans une petite fen\u00eatre ; meilleures traductions (La Prison, \u00c9olide, Comt\u00e9-du-Nord, chevalet de tannage, BS / LW + niveau, q = qu\u00eate, yo, dr, dobro do\u0161li). Mets aussi ChatFR \u00e0 jour.",
@@ -74,7 +75,8 @@ NEWS = {
            "- Fen\u00eatre des nouveaut\u00e9s apr\u00e8s chaque mise \u00e0 jour (celle-ci !).",
            "- Meilleures traductions : lfg/lfm, wts/wtb, Deadmines, jargon russe (\u041b\u0424\u0413), mots coll\u00e9s aux liens, petits messages en espagnol ou en letton, moins d'appels inutiles \u00e0 Google."],
     "en": ["WoW Traducteur %s" % VERSION,
-           "- New in %s: \u2713 ABC button to fix your French spelling before sending (beta); write bar on one line, rounded window and buttons, restyled Settings; 7 reworked themes and new Alliance and Horde emblems, the theme changes as soon as you pick it; option to hide the strip of colored squares (Settings, test); when Google blocks, Bing takes over and Google rests longer; fewer requests to Google; Enter no longer translates by accident; better translations (The Stockade, LFW, Fiery Weapon, Crusader, +2 Stamina, in IF = Ironforge). Update ChatFR too." % VERSION,
+           "- New in %s: hotfix. The write bar no longer gets garbled when the mouse moves over it (rounded window made another way); buttons light up on hover; the bar no longer jumps when a hint shows; square strip cover (the rounded one prevented reading the strip); \"ops\" translated as \"oops\"." % VERSION,
+           "- 1.9.8: \u2713 ABC button to fix your French spelling before sending (beta); write bar on one line, rounded window and buttons, restyled Settings; 7 reworked themes and new Alliance and Horde emblems, the theme changes as soon as you pick it; option to hide the strip of colored squares (Settings, test); when Google blocks, Bing takes over and Google rests longer; fewer requests to Google; Enter no longer translates by accident; better translations (The Stockade, LFW, Fiery Weapon, Crusader, +2 Stamina, in IF = Ironforge).",
            "- 1.9.7: if Google goes down, the backup translators now always take over; item tooltip prices shown with coins, like in the game; \"Threat\" and \"Look here\" pings with their diamond icon; a services.txt file (settings folder) records which service translated the messages and any outages, never the message text.",
            "- 1.9.6: important fix, the translator no longer stops showing messages after a Questie quest announcement; if it fails on a message, it carries on with the next ones and writes the error to erreurs.txt; player names in their class color, like in the game (your name in bold); emotes in orange, experience in blue, group role changes; the window hides when the world map is open full size; warning if ChatFR and the translator are not the same version; cleaner Questie quest links; \"salty\" handled in French translations.",
            "- 1.9.5: the translator now updates itself at launch (with a countdown); if Python is missing, \"Lancer le traducteur.bat\" offers to install it; Threat and Look ping symbols; raid marks recognized in every game language; Questie announcements no longer translated; the window no longer jumps down while you read older messages; \"Write\" box fixed in a small window; better translations (BS / LW + skill, q = quest, Skyborne, Northshire, Tanning Rack). Update ChatFR too.",
@@ -234,8 +236,8 @@ EN = {
     "ABC (b\u00eata) : corrige et copie en fran\u00e7ais, SANS traduire. Correcteur en d\u00e9veloppement : relis avant d'envoyer.":
         "ABC (beta): corrects and copies in French, WITHOUT translating. Checker still in development: read it before sending.",
     "Cacher la bande de cases color\u00e9es (essai)": "Hide the strip of colored squares (test)",
-    "Cache-bande d\u00e9sactiv\u00e9 : Windows ne permet pas de le cacher \u00e0 la capture (Windows trop ancien ?).":
-        "Strip cover turned off: Windows can't hide it from the capture (Windows too old?).",
+    "Cache-bande d\u00e9sactiv\u00e9 : il emp\u00eachait de lire la bande de cases color\u00e9es.":
+        "Strip cover turned off: it prevented reading the strip of colored squares.",
     "\u2713 Corriger": "\u2713 Correct",
     "ABC : corrige et copie en fran\u00e7ais, SANS traduire.":
         "ABC: corrects and copies in English, WITHOUT translating.",
@@ -426,6 +428,74 @@ def coin_png(unit, size, ss=4):
         return struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xffffffff)
     return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", size, size, 8, 6, 0, 0, 0))
             + chunk(b"IDAT", zlib.compress(bytes(raw), 9)) + chunk(b"IEND", b""))
+
+
+class FlatButton(tk.Label):
+    """Bouton dessine par tkinter (une etiquette cliquable) au lieu d'un vrai bouton Windows.
+    Depuis les coins arrondis, la fenetre est "en couches" (couleur transparente) : les vrais boutons
+    Windows s'y redessinaient mal au survol (barre coupee, zones blanches)."""
+
+    def __init__(self, master=None, command=None, activebackground=None, activeforeground=None,
+                 state="normal", **kw):
+        for k in ("relief", "bd", "borderwidth", "overrelief", "default"):
+            kw.pop(k, None)
+        kw.setdefault("cursor", "hand2")
+        kw.setdefault("highlightthickness", 0)
+        tk.Label.__init__(self, master, bd=0, **kw)
+        self._cmd, self._state = command, state
+        self._bg, self._fg = self.cget("bg"), self.cget("fg")
+        self._abg = activebackground or self._bg
+        self._afg = activeforeground or self._fg
+        self._in = False
+        self.bind("<Enter>", self._enter, add="+")
+        self.bind("<Leave>", self._leave, add="+")
+        self.bind("<ButtonRelease-1>", self._release, add="+")
+
+    def _enter(self, _e=None):
+        self._in = True
+        if self._state != "disabled":
+            tk.Label.configure(self, bg=self._abg, fg=self._afg)
+
+    def _leave(self, _e=None):
+        self._in = False
+        tk.Label.configure(self, bg=self._bg, fg=self._fg)
+
+    def _release(self, _e=None):
+        if self._in:
+            self.invoke()
+
+    def invoke(self):
+        if self._state != "disabled" and self._cmd:
+            return self._cmd()
+
+    def configure(self, cnf=None, **kw):
+        if cnf:
+            kw.update(cnf)
+        if "command" in kw:
+            self._cmd = kw.pop("command")
+        if "state" in kw:
+            self._state = kw.pop("state")
+        if "activebackground" in kw:
+            self._abg = kw.pop("activebackground")
+        if "activeforeground" in kw:
+            self._afg = kw.pop("activeforeground")
+        for k in ("relief", "bd", "borderwidth", "overrelief"):
+            kw.pop(k, None)
+        if "bg" in kw or "background" in kw:
+            self._bg = kw.get("bg", kw.get("background"))
+        if "fg" in kw or "foreground" in kw:
+            self._fg = kw.get("fg", kw.get("foreground"))
+        if kw:
+            return tk.Label.configure(self, **kw)
+
+    config = configure
+
+    def cget(self, key):
+        if key == "state":
+            return self._state
+        if key == "command":
+            return self._cmd
+        return tk.Label.cget(self, key)
 
 
 def corner_png(r, inside, outside, corner, ring=None, ring_w=0, hard_out=False, ss=4):
@@ -2302,6 +2372,7 @@ LEX_FULL = {
     "wts": "je vends", "wtb": "j'achète", "wtt": "j'échange", "pst": "écris-moi en privé",
     "pm me": "écris-moi en privé", "dm me": "écris-moi en privé", "w me": "chuchote-moi",
     "sry": "désolé", "sorry": "désolé", "my bad": "ma faute", "mb": "ma faute", "oops": "oups",
+    "ops": "oups", "oopsie": "oups", "whoops": "oups",      # "ops" seul donnait "operations"
     "oom": "plus de mana", "pull": "j'engage", "pulling": "j'engage", "wipe": "on est tous morts",
     "rez": "ressuscite-moi", "rez pls": "ressuscite-moi stp", "res pls": "ressuscite-moi stp",
     "buff": "un buff", "buff pls": "un buff stp", "water": "de l'eau", "water pls": "de l'eau stp",
@@ -2609,11 +2680,10 @@ class App:
         self.root.title("WoW Traducteur")
         self.root.configure(bg=self.T["bg"])
         self.root.overrideredirect(True)      # pas de barre de titre Windows : on a la notre
-        # coins arrondis de la fenetre : cette couleur (jamais utilisee ailleurs) devient transparente
-        try:
-            self.root.wm_attributes("-transparentcolor", WIN_HOLE)
-        except tk.TclError:          # hors Windows : les coins restent presque noirs
-            pass
+        # coins arrondis de la fenetre : la fenetre est DECOUPEE en forme arrondie (SetWindowRgn).
+        # (1.9.8 : couleur rendue transparente -> fenetre "en couches", ou Windows redessinait mal
+        # la barre d'ecriture au survol de la souris.)
+        self.root.bind("<Configure>", self._win_shape, add="+")
         geo = str(self.cfg.get("geometry", ""))
         # premier lancement : la fenetre se placera sur le tchat de WoW des que ChatFR en donne la place
         self.geo_auto, self.last_geo = not re.match(r"^\d+x\d+\+-?\d+\+-?\d+$", geo), None
@@ -2779,23 +2849,23 @@ class App:
             lab = tk.Label(bar, text=T["label"], bg=BAR, fg=T["label_fg"], font=("Segoe UI", 9, "bold"))
             lab.pack(side="left", padx=(2, 2))
             drag.append(lab)
-        setb = tk.Button(bar, text=_("\u2699 R\u00e9glages"), command=self.open_settings, **btn)
+        setb = FlatButton(bar, text=_("\u2699 R\u00e9glages"), command=self.open_settings, **btn)
         setb.pack(side="left", padx=(6, 3), pady=4)
-        self._clear_btn = tk.Button(bar, text=_("Effacer"), command=self.clear, **btn)
+        self._clear_btn = FlatButton(bar, text=_("Effacer"), command=self.clear, **btn)
         self._clear_btn.pack(side="left", padx=3, pady=4)
-        helpb = tk.Button(bar, text="?", command=self.open_help, **dict(btn, padx=7))
+        helpb = FlatButton(bar, text="?", command=self.open_help, **dict(btn, padx=7))
         helpb.pack(side="left", padx=3, pady=4)
         for b in (setb, self._clear_btn, helpb):        # boutons aux coins arrondis
             self._round(b, 5, T["btn"], BAR)
         # bouton cache, affiche seulement si une nouvelle version existe sur GitHub
-        self.update_btn = tk.Button(bar, text="", command=self.do_update,
+        self.update_btn = FlatButton(bar, text="", command=self.do_update,
                                     **dict(btn, bg=T["accent"], fg=T["accent_fg"], activebackground=T["accent_act"]))
         self._round(self.update_btn, 5, T["accent"], BAR)
-        closeb = tk.Button(bar, text="\u2715", command=self.on_close, bg=BAR, fg=T["icon"], relief="flat", bd=0,
+        closeb = FlatButton(bar, text="\u2715", command=self.on_close, bg=BAR, fg=T["icon"], relief="flat", bd=0,
                            padx=10, pady=2, activebackground="#c0392b", activeforeground="white",
                            cursor="hand2", font=("Segoe UI", 10), highlightthickness=0)
         closeb.pack(side="right", padx=(0, 4), pady=4)
-        minb = tk.Button(bar, text="\u2014", command=self.minimize, bg=BAR, fg=T["icon"], relief="flat", bd=0,
+        minb = FlatButton(bar, text="\u2014", command=self.minimize, bg=BAR, fg=T["icon"], relief="flat", bd=0,
                          padx=10, pady=2, activebackground=T["btn_act"], activeforeground="white",
                          cursor="hand2", font=("Segoe UI", 10), highlightthickness=0)
         minb.pack(side="right", pady=4)
@@ -2911,7 +2981,7 @@ class App:
         self.reply_lbl = tk.Label(lf, text=("%s \u2192" % UI.upper()), bg=B, fg=T["name"],
                                   font=("Segoe UI", 9, "bold"), padx=0)
         self.reply_lbl.pack(side="left", padx=(8, 0))
-        self.reply_x = tk.Button(lf, text="\u2715", command=lambda: self.set_reply_to(None), bg=B, fg=T["muted"],
+        self.reply_x = FlatButton(lf, text="\u2715", command=lambda: self.set_reply_to(None), bg=B, fg=T["muted"],
                                  activebackground=B, activeforeground=T["fg"], relief="flat", bd=0,
                                  highlightthickness=0, padx=2, pady=0, cursor="hand2", font=("Segoe UI", 8))
         # width=1 : la case prend juste la place restante (avec sa largeur par defaut, dans une petite
@@ -2927,7 +2997,7 @@ class App:
             self._ph_loop = True
             self.root.after(150, self._ph_update)
         # croix : efface vite le texte a traduire et le dernier resultat (touche Echap aussi)
-        xb = tk.Button(bar, text="\u2715", command=self.clear_out, bg=T["entry"], fg=T["muted"],
+        xb = FlatButton(bar, text="\u2715", command=self.clear_out, bg=T["entry"], fg=T["muted"],
                   activebackground=T["btn_act"], activeforeground=T["err"], relief="flat", bd=0,
                   highlightthickness=0, padx=2, pady=0, cursor="hand2",
                   font=("Segoe UI", 8))
@@ -2935,7 +3005,7 @@ class App:
         self._add_hint(xb, _("\u2715 : efface ta phrase (touche \u00c9chap aussi)."))
         self.out_lang = tk.StringVar(value=self.cfg["out_lang"])
         # langue de reponse : bouton "EN ▴" qui ouvre une liste VERS LE HAUT (la fenetre est souvent en bas)
-        self.out_lang_btn = tk.Button(lf, text="", command=self.open_lang_menu, bg=B, fg=T["name"],
+        self.out_lang_btn = FlatButton(lf, text="", command=self.open_lang_menu, bg=B, fg=T["name"],
                                       activebackground=T["btn_act"], activeforeground=T["name"], relief="flat", bd=0,
                                       highlightthickness=0, padx=6, cursor="hand2", font=("Segoe UI", 9, "bold"))
         self.out_lang_btn.pack(side="left", fill="y", padx=(2, 2))
@@ -2946,14 +3016,14 @@ class App:
         if self.cfg.get("correcteur", UI == "fr"):
             # petit bouton "ABC✓" (symbole des correcteurs) : la case Ecrire garde presque toute sa place
             tk.Frame(bar, bg=T["btn_act"], width=1).grid(row=0, column=3, sticky="ns")   # petit trait
-            cb = tk.Button(bar, text="\u2713 ABC", command=self.correct_out, bg=T["entry"], fg=T["fg"],
+            cb = FlatButton(bar, text="\u2713 ABC", command=self.correct_out, bg=T["entry"], fg=T["fg"],
                            activebackground=T["btn_act"], activeforeground=T["fg"], relief="flat", bd=0,
                            highlightthickness=0, padx=8, cursor="hand2", font=("Segoe UI", 8, "bold"))
             cb.grid(row=0, column=4, sticky="ns")
             self._add_hint(cb, _("ABC (b\u00eata) : corrige et copie en fran\u00e7ais, SANS traduire. Correcteur en d\u00e9veloppement : relis avant d'envoyer."))
         self.out_lang.trace_add("write", lambda *a: self._show_lang())
         self._show_lang()
-        tb = tk.Button(bar, text=_("Traduire + copier"), command=self.send_out, bg=T["accent"], fg=T["accent_fg"],
+        tb = FlatButton(bar, text=_("Traduire + copier"), command=self.send_out, bg=T["accent"], fg=T["accent_fg"],
                        activebackground=T["accent_act"], activeforeground=T["accent_fg"],
                        relief="flat", highlightthickness=0, bd=0, padx=12, font=("Segoe UI", 9, "bold"))
         tb.grid(row=0, column=5, sticky="ns")
@@ -2971,7 +3041,9 @@ class App:
                 relx=rx, rely=ry, anchor={"nw": "nw", "sw": "sw", "ne": "ne", "se": "se"}[corner])
         self._add_hint(tb, _("Traduit ta phrase dans la langue choisie et copie la traduction."))
         self.out_result = tk.Label(out, text=_("Clique sur un message pour repondre dans sa langue."),
-                                   bg=P, fg=T["muted"], anchor="w", justify="left", wraplength=520)
+                                   bg=P, fg=T["muted"], anchor="nw", justify="left", wraplength=520,
+                                   height=2)   # hauteur fixe (2 lignes) : au survol d'un bouton, l'aide d'une ligne
+        # remplacait un message de 2 lignes, la barre bougeait sous la souris et clignotait
         self.out_result.grid(row=1, column=0, sticky="ew", padx=4, pady=(0, 3))
         # Entree ne fait rien : on clique sur "Traduire + copier" ou "ABC" (par reflexe, ca traduisait sans le vouloir)
         self.out_entry.bind("<Button-1>", self.take_keyboard, add="+")
@@ -4381,7 +4453,7 @@ class App:
             lab = tk.Label(w.master, image=img, bd=0, padx=0, pady=0, highlightthickness=0, cursor="hand2")
             lab.place(in_=w, relx=1 if c[1] == "e" else 0, rely=1 if c[0] == "s" else 0, anchor=c)
             lab.lift(w)
-            if isinstance(w, tk.Button):
+            if hasattr(w, "invoke"):
                 lab.bind("<ButtonRelease-1>", lambda e, b=w: b.invoke())
 
     # ---- cache-bande : rectangle par-dessus la bande de cases colorees ---------
@@ -4391,7 +4463,7 @@ class App:
             self._band_rect = None
             self._update_cover()
             try:
-                self.out_result.config(text=_("Cache-bande d\u00e9sactiv\u00e9 : Windows ne permet pas de le cacher \u00e0 la capture (Windows trop ancien ?)."),
+                self.out_result.config(text=_("Cache-bande d\u00e9sactiv\u00e9 : il emp\u00eachait de lire la bande de cases color\u00e9es."),
                                        fg=self.T["muted"])
             except tk.TclError:
                 pass
@@ -4460,29 +4532,16 @@ class App:
             self._cover_shown = True
 
     def _draw_cover(self, cov, W, H):
-        """Coins arrondis du cache-bande : forme de la fenetre arrondie (SetWindowRgn, pas une fenetre
-        "en couches" qui empecherait de la cacher a la capture) + liseré dessine le long de l'arrondi."""
+        """Cache-bande carre avec un fin liseré. (Pas de coins arrondis : la fenetre decoupee en forme
+        arrondie, comme la fenetre "en couches", n'est plus cachee a la capture : essaye en 1.9.8.)"""
         if getattr(cov, "_drawn", None) == (W, H):
             return
         cov._drawn = (W, H)
-        T, r = self.T, 10
+        T = self.T
         cv = cov._cv
         cv.delete("all")
-        pts = []                       # contour : 4 quarts de cercle de rayon r, reperes par leurs centres
-        for cx, cy, a0 in ((W - 1 - r, r, -90), (W - 1 - r, H - 1 - r, 0), (r, H - 1 - r, 90), (r, r, 180)):
-            for k in range(7):
-                a = math.radians(a0 + k * 15)
-                pts += [cx + (r - 0.5) * math.cos(a), cy + (r - 0.5) * math.sin(a)]
-        cv.create_polygon(pts, fill=T["bar"], outline=T["border"], width=1)
+        cv.create_rectangle(0, 0, W - 1, H - 1, fill=T["bar"], outline=T["border"], width=1)
         cv.create_text(W // 2, H // 2, text="ChatFR", fill=T["status"], font=("Segoe UI", 8))
-        try:
-            g, u = ctypes.windll.gdi32, ctypes.windll.user32
-            g.CreateRoundRectRgn.restype = ctypes.c_void_p
-            rgn = g.CreateRoundRectRgn(0, 0, W + 1, H + 1, 2 * r, 2 * r)
-            u.SetWindowRgn.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
-            u.SetWindowRgn(cov._hwnd, rgn, 1)          # Windows garde la forme (pas a liberer)
-        except Exception:  # noqa
-            pass
 
     def _color_titlebar(self, win):
         """Barre de titre Windows aux couleurs du theme (Windows 11 ; ailleurs, rien ne change)."""
@@ -4504,6 +4563,27 @@ class App:
         except Exception:  # noqa  (Windows 10 ou plus ancien : barre normale)
             pass
 
+    def _win_shape(self, e=None):
+        """Decoupe la fenetre aux coins arrondis, a chaque changement de taille (Windows seulement)."""
+        if e is not None and e.widget is not self.root:
+            return
+        if not sys.platform.startswith("win"):
+            return
+        try:
+            W, H = self.root.winfo_width(), self.root.winfo_height()
+            if (W, H) == getattr(self, "_win_shape_wh", None) or W < 20 or H < 20:
+                return
+            self._win_shape_wh = (W, H)
+            u, g = ctypes.windll.user32, ctypes.windll.gdi32
+            u.GetParent.restype, u.GetParent.argtypes = ctypes.c_void_p, [ctypes.c_void_p]
+            hwnd = u.GetParent(self.root.winfo_id()) or self.root.winfo_id()
+            g.CreateRoundRectRgn.restype = ctypes.c_void_p
+            rgn = g.CreateRoundRectRgn(0, 0, W + 1, H + 1, 20, 20)
+            u.SetWindowRgn.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
+            u.SetWindowRgn(hwnd, rgn, 1)                  # Windows garde la forme (pas a liberer)
+        except Exception:  # noqa
+            pass
+
     def _round_window(self):
         """Coins arrondis de la fenetre (cadre compris). Bas : couleur du fond, ou de la barre si repliee."""
         T = self.T
@@ -4518,7 +4598,7 @@ class App:
         for c in ("nw", "ne", "sw", "se"):
             inside = T["bar"] if (c[0] == "n" or rolled) else T["bg"]
             try:
-                img = self._corner_img(10, inside, WIN_HOLE, c, ring=T["border"], ring_w=bw, hard_out=True)
+                img = self._corner_img(10, inside, T["border"], c, ring=T["border"], ring_w=bw)
             except tk.TclError:
                 return
             lab = tk.Label(self.root, image=img, bd=0, padx=0, pady=0, highlightthickness=0)
