@@ -42,7 +42,7 @@ try:
 except ImportError:  # pas sous Windows
     winsound = None
 
-VERSION = "1.9.9"
+VERSION = "2.0.0"
 # Verification de mise a jour : le fichier version.txt du depot contient le numero de la derniere version.
 VERSION_URL = "https://raw.githubusercontent.com/puenteur/Wow-traducteur/main/version.txt"
 KOFI_URL = "https://ko-fi.com/puenteur"
@@ -61,7 +61,8 @@ enchanting engineering cooking fishing mining herbalism skinning jewelcrafting i
 # Nouveautes affichees une fois dans la fenetre apres une mise a jour (pas au premier lancement).
 NEWS = {
     "fr": ["WoW Traducteur %s" % VERSION,
-           "- Nouveau en %s : correctif, la barre d'\u00e9criture ne se d\u00e9forme plus quand la souris passe dessus ; boutons qui s'\u00e9claircissent au survol ; plus de ligne d'info sous la barre : explications en info-bulles (d\u00e9sactivables dans les R\u00e9glages) et messages dans une petite bulle ; le tchat descend jusqu'\u00e0 la barre, sans ligne vide ; bouton \u00ab Nouveaut\u00e9s des versions \u00bb dans l'aide \u00ab ? \u00bb ; rectangle cache-bande carr\u00e9 ; meilleures traductions (\u00ab ops \u00bb = oups, \u00ab tips optional \u00bb = pourboire facultatif). Mets aussi ChatFR \u00e0 jour." % VERSION,
+           "- Nouveau en %s : ic\u00f4nes de pi\u00e8ces dans les traductions (\u00ab 4 or 25 argent \u00bb) ; fen\u00eatre repli\u00e9e plus propre (bouton \u25a1 lisible, croix enti\u00e8re, sans la poign\u00e9e) ; meilleures traductions : noms des m\u00e9tiers du jeu (travailleur du cuir, d\u00e9peceur), \u00ab lfg + qu\u00eate \u00bb = je cherche un groupe pour..., \u00ab one last for \u00bb = il faut un joueur de plus pour..., \u00ab up \u00bb, \u00ab rouge \u00bb = voleur, \u00ab tips \u00bb = pourboire, coffrets verrouill\u00e9s, \u00ab macrod \u00bb, \u00ab in IF \u00bb = Forgefer. Mets aussi ChatFR \u00e0 jour." % VERSION,
+           "- 1.9.9 : correctif, la barre d'\u00e9criture ne se d\u00e9forme plus quand la souris passe dessus ; boutons qui s'\u00e9claircissent au survol ; plus de ligne d'info sous la barre : explications en info-bulles (d\u00e9sactivables dans les R\u00e9glages) et messages dans une petite bulle ; le tchat descend jusqu'\u00e0 la barre, sans ligne vide ; bouton \u00ab Nouveaut\u00e9s des versions \u00bb dans l'aide \u00ab ? \u00bb ; rectangle cache-bande carr\u00e9 ; meilleures traductions (\u00ab ops \u00bb = oups, \u00ab tips optional \u00bb = pourboire facultatif).",
            "- 1.9.8 : bouton \u2713 ABC pour corriger ton orthographe avant d'envoyer (en b\u00eata) ; barre d'\u00e9criture sur une ligne, fen\u00eatre et boutons aux coins arrondis, R\u00e9glages relook\u00e9s ; 7 th\u00e8mes retravaill\u00e9s et nouveaux embl\u00e8mes Alliance et Horde, le th\u00e8me change d\u00e8s qu'on le choisit ; option pour cacher la bande de cases color\u00e9es (R\u00e9glages, essai) ; quand Google bloque, Bing prend le relais et Google se repose plus longtemps ; moins de demandes \u00e0 Google ; \u00ab slt \u00bb, \u00ab lu \u00bb, \u00ab tlm \u00bb... bien traduits dans tes r\u00e9ponses ; la touche Entr\u00e9e ne traduit plus par accident ; meilleures traductions (La Prison, LFW, Arme flamboyante, Crois\u00e9, +2 Endurance, in IF = Forgefer).",
            "- 1.9.7 : si Google tombe en panne, les traducteurs de secours prennent maintenant toujours le relais ; prix des fiches d'objets avec les pi\u00e8ces, comme dans le jeu ; pings \u00ab Menace \u00bb et \u00ab Par ici \u00bb avec leur losange ; un fichier services.txt (dossier des r\u00e9glages) note quel service a traduit les messages et les pannes, sans jamais le texte des messages.",
            "- 1.9.6 : correction importante, le traducteur ne s'arr\u00eate plus d'afficher les messages apr\u00e8s une annonce de qu\u00eate de Questie ; s'il plante sur un message, il continue avec les suivants et note l'erreur dans erreurs.txt ; noms des joueurs \u00e0 la couleur de leur classe, comme dans le jeu (ton pseudo en gras) ; \u00e9motes en orange, exp\u00e9rience en bleu, changements de r\u00f4le en groupe ; la fen\u00eatre se cache quand la carte est ouverte en grand ; avertissement si ChatFR et le traducteur n'ont pas la m\u00eame version ; liens de qu\u00eate Questie nettoy\u00e9s ; \u00ab salty \u00bb traduit par \u00ab vex\u00e9 \u00bb.",
@@ -75,7 +76,8 @@ NEWS = {
            "- Fen\u00eatre des nouveaut\u00e9s apr\u00e8s chaque mise \u00e0 jour (celle-ci !).",
            "- Meilleures traductions : lfg/lfm, wts/wtb, Deadmines, jargon russe (\u041b\u0424\u0413), mots coll\u00e9s aux liens, petits messages en espagnol ou en letton, moins d'appels inutiles \u00e0 Google."],
     "en": ["WoW Traducteur %s" % VERSION,
-           "- New in %s: hotfix, the write bar no longer gets garbled when the mouse moves over it; buttons light up on hover; no more info line under the bar: explanations in tooltips (can be turned off in Settings) and messages in a small bubble; the chat goes down to the bar, without an empty line; \"What's new\" button in the \"?\" help; square strip cover; better translations (\"ops\" = oops, \"tips optional\" = tip optional). Update ChatFR too." % VERSION,
+           "- New in %s: coin icons in translations; cleaner rolled-up window (readable \u25a1 button, full close cross, no resize grip); better translations: in-game profession names, \"lfg + quest\", \"one last for\", \"up\", \"rouge\" = rogue, \"tips\" = tip money, lockboxes, \"macrod\", \"in IF\" = Ironforge. Update ChatFR too." % VERSION,
+           "- 1.9.9: hotfix, the write bar no longer gets garbled when the mouse moves over it; buttons light up on hover; no more info line under the bar: explanations in tooltips (can be turned off in Settings) and messages in a small bubble; the chat goes down to the bar, without an empty line; \"What's new\" button in the \"?\" help; square strip cover; better translations (\"ops\" = oops, \"tips optional\" = tip optional).",
            "- 1.9.8: \u2713 ABC button to fix your French spelling before sending (beta); write bar on one line, rounded window and buttons, restyled Settings; 7 reworked themes and new Alliance and Horde emblems, the theme changes as soon as you pick it; option to hide the strip of colored squares (Settings, test); when Google blocks, Bing takes over and Google rests longer; fewer requests to Google; Enter no longer translates by accident; better translations (The Stockade, LFW, Fiery Weapon, Crusader, +2 Stamina, in IF = Ironforge).",
            "- 1.9.7: if Google goes down, the backup translators now always take over; item tooltip prices shown with coins, like in the game; \"Threat\" and \"Look here\" pings with their diamond icon; a services.txt file (settings folder) records which service translated the messages and any outages, never the message text.",
            "- 1.9.6: important fix, the translator no longer stops showing messages after a Questie quest announcement; if it fails on a message, it carries on with the next ones and writes the error to erreurs.txt; player names in their class color, like in the game (your name in bold); emotes in orange, experience in blue, group role changes; the window hides when the world map is open full size; warning if ChatFR and the translator are not the same version; cleaner Questie quest links; \"salty\" handled in French translations.",
@@ -1645,6 +1647,11 @@ for _t in ("tip", "tips"):
                      _t + " not required": "pourboire pas obligatoire", "no " + _t + " required": "pourboire pas obligatoire",
                      _t + " are welcome": "pourboire bienvenu", _t + " are appreciated": "pourboire apprécié"})
 # Enchantements et stats : nom francais du jeu ("Got FIERY WEP" restait en anglais, "+2 End" donnait "+2 Fin")
+# Metiers : nom du jeu ("leatherworker" donnait "maroquinier")
+LEX_PROFS = {"leatherworker": "travailleur du cuir", "leatherworkers": "travailleurs du cuir",
+             "leatherworking": "Travail du cuir", "skinner": "dépeceur", "skinners": "dépeceurs",
+             "skinning": "Dépeçage", "lockbox": "coffret verrouillé", "lockboxes": "coffrets verrouillés",
+             "junkbox": "coffret", "junkboxes": "coffrets"}
 LEX_ENCHANTS = {"fiery weapon": "Arme flamboyante", "fiery weapons": "Arme flamboyante", "crusader": "Croisé",
                 "stamina": "Endurance", "stam": "Endurance"}
 # "dm me" / "dm pls" = message prive, pas les Mortemines.
@@ -1678,6 +1685,7 @@ def _protected(target):
         d.update(LEX_CLASSES)
         d.update(LEX_ENCHANTS)
         d.update(LEX_TIPS)
+        d.update(LEX_PROFS)
     return dict(sorted(d.items(), key=lambda kv: len(kv[0]), reverse=True))
 
 
@@ -2509,6 +2517,7 @@ LEX_FULL = {
     "pm me": "écris-moi en privé", "dm me": "écris-moi en privé", "w me": "chuchote-moi",
     "sry": "désolé", "sorry": "désolé", "my bad": "ma faute", "mb": "ma faute", "oops": "oups",
     "ops": "oups", "oopsie": "oups", "whoops": "oups",      # "ops" seul donnait "operations"
+    "up": "up", "up up": "up", "bump": "up",            # "up" seul = je remonte mon annonce (pas "en haut")
     "oom": "plus de mana", "pull": "j'engage", "pulling": "j'engage", "wipe": "on est tous morts",
     "rez": "ressuscite-moi", "rez pls": "ressuscite-moi stp", "res pls": "ressuscite-moi stp",
     "buff": "un buff", "buff pls": "un buff stp", "water": "de l'eau", "water pls": "de l'eau stp",
@@ -2545,6 +2554,8 @@ LEX_EXPAND = {
     "any1": "anyone", "some1": "someone", "every1": "everyone",
     "mats": "materials", "mat": "material",
     "lfw": "looking for work", "wep": "weapon", "weap": "weapon",   # "Enchanter in SW LFW. Got FIERY WEP."
+    "macrod": "done with a macro", "macroed": "done with a macro",
+    "rouge": "rogue", "rouges": "rogues",      # faute courante en anglais ("LF ROUGE") : un Francais lisait la couleur   # "mustve been macrod" restait tel quel
     "los": "line of sight",          # seulement pour l'anglais (en espagnol, "los" = "les")
 }
 
@@ -2555,11 +2566,22 @@ LEX_PHRASES = [
     (r"\blfm(?:\s+for)?\b", "looking for more players for"),
     # "last tank prison rush" en debut de message = il manque un dernier tank (Google : "derniere ruee...")
     (r"(^|\]\s*)last\s+(tank|heal|healer|dps|spot)\b(?!\s+for\b)", r"\1need one last \2 for"),
+    # "lfg carnage" (quete, sortie...) : "a la recherche d'un carnage de groupe" -> "cherche un groupe pour Carnage"
+    (r"^(lfg|lfm)\s+(?!(?:for|tank|tanks|heal|heals|healer|healers|dps|pls|plz|please|any|anyone|guild|me|pst|w|"
+     r"whisper|now|asap|quest|q|and|or|still|too|also|mage|mages|priest|priests|warrior|warriors|rogue|rogues|"
+     r"hunter|hunters|druid|druids|warlock|warlocks|lock|paladin|paladins|pala|pally|shaman|shamans|shammy|"
+     r"melee|caster|casters|ranged|more|1|2|3|4)\b)(?=[a-z])",
+     lambda m: "looking for a group for " if m.group(1).lower() == "lfg" else "looking for more players for "),
+    # "One last for Dwarf elite war ?" = il manque un joueur (et pas "une derniere pour...")
+    (r"(^|\]\s*)(?:one|1)\s+(?:last|more)\s+for\b|(^|\]\s*)last\s+one\s+for\b",
+     lambda m: (m.group(1) or m.group(2) or "") + "need one more player for"),
     # "prison rush" / "stocks run" = la Prison (le donjon), pas une prison : "rush of the stockade"
     (r"\b(?:prison|stockades?|stocks)\s+(rush(?:es)?|runs?|boosts?)\b", r"\1 of the stockade"),
     (r"\blf(\d)m\b", r"looking for \1 more players"),
+    # "macro'd" (avec apostrophe) = fait avec une macro
+    (r"\bmacro['\u2019]d\b", "done with a macro"),
     # "in IF" en fin de message = a Forgefer (Ironforge) : "lf enchanter ... in if" donnait "... si"
-    (r"\bin\s+if\b(?=\s*(?:$|[.!?,;:]|(?:pst|pm|w|whisper|plz|pls|please)\b))", "in Ironforge"),
+    (r"\bin\s+if\b(?=\s*(?:$|[.!?,;:\[]|zl\d+x|(?:pst|pm|w|whisper|plz|pls|please)\b))", "in Ironforge"),
     # "End" = Endurance (stat) apres "+2" ou colle a "stam" : Google donnait "+2 Fin"
     (r"(\+\s*\d+\s*)(?:end|stam|stamina)(?:\s*/\s*(?:end|stam|stamina))?\b", r"\1stamina"),
     (r"\b(?:end|stam|stamina)\s*/\s*(?:end|stam|stamina)\b", "stamina"),
@@ -2598,6 +2620,8 @@ _PROF_ABBR = {"bs": "blacksmith", "lw": "leatherworker", "alch": "alchemist", "a
 _PROF_RE = re.compile(r"(?i)\b(%s)(?=\s*\d{2,3}\s*\+?)" % "|".join(sorted(_PROF_ABBR, key=len, reverse=True)))
 # "q" en fin de phrase apres un mot = quete ("anyone for the attack q ?") ; ailleurs ("q up") = file d'attente
 _Q_END_RE = re.compile(r"(?i)(?<=[a-z\]])\s+q(?=\s*[?!.]*\s*$)")
+_SERVICE_RE = re.compile(r"(?i)\b(?:lock\s*box(?:es)?|lockpick\w*|junk\s*box(?:es)?|open(?:ing|s)?|enchant\w*|"
+                         r"portals?|ports?|summon\w*|craft\w*|mats|free|your mats|wts|selling|lfw)\b")
 _LFG_PLACE_RE = re.compile(r"(?i)\b(lfg|lfm)\s+(?=(?:%s)\b)" % "|".join(
     re.escape(k) for k in sorted(LEX_PLACES_EN, key=len, reverse=True)))
 
@@ -2701,6 +2725,10 @@ def lexicon_expand(text):
     text = _LFG_PLACE_RE.sub(lambda m: "looking for a group for " if m.group(1).lower() == "lfg"
                              else "looking for more players for ", text)
     text = _PROF_RE.sub(lambda m: _PROF_ABBR[m.group(1).lower()], text)
+    # message de service (coffrets, enchantements, portails...) : "tip(s)" = pourboire, pas "astuce"
+    if _SERVICE_RE.search(text):
+        text = re.sub(r"(?i)\btips\b", "gratuities", text)
+        text = re.sub(r"(?i)\btip\b", "gratuity", text)
     text = _Q_END_RE.sub(lambda m: m.group(0) if re.search(
         r"(?i)\b(?:anyone|anybody|someone|who|u|you|we|i|pls|plz)$", text[:m.start()]) else " quest", text)
     if _TRADE_RE.search(text):
@@ -3000,12 +3028,14 @@ class App:
         closeb = FlatButton(bar, text="\u2715", command=self.on_close, bg=BAR, fg=T["icon"], relief="flat", bd=0,
                            padx=10, pady=2, activebackground="#c0392b", activeforeground="white",
                            cursor="hand2", font=("Segoe UI", 10), highlightthickness=0)
-        closeb.pack(side="right", padx=(0, 4), pady=4)
+        closeb.pack(side="right", padx=(0, 10), pady=4)   # a l'ecart du coin arrondi (il mordait sur la croix)
         minb = FlatButton(bar, text="\u2014", command=self.minimize, bg=BAR, fg=T["icon"], relief="flat", bd=0,
                          padx=10, pady=2, activebackground=T["btn_act"], activeforeground="white",
                          cursor="hand2", font=("Segoe UI", 10), highlightthickness=0)
         minb.pack(side="right", pady=4)
         self._minb = minb
+        if getattr(self, "_rolled", None):              # theme change pendant que la fenetre est repliee
+            minb.config(text="\u25a1", font=("Segoe UI", 11))
         # cadenas : dessine (pas d'emoji, mal affiche par tkinter sous Windows)
         self.lock_cv = tk.Canvas(bar, width=22, height=22, bg=BAR, highlightthickness=0, bd=0, cursor="hand2")
         self.lock_cv.pack(side="right", padx=(0, 2), pady=3)
@@ -3194,7 +3224,9 @@ class App:
             grip.configure(cursor="size_nw_se")
         except tk.TclError:
             pass
-        grip.place(relx=1.0, rely=1.0, x=-3, y=-2, anchor="se")    # decale : laisse la place au coin arrondi
+        self._grip = grip
+        if not getattr(self, "_rolled", None):          # fenetre repliee : pas de poignee sur la barre
+            grip.place(relx=1.0, rely=1.0, x=-3, y=-2, anchor="se")    # decale : laisse la place au coin arrondi
         self._round_window()
         grip.bind("<ButtonPress-1>", self._resize_start)
         grip.bind("<B1-Motion>", self._resize_move)
@@ -4397,7 +4429,8 @@ class App:
             parts.append(("\u2192 ", *tmarks))
             codes = [c for _, c in spans if c and not c.startswith("cls_")]
             for seg, code in color_brackets(trans, codes):
-                parts.append((seg, *tmarks, "link_" + code) if code else (seg, *tmarks))
+                # "4 or 25 argent" dans la traduction : icones de pieces, comme dans les messages du jeu
+                parts.append((seg, *tmarks, "link_" + code) if code else (seg, *tmarks, "coins"))
             parts.append(("\n", *tmarks))
         self.add(*parts)
         self.line_lang[start_line] = lang if not same else None
@@ -4770,7 +4803,11 @@ class App:
             geo, self._rolled = self._rolled, None
             self.root.minsize(MIN_W, MIN_H)
             self.root.geometry(geo)
-            self._minb.config(text="\u2014")
+            self._minb.config(text="\u2014", font=("Segoe UI", 10))
+            try:
+                self._grip.place(relx=1.0, rely=1.0, x=-3, y=-2, anchor="se")
+            except (AttributeError, tk.TclError):
+                pass
             self._round_window()
             self._save_geometry()
             return
@@ -4781,7 +4818,12 @@ class App:
         h = self._bar.winfo_height() + 2 * int(self.T["border_w"])
         self.root.minsize(MIN_W, 1)
         self.root.geometry("%dx%d" % (self.root.winfo_width(), max(h, 20)))
-        self._minb.config(text="\u25a2")
+        # repliee : la poignee d'agrandissement se retrouvait sur la barre, a cote de la croix
+        try:
+            self._grip.place_forget()
+        except (AttributeError, tk.TclError):
+            pass
+        self._minb.config(text="\u25a1", font=("Segoe UI", 11))     # carre lisible (l'ancien etait minuscule)
         self._round_window()
 
     def _on_map(self, e):
