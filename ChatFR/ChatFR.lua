@@ -1093,7 +1093,14 @@ f:SetScript("OnEvent", function(_, event, name, author, a3, a4, a5, a6, a7, a8, 
       local okC, c = pcall(ns.ClassColorHex, event, (select(3, ...)), a8)   -- 12e argument : guid
       if okC then ncol = c end
     end
-    local ok, err = pcall(OnChat, event, name, author, a4, a9, ncol)
+    if ns.PushWho then pcall(ns.PushWho, author, (select(3, ...))) end   -- classe / niveau au survol du pseudo
+    -- numero du canal ("2. Commerce") : le traducteur s'en sert pour repondre dans le bon canal (clic sur le pseudo)
+    local chanArg = a9
+    if event == "CHAT_MSG_CHANNEL" and type(a8) == "number" and a8 > 0 and type(a9) == "string" and a9 ~= ""
+        and not (issecretvalue and (issecretvalue(a8) or issecretvalue(a9))) then
+      chanArg = a8 .. ". " .. a9
+    end
+    local ok, err = pcall(OnChat, event, name, author, a4, chanArg, ncol)
     if not ok and not ns.errShown then
       ns.errShown = true
       Say(L("erreur (message ignore) : ", "error (message skipped): ") .. tostring(err))
@@ -1284,4 +1291,35 @@ SlashCmdList["CHATFR"] = function(msg)
       (ChatFRDB.enabled and "ON" or "OFF") .. ", log: " ..
       (LoggingChat() and "ON" or "OFF") .. ")")
   end
+end
+
+-- Boite aux lettres : total de l'argent recupere (ventes de l'hotel des ventes...), affiche a la fermeture,
+-- dans le tchat et dans le traducteur. Gain net : l'argent a l'ouverture compare a celui a la fermeture.
+do
+  local mf, start = CreateFrame("Frame"), nil
+  local function Coins(v)
+    local g, s, c = math.floor(v / 10000), math.floor(v % 10000 / 100), v % 100
+    local t = {}
+    if g > 0 then t[#t + 1] = g .. L(" po", "g") end
+    if s > 0 then t[#t + 1] = s .. L(" pa", "s") end
+    if c > 0 or #t == 0 then t[#t + 1] = c .. L(" pc", "c") end
+    return table.concat(t, " ")
+  end
+  mf:RegisterEvent("MAIL_SHOW")
+  mf:RegisterEvent("MAIL_CLOSED")
+  mf:SetScript("OnEvent", function(_, event)
+    if not GetMoney then return end
+    if event == "MAIL_SHOW" then
+      start = start or GetMoney()
+    elseif start then                       -- MAIL_CLOSED (le jeu l'envoie parfois deux fois)
+      local diff = GetMoney() - start
+      start = nil
+      if diff > 0 then
+        local msg = L("Courrier : vous avez r\195\169cup\195\169r\195\169 ", "Mail: you collected ") .. Coins(diff) ..
+          L(" au total.", " in total.")
+        if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:AddMessage(msg, 1, 0.82, 0) end
+        if ns.BridgePush then pcall(ns.BridgePush, "CHAT_MSG_SYSTEM", msg, "", "") end
+      end
+    end
+  end)
 end

@@ -33,7 +33,8 @@ Le détail de chaque étape est plus bas.
 **Répondre**
 - Écris en français dans la case du bas, clique sur « Traduire + copier » : la traduction est copiée, tu la colles dans WoW (Entrée, Ctrl+V, Entrée).
 - Clique sur un message pour répondre dans la langue de ce joueur (ou active la langue de réponse automatique dans les Réglages).
-- Clique sur un **pseudo** : ta réponse est copiée avec `/w Pseudo` devant, pour lui chuchoter directement.
+- Clique sur un **pseudo** : ta réponse part dans le canal de son message (`/g` en guilde, `/p` en groupe, `/2` en Commerce…). **Clic droit** sur le pseudo : `/w Pseudo`, pour lui chuchoter.
+- Bouton **Bug** : décris un problème (avec des captures si tu veux) et envoie-le depuis ta propre boîte mail à wowtrad.support@proton.me.
 - Le traducteur n'envoie jamais rien au jeu lui-même : c'est toujours toi qui colles.
 
 **Remplacer le tchat du jeu (options)**
@@ -132,7 +133,7 @@ Dans la barre du haut, le **cadenas** verrouille la fenêtre : un clic et elle n
 
 Pour relire les nouveautés de chaque version, ouvre l'aide **« ? »** puis **« Nouveautés des versions »**.
 
-Pour **chuchoter une réponse**, clique sur le pseudo d'un joueur dans la fenêtre : « FR → » devient « À Pseudo (FR) → », et « Traduire + copier » copie `/w Pseudo ta réponse`. La croix à côté du pseudo revient à une réponse normale. Pour un ami Battle.net, la touche **R** de WoW reste plus fiable.
+Pour **répondre à un joueur**, clique sur son pseudo dans la fenêtre : ta réponse part dans le canal de son message (« Guilde (FR) → » copie `/g ta réponse`, « Commerce (FR) → » copie `/2 ta réponse`…). Pour lui **chuchoter**, fais un **clic droit** sur son pseudo : « À Pseudo (FR) → » copie `/w Pseudo ta réponse`. La croix à côté revient à une réponse normale. Pour un ami Battle.net, la touche **R** de WoW reste plus fiable.
 
 ### Options de l'addon pour le traducteur
 
@@ -175,7 +176,7 @@ Alt+Z (masquer l'interface) cache aussi la bande : le traducteur ne reçoit plus
 - Traductions de Google Traduction : correctes sur les phrases simples, approximatives sur l'argot et les abréviations.
 - Un message reste 0,4 s dans la bande : lors d'une très grosse rafale, un message peut être perdu. Au-delà d'environ 280 octets, il est coupé.
 - Le texte des messages à traduire et ce que tu écris dans la case du bas est envoyé à Google Traduction, ou à un service de traduction de secours quand Google ne répond pas. Avec le bouton ✓ ABC, ta phrase est envoyée au correcteur LanguageTool. Rien d'autre ne quitte ton ordinateur.
-- L'addon n'utilise que des fonctions normales de WoW, et le traducteur ne fait que lire une partie de ton propre écran ; il ne touche ni au clavier ni à la souris et n'envoie rien dans le tchat. Ce n'est toutefois pas une méthode prévue par Blizzard, et il n'y a pas encore de confirmation officielle de Blizzard à ce sujet. Projet non officiel, fourni tel quel, sans garantie : utilisation sous ta responsabilité.
+- L'addon n'utilise que des fonctions normales de WoW, et le traducteur ne fait que lire une partie de ton propre écran ; il ne touche ni au clavier ni à la souris et n'envoie rien dans le tchat. Ce n'est toutefois pas une méthode prévue par Blizzard, et Blizzard ne vérifie ni ne confirme les logiciels tiers (réponse du support, novembre 2026). Projet non officiel, fourni tel quel, sans garantie : utilisation sous ta responsabilité.
 
 ## Désinstallation
 

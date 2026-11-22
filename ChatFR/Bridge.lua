@@ -316,14 +316,73 @@ local function PushTip(hlink, name, tries)
     if #lines == 0 then return end
   end
   local body, nm = "", name:gsub("[\1-\31]", " ")
+  -- page Wowhead de l'objet (par son numero) : "item=12345" dans le dernier champ (vide avant la 2.1.0,
+  -- ignore par les anciens traducteurs). Avant, le traducteur cherchait le nom sur Wowhead : souvent rien.
+  local lt, id = hlink:match("^(%a+):(%d+)")
+  local wh = ({ item = "item", quest = "quest", spell = "spell", enchant = "spell" })[lt or ""]
+  wh = (wh and id) and (wh .. "=" .. id) or ""
   for _, t in ipairs(lines) do
     local nb = (body == "") and t or (body .. "\30" .. t)
-    if #nb + #nm + 8 > MAXREC then break end
+    if #nb + #nm + #wh + 8 > MAXREC then break end
     body = nb
   end
   tipSent[name] = now
-  queue[#queue + 1] = "tip\31" .. body .. "\31" .. nm .. "\31"
+  queue[#queue + 1] = "tip\31" .. body .. "\31" .. nm .. "\31" .. wh
   if #queue > MAXQ then table.remove(queue, 1) end
+end
+
+-- [Vous avez succombe.] : les derniers coups recus, lus dans le recapitulatif de mort du jeu
+-- (C_DeathRecap, celui de la fenetre de Blizzard). Envoye comme une fiche : le traducteur l'affiche au survol.
+-- Pas de limite de 2 min : chaque mort a son recapitulatif. Valeur illisible ("secrete") : ligne sautee.
+local function Plain(v)
+  if v == nil or (issecretvalue and issecretvalue(v)) then return nil end
+  return v
+end
+
+local function PushDeath(hlink, name)
+  local id = tonumber(hlink:match("^death:(%d+)"))
+  -- recapitulatif de mort : C_DeathRecap.GetRecapEvents (Forever / jeu actuel), DeathRecap_GetEvents (ancien nom)
+  local get = (C_DeathRecap and C_DeathRecap.GetRecapEvents) or DeathRecap_GetEvents
+  if not (frame and get) then return end
+  local ok, events = pcall(get, id)
+  if not ok or type(events) ~= "table" or #events == 0 then return end
+  local list = {}
+  for _, e in ipairs(events) do
+    if type(e) == "table" then list[#list + 1] = e end
+  end
+  -- le plus recent d'abord (le coup fatal en haut), comme le recapitulatif de Blizzard
+  table.sort(list, function(a, b) return (Plain(a.timestamp) or 0) > (Plain(b.timestamp) or 0) end)
+  local last = Plain(list[1] and list[1].timestamp)
+  local lines = { "Derniers coups re\195\167us :" }
+  for _, e in ipairs(list) do
+    local amount = Plain(e.amount)
+    local spell = Plain(e.spellName)
+    local ev = Plain(e.event) or ""
+    if not spell then
+      if ev:find("^SWING") then spell = "M\195\170l\195\169e"
+      elseif ev:find("^ENVIRONMENTAL") then spell = "Environnement"
+      else spell = "?" end
+    end
+    local src = (not Plain(e.hideCaster)) and Plain(e.sourceName) or nil
+    local t = Plain(e.timestamp)
+    local when = (t and last) and string.format("%.1f s", t - last):gsub("%.", ",") or ""
+    if amount and type(amount) == "number" then
+      local l = string.format("-%d  %s", amount, spell)
+      if src and src ~= "" then l = l .. " (" .. src .. ")" end
+      if Plain(e.critical) then l = l .. " critique" end
+      if when ~= "" then l = when .. "   " .. l end
+      lines[#lines + 1] = l:gsub("[\1-\31]", " ")
+    end
+    if #lines >= 11 then break end
+  end
+  if #lines < 2 then return end
+  local body, nm = "", name:gsub("[\1-\31]", " ")
+  for _, t in ipairs(lines) do
+    local nb = (body == "") and t or (body .. "\30" .. t)
+    if #nb + #nm + 10 > MAXREC then break end
+    body = nb
+  end
+  queue[#queue + 1] = "tip\31" .. body .. "\31" .. nm .. "\31-"        -- "-" : pas de page Wowhead
 end
 
 -- Couleur de classe du joueur ("C69B6D"), seulement si le jeu colore les noms pour ce type de
@@ -342,6 +401,105 @@ function ns.ClassColorHex(event, guid, chanIndex)
   local c = cls and ((CUSTOM_CLASS_COLORS and CUSTOM_CLASS_COLORS[cls]) or (RAID_CLASS_COLORS and RAID_CLASS_COLORS[cls]))
   if not c or not c.r then return nil end
   return string.format("%02X%02X%02X", math.floor(c.r * 255 + 0.5), math.floor(c.g * 255 + 0.5), math.floor(c.b * 255 + 0.5))
+end
+
+-- Fiche du joueur au survol de son pseudo dans le traducteur : classe, race et niveau.
+-- Classe et race : le jeu les donne pour tout joueur qui parle (GetPlayerInfoByGUID).
+-- Niveau : seulement s'il est dans ton groupe, ta guilde, tes amis, ou en cible / sous la souris.
+local whoSent, guildLvl, seenLvl, whoGuid, whoNoLvl = {}, {}, {}, {}, {}
+local gf = CreateFrame("Frame")
+gf:RegisterEvent("GUILD_ROSTER_UPDATE")
+gf:RegisterEvent("PLAYER_ENTERING_WORLD")
+gf:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
+gf:RegisterEvent("PLAYER_TARGET_CHANGED")
+gf:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+gf:RegisterEvent("WHO_LIST_UPDATE")
+-- niveau d'un joueur vu en jeu (souris, cible, barre de vie, resultat d'un /qui) : garde pour la session.
+-- S'il avait deja une fiche "niveau inconnu", elle est renvoyee avec le niveau.
+local function Seen(name, lv)
+  if type(name) ~= "string" or name == "" or type(lv) ~= "number" or lv <= 0 then return end
+  if issecretvalue and (issecretvalue(name) or issecretvalue(lv)) then return end
+  local short = name:match("^[^%-]+") or name
+  if seenLvl[short] == lv then return end
+  seenLvl[short] = lv
+  for author in pairs(whoNoLvl) do
+    if (author:match("^[^%-]+") or author) == short then
+      whoNoLvl[author], whoSent[author] = nil, nil
+      if ns.PushWho then pcall(ns.PushWho, author, whoGuid[author]) end
+    end
+  end
+end
+local function SeenUnit(u)
+  local okP, isP = pcall(UnitIsPlayer, u)
+  if not (okP and isP) then return end
+  local okN, n = pcall(UnitName, u)
+  local okL, l = pcall(UnitLevel, u)
+  if okN and okL then Seen(n, l) end
+end
+gf:SetScript("OnEvent", function(_, event, arg1)
+  if event == "UPDATE_MOUSEOVER_UNIT" then return SeenUnit("mouseover") end
+  if event == "PLAYER_TARGET_CHANGED" then return SeenUnit("target") end
+  if event == "NAME_PLATE_UNIT_ADDED" then return arg1 and SeenUnit(arg1) end
+  if event == "WHO_LIST_UPDATE" then
+    local n = (C_FriendList and C_FriendList.GetNumWhoResults and C_FriendList.GetNumWhoResults()) or 0
+    for i = 1, n do
+      local ok, w = pcall(C_FriendList.GetWhoInfo, i)
+      if ok and type(w) == "table" then Seen(w.fullName, w.level) end
+    end
+    return
+  end
+  if event == "PLAYER_ENTERING_WORLD" then
+    if C_GuildInfo and C_GuildInfo.GuildRoster then pcall(C_GuildInfo.GuildRoster) end
+    return
+  end
+  if not (GetNumGuildMembers and GetGuildRosterInfo) then return end
+  local n = GetNumGuildMembers() or 0
+  for i = 1, n do
+    local nm, _, _, lv = GetGuildRosterInfo(i)
+    if type(nm) == "string" and type(lv) == "number" then guildLvl[(nm:match("^[^%-]+") or nm)] = lv end
+  end
+end)
+
+local function LevelOf(short, guid)
+  for _, u in ipairs({ "target", "mouseover", "focus" }) do
+    local okG, g = pcall(UnitGUID, u)
+    if okG and g and g == guid then
+      local okL, l = pcall(UnitLevel, u)
+      if okL and type(l) == "number" and l > 0 then return l end
+    end
+  end
+  if UnitInParty and (UnitInParty(short) or (UnitInRaid and UnitInRaid(short))) then
+    local okL, l = pcall(UnitLevel, short)
+    if okL and type(l) == "number" and l > 0 then return l end
+  end
+  if guildLvl[short] then return guildLvl[short] end
+  if seenLvl[short] then return seenLvl[short] end
+  if C_FriendList and C_FriendList.GetFriendInfo then
+    local okF, f = pcall(C_FriendList.GetFriendInfo, short)
+    if okF and type(f) == "table" and type(f.level) == "number" and f.level > 0 then return f.level end
+  end
+  return nil
+end
+
+function ns.PushWho(author, guid)
+  if not frame or type(author) ~= "string" or author == "" or type(guid) ~= "string" or guid == "" then return end
+  if issecretvalue and (issecretvalue(author) or issecretvalue(guid)) then return end
+  if not GetPlayerInfoByGUID or not guid:find("^Player") then return end
+  local now = GetTime and GetTime() or 0
+  if whoSent[author] and now - whoSent[author] < 300 then return end
+  if #queue > 20 then return end           -- tchat tres charge : les messages d'abord, la fiche plus tard
+  local okI, cls, _, race = pcall(GetPlayerInfoByGUID, guid)
+  if not okI or type(cls) ~= "string" or cls == "" then return end
+  local short = author:match("^[^%-]+") or author
+  local lv = LevelOf(short, guid)
+  local L = ns.L or function(fr) return fr end
+  local l1 = cls .. ((type(race) == "string" and race ~= "") and (" - " .. race) or "")
+  local l2 = lv and (L("Niveau ", "Level ") .. lv)
+    or L("Niveau inconnu : passe ta souris sur lui en jeu, cible-le ou fais /qui " .. short,
+         "Level unknown: hover or target them in game, or type /who " .. short)
+  whoSent[author], whoGuid[author], whoNoLvl[author] = now, guid, (not lv) or nil
+  queue[#queue + 1] = "who\31" .. (l1 .. "\30" .. l2):gsub("[\1-\29\31]", " ") .. "\31" .. author:gsub("[\1-\31]", " ") .. "\31"
+  if #queue > MAXQ then table.remove(queue, 1) end
 end
 
 function ns.BridgePush(event, msg, author, chan, tries, ncol)
@@ -377,9 +535,12 @@ function ns.BridgePush(event, msg, author, chan, tries, ncol)
   msg = msg:gsub("|cn([%w_]+):|H([^:|]+)([^|]*)|h(.-)|h|r", LinkMark)
   msg = msg:gsub("|H([^:|]+)([^|]*)|h(.-)|h", function(t, d, n) return LinkMark(nil, t, d, n) end)
   msg = CleanCodes(msg)
-  chan = (type(chan) == "string") and chan:gsub("^%d+%.%s*", ""):gsub("[\1-\31]", " ") or ""
+  -- le numero du canal ("2. ") est garde : le traducteur l'enleve a l'affichage et s'en sert pour repondre
+  chan = (type(chan) == "string") and chan:gsub("[\1-\31]", " ") or ""
   -- pings : l'auteur arrive en lien "|Hplayer:Nom|h[Nom]|h" -> "Nom"
-  author = CleanCodes(author:gsub("|H[^|]*|h(.-)|h", "%1")):gsub("^%[(.*)%]$", "%1"):gsub("[\1-\31]", " ")
+  author = CleanCodes(author:gsub("|H[^|]*|h(.-)|h", "%1")):gsub("[\1-\31]", " ")
+  -- ping avec le role devant ("[Tank] [Lenkkah Foidefer]") : on garde seulement le dernier [Nom]
+  author = author:match("%[([^%[%]]+)%]%s*$") or author
   -- tes propres messages : espace insecable (invisible) a la fin du canal -> le traducteur sait que
   -- c'est toi (pas de badge, ton pseudo n'est pas "cliquable pour repondre"), sans reglage a remplir
   local me = UnitName and UnitName("player")
@@ -408,6 +569,7 @@ function ns.BridgePush(event, msg, author, chan, tries, ncol)
     end
     if ltype == "quest" then name = QuestTitle(tonumber(hl:match("^quest:(%d+)"))) or name end
     if TIP_TYPES[ltype] then pcall(PushTip, hl, name) end
+    if ltype == "death" then pcall(PushDeath, hl, name) end
   end
 end
 
@@ -458,7 +620,65 @@ end
 -- en tete de file pour qu'il se cache tout de suite ; "1" est repete toutes les 3 s tant que le menu
 -- reste ouvert (un traducteur lance entre-temps ne reste pas cache pour rien). Les anciens traducteurs
 -- ignorent ce message (texte vide).
-local menuOpen, menuSent = false, 0
+local menuOpen, menuSent, mapSince = false, 0, nil
+local function BigMapOpen()
+  local map = _G.WorldMapFrame
+  if not (map and map.IsShown and map:IsShown()) then return false end
+  local okM, big = false, nil
+  if map.IsMaximized then okM, big = pcall(map.IsMaximized, map) end
+  if okM then return big and true or false end
+  -- pas de IsMaximized sur ce client : "en grand" = plus des 3/4 de la largeur de l'ecran
+  local okW, w = pcall(function() return map:GetWidth() * map:GetEffectiveScale() end)
+  local okU, uw = pcall(function() return UIParent:GetWidth() * UIParent:GetEffectiveScale() end)
+  return (okW and okU and w and uw and uw > 0 and w >= uw * 0.75) and true or false
+end
+
+-- Grandes fenetres du jeu (transmogrification, hotel des ventes, metiers...) qui passent sous le traducteur :
+-- s'il y en a une d'ouverte PAR-DESSUS le tchat, le traducteur s'efface comme pour un menu.
+local PANELS_UNDER = { "TransmogFrame", "TransmogrifyFrame", "WardrobeFrame", "DressUpFrame", "CollectionsJournal",
+  "AuctionHouseFrame", "AuctionFrame", "ProfessionsFrame", "TradeSkillFrame", "CraftFrame", "MerchantFrame",
+  "MailFrame", "BankFrame", "AccountBankPanel", "QuestFrame", "GossipFrame", "TradeFrame", "EncounterJournal",
+  "PVEFrame", "CommunitiesFrame", "GuildFrame", "AchievementFrame", "CharacterFrame", "SpellBookFrame",
+  "PlayerSpellsFrame", "ClassTalentFrame", "TalentFrame", "BarberShopFrame", "ClassTrainerFrame",
+  "ItemUpgradeFrame", "ItemSocketingFrame", "InspectFrame", "LootFrame", "TaxiFrame", "SettingsPanel",
+  "GameMenuFrame", "CalendarFrame", "FriendsFrame", "HelpFrame", "AddonList" }
+
+local function Box(fr)
+  local ok, l, r, t, b, sc = pcall(function()
+    return fr:GetLeft(), fr:GetRight(), fr:GetTop(), fr:GetBottom(), fr:GetEffectiveScale()
+  end)
+  if not ok or not (l and r and t and b and sc) then return nil end
+  return l * sc, r * sc, t * sc, b * sc
+end
+
+local function PanelOverChat()
+  local cf = _G.ChatFrame1
+  if not cf then return false end
+  local cl, cr, ct, cb = Box(cf)
+  if not cl then return false end
+  ct = ct + 40                                   -- onglets du tchat au-dessus
+  local function Over(fr)
+    if type(fr) ~= "table" or fr == cf or not (fr.IsShown and fr:IsShown()) then return false end
+    local l, r, t, b = Box(fr)
+    return l and l < cr and r > cl and b < ct and t > cb
+  end
+  for _, name in ipairs(PANELS_UNDER) do
+    if Over(_G[name]) then return true end
+  end
+  -- toutes les fenetres que le jeu ouvre comme "panneaux" (nouvelles fenetres comprises, quel que soit leur nom)
+  if GetUIPanel then
+    for _, pos in ipairs({ "left", "center", "right", "doublewide", "fullscreen" }) do
+      local ok, fr = pcall(GetUIPanel, pos)
+      if ok and Over(fr) then return true end
+    end
+  end
+  -- et celles qui se ferment avec Echap
+  for _, name in ipairs(UISpecialFrames or {}) do
+    if Over(_G[name]) then return true end
+  end
+  return false
+end
+
 local function MenuOpen()
   for _, name in ipairs({ "ChatMenu", "DropDownList1", "L_DropDownList1", "LibDropDownMenu_List1" }) do
     local fr = _G[name]
@@ -466,19 +686,8 @@ local function MenuOpen()
   end
   -- carte du monde ouverte EN GRAND (touche M) : le traducteur se poserait dessus.
   -- La petite carte (fenetree) ne cache pas le traducteur.
-  local map = _G.WorldMapFrame
-  if map and map.IsShown and map:IsShown() then
-    local okM, big = false, nil
-    if map.IsMaximized then okM, big = pcall(map.IsMaximized, map) end
-    if okM then
-      if big then return true end
-    else
-      -- pas de IsMaximized sur ce client : "en grand" = plus des 3/4 de la largeur de l'ecran
-      local okW, w = pcall(function() return map:GetWidth() * map:GetEffectiveScale() end)
-      local okU, uw = pcall(function() return UIParent:GetWidth() * UIParent:GetEffectiveScale() end)
-      if okW and okU and w and uw and uw > 0 and w >= uw * 0.75 then return true end
-    end
-  end
+  if BigMapOpen() then return true end
+  if PanelOverChat() then return true end
   if Menu and Menu.GetManager then
     local ok, open = pcall(function()
       local mg = Menu.GetManager()
@@ -495,6 +704,15 @@ local function WatchMenus()
   if open ~= menuOpen or (open and now - menuSent > 3) then
     menuOpen, menuSent = open, now
     table.insert(queue, 1, "ui\31" .. (open and "1" or "0") .. "\31\31")
+  end
+  -- carte en grand : la bande de cases disparait aussi (apres 1 s, le temps que le traducteur lise "1" et se cache).
+  -- Le traducteur reste cache tant qu'il ne voit plus la bande ; elle revient avec "0" a la fermeture.
+  if BigMapOpen() then
+    mapSince = mapSince or now
+    if now - mapSince > 1 and frame:GetAlpha() > 0 then frame:SetAlpha(0) end
+  else
+    mapSince = nil
+    if frame:GetAlpha() < 1 then frame:SetAlpha(1) end
   end
 end
 
