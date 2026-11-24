@@ -42,7 +42,7 @@ try:
 except ImportError:  # pas sous Windows
     winsound = None
 
-VERSION = "2.0.1"
+VERSION = "2.0.2"
 # Verification de mise a jour : le fichier version.txt du depot contient le numero de la derniere version.
 VERSION_URL = "https://raw.githubusercontent.com/puenteur/Wow-traducteur/main/version.txt"
 KOFI_URL = "https://ko-fi.com/puenteur"
@@ -66,7 +66,8 @@ enchanting engineering cooking fishing mining herbalism skinning jewelcrafting i
 # Nouveautes affichees une fois dans la fenetre apres une mise a jour (pas au premier lancement).
 NEWS = {
     "fr": ["WoW Traducteur %s" % VERSION,
-           "- Nouveau en %s : bouton \u00ab Bug \u00bb pour signaler un probl\u00e8me par mail ; clic sur un pseudo = r\u00e9ponse dans le canal de son message (guilde /g, groupe /p, Commerce /2..., clic droit = chuchotement), en fran\u00e7ais si son message l'\u00e9tait ; \u00ab [FR] (Guilde) \u00bb \u00e0 la couleur du canal ; traductions en gras ; un seul traducteur ouvert \u00e0 la fois ; liens Wowhead vers la page exacte de l'objet (section Forever) ; derniers coups re\u00e7us au survol de \u00ab Vous avez succomb\u00e9 \u00bb (si le jeu le permet) ; total de l'argent r\u00e9cup\u00e9r\u00e9 au courrier ; le traducteur et la bande s'effacent quand la carte en grand ou une grande fen\u00eatre du jeu passe sur le tchat ; fiche du joueur au survol de son pseudo (option, d\u00e9sactiv\u00e9e par d\u00e9faut) ; meilleures traductions (fran\u00e7ais pris pour de l'anglais, \u00ab oom \u00bb, \u00ab chill \u00bb, \u00ab mage \u00bb, \u00ab bro \u00bb, \u00ab w/me \u00bb, \u00ab Stockade run \u00bb, eau de mage, armes de lanceur de sorts, guilde pour monter de niveau, IF / Darna, fautes de frappe...). Mets aussi ChatFR \u00e0 jour." % VERSION,
+           "- Nouveau en %s : total de l\u2019argent du courrier qui s\u2019affiche maintenant \u00e0 chaque fois ; messages avec plusieurs liens ([Qu\u00eate][Objet]...) de nouveau traduits ; fen\u00eatre des nouveaut\u00e9s plus lisible (un titre par version, une puce par nouveaut\u00e9) ; fiche du joueur aussi pour les membres de guilde cit\u00e9s dans un message du jeu ; meilleures traductions : \u00ab pg \u00bb = pas grave, \u00ab LFW \u00bb = propose ses services, \u00ab wtbuy \u00bb, \u00ab port \u00bb = portail, \u00ab fiery \u00bb = Arme flamboyante, vitesse des bottes, \u00ab /w me \u00bb = chuchote-moi, \u00ab 1g a go \u00bb, \u00ab vend \u00bb = vendre au marchand, \u00ab doomer \u00bb. Mets aussi ChatFR \u00e0 jour." % VERSION,
+           "- 2.0.1 : bouton \u00ab Bug \u00bb pour signaler un probl\u00e8me par mail ; clic sur un pseudo = r\u00e9ponse dans le canal de son message (guilde /g, groupe /p, Commerce /2..., clic droit = chuchotement), en fran\u00e7ais si son message l'\u00e9tait ; \u00ab [FR] (Guilde) \u00bb \u00e0 la couleur du canal ; traductions en gras ; un seul traducteur ouvert \u00e0 la fois ; liens Wowhead vers la page exacte de l'objet (section Forever) ; derniers coups re\u00e7us au survol de \u00ab Vous avez succomb\u00e9 \u00bb (si le jeu le permet) ; total de l'argent r\u00e9cup\u00e9r\u00e9 au courrier ; le traducteur et la bande s'effacent quand la carte en grand ou une grande fen\u00eatre du jeu passe sur le tchat ; fiche du joueur au survol de son pseudo (option, d\u00e9sactiv\u00e9e par d\u00e9faut) ; meilleures traductions (fran\u00e7ais pris pour de l'anglais, \u00ab oom \u00bb, \u00ab chill \u00bb, \u00ab mage \u00bb, \u00ab bro \u00bb, \u00ab w/me \u00bb, \u00ab Stockade run \u00bb, eau de mage, armes de lanceur de sorts, guilde pour monter de niveau, IF / Darna, fautes de frappe...). Mets aussi ChatFR \u00e0 jour.",
            "- 2.0.0 : ic\u00f4nes de pi\u00e8ces dans les traductions (\u00ab 4 or 25 argent \u00bb) ; fen\u00eatre repli\u00e9e plus propre (bouton \u25a1 lisible, croix enti\u00e8re, sans la poign\u00e9e) ; meilleures traductions : noms des m\u00e9tiers du jeu (travailleur du cuir, d\u00e9peceur), \u00ab lfg + qu\u00eate \u00bb = je cherche un groupe pour..., \u00ab one last for \u00bb = il faut un joueur de plus pour..., \u00ab up \u00bb, \u00ab rouge \u00bb = voleur, \u00ab tips \u00bb = pourboire, coffrets verrouill\u00e9s, \u00ab macrod \u00bb, \u00ab in IF \u00bb = Forgefer.",
            "- 1.9.9 : correctif, la barre d'\u00e9criture ne se d\u00e9forme plus quand la souris passe dessus ; boutons qui s'\u00e9claircissent au survol ; plus de ligne d'info sous la barre : explications en info-bulles (d\u00e9sactivables dans les R\u00e9glages) et messages dans une petite bulle ; le tchat descend jusqu'\u00e0 la barre, sans ligne vide ; bouton \u00ab Nouveaut\u00e9s des versions \u00bb dans l'aide \u00ab ? \u00bb ; rectangle cache-bande carr\u00e9 ; meilleures traductions (\u00ab ops \u00bb = oups, \u00ab tips optional \u00bb = pourboire facultatif).",
            "- 1.9.8 : bouton \u2713 ABC pour corriger ton orthographe avant d'envoyer (en b\u00eata) ; barre d'\u00e9criture sur une ligne, fen\u00eatre et boutons aux coins arrondis, R\u00e9glages relook\u00e9s ; 7 th\u00e8mes retravaill\u00e9s et nouveaux embl\u00e8mes Alliance et Horde, le th\u00e8me change d\u00e8s qu'on le choisit ; option pour cacher la bande de cases color\u00e9es (R\u00e9glages, essai) ; quand Google bloque, Bing prend le relais et Google se repose plus longtemps ; moins de demandes \u00e0 Google ; \u00ab slt \u00bb, \u00ab lu \u00bb, \u00ab tlm \u00bb... bien traduits dans tes r\u00e9ponses ; la touche Entr\u00e9e ne traduit plus par accident ; meilleures traductions (La Prison, LFW, Arme flamboyante, Crois\u00e9, +2 Endurance, in IF = Forgefer).",
@@ -82,7 +83,8 @@ NEWS = {
            "- Fen\u00eatre des nouveaut\u00e9s apr\u00e8s chaque mise \u00e0 jour (celle-ci !).",
            "- Meilleures traductions : lfg/lfm, wts/wtb, Deadmines, jargon russe (\u041b\u0424\u0413), mots coll\u00e9s aux liens, petits messages en espagnol ou en letton, moins d'appels inutiles \u00e0 Google."],
     "en": ["WoW Traducteur %s" % VERSION,
-           "- New in %s: \"Bug\" button to report a problem by email; click a name = reply in the channel of their message (guild /g, party /p, Trade /2..., right-click = whisper), in French if their message was; \"[FR] (Guild)\" in the channel color; translations in bold; only one translator open at a time; Wowhead links to the exact item page (Forever section); last hits taken when hovering \"You died\" (if the game allows it); total money collected from the mailbox; the translator and the strip step aside when the big map or a large game window covers the chat; player card when hovering a name (option, off by default); better translations (French taken for English, \"oom\", \"chill\", \"mage\", \"bro\", \"w/me\", \"Stockade run\", mage water, caster weapons, leveling guild, IF / Darna, typos...). Update ChatFR too." % VERSION,
+           "- New in %s: the mailbox money total now shows every time; messages with several links ([Quest][Item]...) translated again; clearer What's new window (one title per version, one bullet per change); player card also for guild members named in a game message; better translations: \"pg\" (French \"no big deal\"), \"LFW\", \"wtbuy\", \"port\" = portal, \"fiery\" = Fiery Weapon, boots speed, \"/w me\", \"1g a go\", \"vend\", \"doomer\". Update ChatFR too." % VERSION,
+           "- 2.0.1: \"Bug\" button to report a problem by email; click a name = reply in the channel of their message (guild /g, party /p, Trade /2..., right-click = whisper), in French if their message was; \"[FR] (Guild)\" in the channel color; translations in bold; only one translator open at a time; Wowhead links to the exact item page (Forever section); last hits taken when hovering \"You died\" (if the game allows it); total money collected from the mailbox; the translator and the strip step aside when the big map or a large game window covers the chat; player card when hovering a name (option, off by default); better translations (French taken for English, \"oom\", \"chill\", \"mage\", \"bro\", \"w/me\", \"Stockade run\", mage water, caster weapons, leveling guild, IF / Darna, typos...). Update ChatFR too.",
            "- 2.0.0: coin icons in translations; cleaner rolled-up window (readable \u25a1 button, full close cross, no resize grip); better translations: in-game profession names, \"lfg + quest\", \"one last for\", \"up\", \"rouge\" = rogue, \"tips\" = tip money, lockboxes, \"macrod\", \"in IF\" = Ironforge.",
            "- 1.9.9: hotfix, the write bar no longer gets garbled when the mouse moves over it; buttons light up on hover; no more info line under the bar: explanations in tooltips (can be turned off in Settings) and messages in a small bubble; the chat goes down to the bar, without an empty line; \"What's new\" button in the \"?\" help; square strip cover; better translations (\"ops\" = oops, \"tips optional\" = tip optional).",
            "- 1.9.8: \u2713 ABC button to fix your French spelling before sending (beta); write bar on one line, rounded window and buttons, restyled Settings; 7 reworked themes and new Alliance and Horde emblems, the theme changes as soon as you pick it; option to hide the strip of colored squares (Settings, test); when Google blocks, Bing takes over and Google rests longer; fewer requests to Google; Enter no longer translates by accident; better translations (The Stockade, LFW, Fiery Weapon, Crusader, +2 Stamina, in IF = Ironforge).",
@@ -1717,7 +1719,13 @@ LEX_PROFS = {"leatherworker": "travailleur du cuir", "leatherworkers": "travaill
              "skinning": "Dépeçage", "lockbox": "coffret verrouillé", "lockboxes": "coffrets verrouillés",
              "junkbox": "coffret", "junkboxes": "coffrets"}
 LEX_ENCHANTS = {"fiery weapon": "Arme flamboyante", "fiery weapons": "Arme flamboyante", "crusader": "Croisé",
-                "stamina": "Endurance", "stam": "Endurance"}
+                "stamina": "Endurance", "stam": "Endurance",
+                # "lesser boots speed" : Google donnait "vitesse de demarrage moindre" (boots = demarrage)
+                "lesser boots speed": "Vitesse mineure (bottes)", "minor boots speed": "Vitesse mineure (bottes)",
+                "boots speed": "Vitesse mineure (bottes)", "boot speed": "Vitesse mineure (bottes)",
+                "boots minor speed": "Vitesse mineure (bottes)", "minor speed boots": "Vitesse mineure (bottes)",
+                "speed boots": "Vitesse mineure (bottes)", "minor speed": "Vitesse mineure",
+                "boots - minor speed": "Vitesse mineure (bottes)", "boots: minor speed": "Vitesse mineure (bottes)"}
 # "dm me" / "dm pls" = message prive, pas les Mortemines.
 _PLACE_NOT_BEFORE = {"dm": r"(?!\s*(?:me|him|her|them|u|you|pls|plz)\b)"}
 
@@ -2486,7 +2494,7 @@ SURE_FR = set("je j tu il elle nous vous ils elles est suis sont es ai as avons 
               "bcp pcq psk pq pkoi koi kwa keske kestu qd qqch qqun qq1 rdv mtn auj ajd dmn tjr tjrs ptet ptetre "
               "jvais jvien jviens jreviens jarrive jsuis chui chuis jte jpense dac dacc ouep ouai frr frero "
               "bsx biz bisous bn aplus bonap trkl tranquille ptn wesh wsh tg fdp ntm xptdr pex pexe pexer "
-              "donj donjs grp "
+              "donj donjs grp pg "
               # "on a finit globalement la non?" etait pris pour de l'anglais ("on", "a") et traduit n'importe comment
               "fini finit finis finie vraiment normalement franchement justement".split())
 # Mots d'une autre langue : s'il y en a un, on laisse Google decider (message mixte ou etranger).
@@ -2637,7 +2645,7 @@ LEX_EXPAND = {
     "ty": "thank you", "thx": "thanks",
     "tyvm": "thank you very much", "pls": "please", "plz": "please", "ppl": "people",
     "lfg": "looking for group", "lfm": "looking for more", "lfr": "looking for raid", "lf": "looking for",
-    "wts": "want to sell", "wtb": "want to buy", "wtt": "want to trade", "cod": "cash on delivery", "ea": "each",
+    "wts": "want to sell", "wtb": "want to buy", "wtbuy": "want to buy", "wtsell": "want to sell", "wtt": "want to trade", "cod": "cash on delivery", "ea": "each",
     "idk": "I don't know", "imo": "in my opinion", "btw": "by the way", "tbh": "to be honest",
     "brb": "be right back", "afk": "away from keyboard", "omw": "on my way",
     "np": "no problem", "sry": "sorry", "thru": "through", "cuz": "because", "bc": "because",
@@ -2650,7 +2658,8 @@ LEX_EXPAND = {
     "pt": "group", "grp": "group",
     "any1": "anyone", "some1": "someone", "every1": "everyone",
     "mats": "materials", "mat": "material",
-    "lfw": "looking for work", "wep": "weapon", "weap": "weapon",   # "Enchanter in SW LFW. Got FIERY WEP."
+    "lfw": "offering my services",   # "LFW your mats" : Google donnait "recherche travail vos materiaux"
+    "wep": "weapon", "weap": "weapon",   # "Enchanter in SW LFW. Got FIERY WEP."
     "macrod": "done with a macro", "macroed": "done with a macro",
     "rouge": "rogue", "rouges": "rogues",      # faute courante en anglais ("LF ROUGE") : un Francais lisait la couleur   # "mustve been macrod" restait tel quel
     "comps": "components",                    # "I have comps" = j'ai les composants (materiaux)
@@ -2666,6 +2675,22 @@ EN_JARGON = {k for k in LEX_EXPAND if re.fullmatch(r"[a-z]+", k) and k not in SU
 # Expressions entieres (regex, remplacement) appliquees avant les mots seuls : "LFM Hogger" ne doit pas
 # devenir "cherche plus de Hogger", ni "whisp for inv" "fouette pour inviter".
 LEX_PHRASES = [
+    # "/w me 1g a go" = chuchote-moi, 1 po la fois (Google : "/ avec moi 1 po a la fois")
+    (r"(?<![\w/])/?w\s+me\b", "whisper me"),
+    (r"(\d+\s*(?:g|s|c|gold|silver|copper|po|pa|pc)\b)\s+(?:a|per|each)\s+go\b", r"\1 per use"),
+    # "you have to have fiery" = l'enchantement Arme flamboyante (Google : "le fougueux")
+    (r"\b(have|has|get|got|need|needs|want|wants|with|put|buy|sell|wts|wtb|on)\s+(a\s+|the\s+)?fiery\b"
+     r"(?!\s+(?:weapons?|wep|weap|core|cores|enchant\w*|totem|shield|claymore|blade|plate|war\w*))",
+     r"\1 \2fiery weapon"),
+    # "wtbuy port from IF to Darnassus" : "port" = portail de mage (Google : "port", comme un port maritime)
+    (r"\b(port)(s?)\b(?=\s+(?:to|from|for|in|ir|if|sw|org|uc|tb|darn\w*|stormwind|ironforge|orgrimmar)\b)", r"portal\2"),
+    # "[Casque] LFW your mats + fee" = je le fabrique avec tes composants (Google : "recherche travail vos materiaux")
+    (r"\blfw\s+(?:with\s+)?(?:your|ur|ya)\s+mats\b", "I craft it with your materials"),
+    # "i'd rather vend this" = vendre au marchand (Google : "vendre", comme a l'hotel des ventes)
+    (r"\bvend(?=\s+(?:this|that|it|them|those|these|all|everything|my|the|stuff|junk|greys?|grays?|shit)\b)",
+     "sell to the merchant"),
+    # "fellow doomer" = pessimiste (argot internet), pas "condamne"
+    (r"\bdoomers\b", "pessimists"), (r"\bdoomer\b", "pessimist"),
     (r"(?<![\w/])w/\s*(?=now\b|for inv)", "whisper "),     # "w/ now for inv" = chuchote-moi, pas "with"
     # "..., your mats + tip, w/me :)" en fin de message = chuchote-moi (Google : "avec moi")
     (r"(^|[,.;!]\s*)w/\s*me\b(?=[\s.!:;()<>pD3]*$|\s+for\s+(?:an?\s+)?inv)", r"\1whisper me"),
@@ -2793,7 +2818,8 @@ def _lex_key(text, max_run):
 
 
 # Jargon WoW ecrit en cyrillique ("ЛФГ ТЮРЬМА" = "LFG Prison") : Google le prend pour des mots russes
-RU_SLANG = {"лфг": "LFG", "лфм": "LFM", "втс": "WTS", "втб": "WTB", "гс": "GS", "дд": "DPS", "дпс": "DPS",
+RU_SLANG = {"плюсуем": "пишите +", "плюсуйте": "пишите +",   # "plusuem" = ecrivez + pour venir
+             "лфг": "LFG", "лфм": "LFM", "втс": "WTS", "втб": "WTB", "гс": "GS", "дд": "DPS", "дпс": "DPS",
             "хил": "heal", "танк": "tank", "тюрьма": "Stockade", "тюрьму": "Stockade", "тюрьмы": "Stockade",
             "дедмайны": "Deadmines", "дм": "DM", "вк": "WC", "сфк": "SFK", "ск": "SM"}
 _RU_SLANG_RE = re.compile(r"(?<![\w])(" + "|".join(sorted(RU_SLANG, key=len, reverse=True)) + r")(?![\w])", re.I)
@@ -2824,7 +2850,8 @@ FR_SLANG = {"pex": "leveling", "pexing": "leveling", "pexe": "monte de niveau", 
             "jviens": "je viens", "jreviens": "je reviens", "jsuis": "je suis", "jte": "je te", "jpense": "je pense",
             "dac": "d'accord", "dacc": "d'accord", "ouep": "ouais", "frr": "fr\u00e8re", "frero": "fr\u00e8re",
             "bsx": "bisous", "biz": "bisous", "bn": "bonne nuit", "aplus": "\u00e0 plus", "bonap": "bon app\u00e9tit",
-            "trkl": "tranquille", "xptdr": "lol"}
+            "trkl": "tranquille", "xptdr": "lol",
+            "pg": "pas grave"}   # "hahaha pg" donnait "hahaha page"
 _FR_SLANG_RE = re.compile(r"(?<![\w'])(" + "|".join(sorted(FR_SLANG, key=len, reverse=True)) + r")(?![\w'])", re.I)
 
 
@@ -2940,12 +2967,17 @@ def is_questie(text):
     return bool(_QUESTIE_ANNOUNCE_RE.match(text or ""))
 
 
+_LAUGH_RE = re.compile(r"(?i)^(?:(?:[hj]a){2,}h?|(?:h[eiu]){2,}h?|l+o+l+|x+d+|m+d+r+|k{3,}|ptdr|lmao|rofl)$")
+
+
 def unknown_abbrev(text):
     """Abreviation inconnue sans voyelle ("lfr", "mm") : Google invente une langue ("lfr" pris pour de
     l'islandais -> "selon"). On l'affiche telle quelle. Les abreviations connues ("brb", "thx") passent."""
     if re.search(r"[^\sA-Za-z0-9?!.,]", text):
         return False
     words = re.findall(r"[A-Za-z]+", text)
+    # les rires ne comptent pas : "hahaha pg" -> "pg" reste tel quel (Google donnait "hahaha page")
+    words = [w for w in words if not _LAUGH_RE.match(w)]
     if not words or len(words) > 3:
         return False
     return all(not re.search("[aeiouyAEIOUY]", w) and w.lower() not in LEX_EXPAND and w.lower() not in LEX_FULL
@@ -3726,10 +3758,12 @@ class App:
         """Survol d'un lien : la fiche s'affiche apres un court instant, comme dans WoW."""
         idx = self.text.index("@%d,%d" % (event.x, event.y))
         link, name = self.link_at(idx)
-        if not name and self.cfg.get("player_card", False) and "name" in self.text.tag_names(idx):
-            # pseudo : sa fiche (classe, niveau), si l'option est cochee dans les Reglages
-            rng = self.text.tag_prevrange("name", idx + "+1c")
-            who = self.text.get(*rng).strip() if rng else ""
+        tags = self.text.tag_names(idx)
+        wtag = "name" if "name" in tags else ("link_o" if "link_o" in tags else None)
+        if not name and wtag and self.cfg.get("player_card", False):
+            # pseudo (auteur, ou [Pseudo] dans "vient de se connecter") : sa fiche, si l'option est cochee
+            rng = self.text.tag_prevrange(wtag, idx + "+1c")
+            who = self.text.get(*rng).strip().strip("[]").strip() if rng else ""
             if who and who.lower() in getattr(self, "whois", {}):
                 link, name = "name_who", who
         job = getattr(self, "_hover_job", None)
@@ -3859,8 +3893,20 @@ class App:
         t = tk.Text(w, bg=T["bg"], fg=T["fg"], wrap="word", relief="flat", padx=12, pady=8,
                     font=("Segoe UI", fs), highlightthickness=0, bd=0, spacing1=2, spacing3=4, cursor="arrow")
         t.pack(fill="both", expand=True, padx=12)
+        # une version = un titre ("Nouveau en 2.0.1", "2.0.0") puis une puce par nouveaute (separees par " ; ")
+        # avec retrait des lignes suivantes : avant, chaque version etait un seul gros paragraphe
+        t.tag_configure("head", font=("Segoe UI", fs, "bold"), foreground=T["name"], spacing1=8)
+        t.tag_configure("item", lmargin1=6, lmargin2=22)
         for ln in lines[1:]:
-            t.insert("end", "\u2022  " + ln.lstrip("- ") + "\n")
+            body = ln.lstrip("- ").strip()
+            m = re.match(r"^((?:Nouveau en|New in)\s+[\d.]+|[\d.]+)\s*:\s*(.*)$", body, re.S)
+            if m:
+                t.insert("end", m.group(1) + "\n", "head")
+                parts = [p.strip() for p in re.split(r"\s*;\s+", m.group(2)) if p.strip()]
+            else:
+                parts = [body]
+            for part in parts:
+                t.insert("end", "\u2022  " + part[:1].upper() + part[1:] + "\n", "item")
         t.configure(state="disabled")
 
         def help_():
@@ -4662,7 +4708,12 @@ class App:
             except Exception as e:  # noqa
                 # affiche l'erreur sous le message (la barre d'etat est vite ecrasee par le pont)
                 trans, lang = _("\u26a0 traduction impossible : %s") % err_text(e), "?"
-        if trans and not trans.startswith("\u26a0") and near_same(trans, text):
+        # comparaison SANS les liens : "[Magie des Tenebres][Tharil'zun][Avis de recherche...] LFM \ плюсуем"
+        # -> "... LFM \ plus" semblait identique (les liens font presque tout le texte) : traduction cachee
+        _t_cmp = trans or ""
+        for _seg in (link_segs if has_links else []):
+            _t_cmp = _t_cmp.replace(_seg, " ")
+        if trans and not trans.startswith("\u26a0") and near_same(_t_cmp, judge):
             # "traduction" identique au message ("lfg/lfm" pris pour de l'allemand) : rien a traduire,
             # c'est deja lisible dans ta langue -> pas de ligne en double, badge de ta langue
             trans, lang = None, "?"     # pas de badge : on ne sait pas vraiment quelle langue c'etait
