@@ -406,7 +406,7 @@ end
 -- Fiche du joueur au survol de son pseudo dans le traducteur : classe, race et niveau.
 -- Classe et race : le jeu les donne pour tout joueur qui parle (GetPlayerInfoByGUID).
 -- Niveau : seulement s'il est dans ton groupe, ta guilde, tes amis, ou en cible / sous la souris.
-local whoSent, guildLvl, seenLvl, whoGuid, whoNoLvl = {}, {}, {}, {}, {}
+local whoSent, guildLvl, seenLvl, whoGuid, whoNoLvl, guildInfo = {}, {}, {}, {}, {}, {}
 local gf = CreateFrame("Frame")
 gf:RegisterEvent("GUILD_ROSTER_UPDATE")
 gf:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -455,8 +455,12 @@ gf:SetScript("OnEvent", function(_, event, arg1)
   if not (GetNumGuildMembers and GetGuildRosterInfo) then return end
   local n = GetNumGuildMembers() or 0
   for i = 1, n do
-    local nm, _, _, lv = GetGuildRosterInfo(i)
-    if type(nm) == "string" and type(lv) == "number" then guildLvl[(nm:match("^[^%-]+") or nm)] = lv end
+    local nm, rank, _, lv, cls, zone = GetGuildRosterInfo(i)
+    if type(nm) == "string" and type(lv) == "number" then
+      local short = nm:match("^[^%-]+") or nm
+      guildLvl[short] = lv
+      guildInfo[short] = { lv = lv, cls = cls, rank = rank, zone = zone }
+    end
   end
 end)
 
@@ -499,6 +503,26 @@ function ns.PushWho(author, guid)
          "Level unknown: hover or target them in game, or type /who " .. short)
   whoSent[author], whoGuid[author], whoNoLvl[author] = now, guid, (not lv) or nil
   queue[#queue + 1] = "who\31" .. (l1 .. "\30" .. l2):gsub("[\1-\29\31]", " ") .. "\31" .. author:gsub("[\1-\31]", " ") .. "\31"
+  if #queue > MAXQ then table.remove(queue, 1) end
+end
+
+-- Membre de ta guilde cite dans un message du jeu ("[Zziska Cj] vient de se connecter") : sa fiche vient
+-- de la liste de guilde (classe, rang, niveau, zone), sans qu'il ait besoin d'avoir parle.
+local function PushWhoName(name)
+  if not frame or type(name) ~= "string" or name == "" then return end
+  local short = name:match("^[^%-]+") or name
+  local g = guildInfo[short]
+  if not g then return end
+  local now = GetTime and GetTime() or 0
+  if whoSent[name] and now - whoSent[name] < 60 then return end
+  if #queue > 20 then return end
+  local L = ns.L or function(fr) return fr end
+  local l1 = (type(g.cls) == "string" and g.cls ~= "") and g.cls or "?"
+  if type(g.rank) == "string" and g.rank ~= "" then l1 = l1 .. " - " .. L("Guilde : ", "Guild: ") .. g.rank end
+  local lines = l1 .. "\30" .. L("Niveau ", "Level ") .. g.lv
+  if type(g.zone) == "string" and g.zone ~= "" then lines = lines .. "\30" .. g.zone end
+  whoSent[name] = now
+  queue[#queue + 1] = "who\31" .. lines:gsub("[\1-\29\31]", " ") .. "\31" .. name:gsub("[\1-\31]", " ") .. "\31"
   if #queue > MAXQ then table.remove(queue, 1) end
 end
 
@@ -570,6 +594,7 @@ function ns.BridgePush(event, msg, author, chan, tries, ncol)
     if ltype == "quest" then name = QuestTitle(tonumber(hl:match("^quest:(%d+)"))) or name end
     if TIP_TYPES[ltype] then pcall(PushTip, hl, name) end
     if ltype == "death" then pcall(PushDeath, hl, name) end
+    if ltype == "player" then pcall(PushWhoName, name) end
   end
 end
 

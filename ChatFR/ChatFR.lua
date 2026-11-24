@@ -1305,15 +1305,22 @@ do
     if c > 0 or #t == 0 then t[#t + 1] = c .. L(" pc", "c") end
     return table.concat(t, " ")
   end
-  mf:RegisterEvent("MAIL_SHOW")
-  mf:RegisterEvent("MAIL_CLOSED")
-  mf:SetScript("OnEvent", function(_, event)
-    if not GetMoney then return end
-    if event == "MAIL_SHOW" then
-      start = start or GetMoney()
-    elseif start then                       -- MAIL_CLOSED (le jeu l'envoie parfois deux fois)
-      local diff = GetMoney() - start
-      start = nil
+  -- Ouverture / fermeture vues de plusieurs facons (le jeu actuel n'envoie pas toujours MAIL_CLOSED) :
+  -- evenements MAIL_*, PLAYER_INTERACTION_MANAGER_* (courrier = 17) et la fenetre MailFrame elle-meme.
+  -- Avant : une fermeture ratee gardait l'argent d'une ancienne ouverture, et plus rien ne s'affichait.
+  local open = false
+  local function Open()
+    if open or not GetMoney then return end
+    open, start = true, GetMoney()
+  end
+  local function Close()
+    if not open then return end
+    open = false
+    local s0 = start
+    start = nil
+    -- petit delai : l'argent du dernier courrier peut arriver juste apres la fermeture
+    local function Show()
+      local diff = GetMoney() - s0
       if diff > 0 then
         local msg = L("Courrier : vous avez r\195\169cup\195\169r\195\169 ", "Mail: you collected ") .. Coins(diff) ..
           L(" au total.", " in total.")
@@ -1321,5 +1328,32 @@ do
         if ns.BridgePush then pcall(ns.BridgePush, "CHAT_MSG_SYSTEM", msg, "", "") end
       end
     end
+    if C_Timer and C_Timer.After then C_Timer.After(1, function() pcall(Show) end) else pcall(Show) end
+  end
+  local MAIL_TYPE = (Enum and Enum.PlayerInteractionType and Enum.PlayerInteractionType.MailInfo) or 17
+  for _, ev in ipairs({ "MAIL_SHOW", "MAIL_CLOSED", "PLAYER_INTERACTION_MANAGER_FRAME_SHOW",
+                        "PLAYER_INTERACTION_MANAGER_FRAME_HIDE" }) do
+    pcall(mf.RegisterEvent, mf, ev)          -- evenement absent de ce client : ignore
+  end
+  mf:SetScript("OnEvent", function(_, event, kind)
+    if event == "MAIL_SHOW" then Open()
+    elseif event == "MAIL_CLOSED" then Close()
+    elseif kind == MAIL_TYPE then
+      if event == "PLAYER_INTERACTION_MANAGER_FRAME_SHOW" then Open() else Close() end
+    end
+  end)
+  if MailFrame and MailFrame.HookScript then
+    MailFrame:HookScript("OnShow", Open)
+    MailFrame:HookScript("OnHide", Close)
+  end
+  -- filet de securite : on regarde aussi toutes les 0,5 s si la fenetre du courrier est ouverte
+  -- (si le jeu n'envoie aucun des signaux ci-dessus)
+  local wait = 0
+  mf:SetScript("OnUpdate", function(_, el)
+    wait = wait + (el or 0)
+    if wait < 0.5 then return end
+    wait = 0
+    local shown = MailFrame and MailFrame.IsShown and MailFrame:IsShown()
+    if shown and not open then Open() elseif not shown and open then Close() end
   end)
 end
