@@ -113,7 +113,13 @@ local function Layout()
   -- l'ecran (fenetre maximisee) et couper la premiere ligne de cases.
   frame:ClearAllPoints()
   -- u = taille d'une case (CELL pixels) : INSET est en pixels
-  frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", INSET * u / CELL, -INSET * u / CELL)
+  -- coin choisi avec /cfr pont coin (haut-gauche par defaut) ; le traducteur cherche dans les 4 coins
+  local corner = ChatFRDB and ChatFRDB.bridgecorner
+  if corner ~= "TOPRIGHT" and corner ~= "BOTTOMLEFT" and corner ~= "BOTTOMRIGHT" then corner = "TOPLEFT" end
+  local d = INSET * u / CELL
+  local sx = (corner == "TOPRIGHT" or corner == "BOTTOMRIGHT") and -d or d
+  local sy = (corner == "BOTTOMLEFT" or corner == "BOTTOMRIGHT") and d or -d
+  frame:SetPoint(corner, UIParent, corner, sx, sy)
   for i = 1, NCELLS do
     local c, r = (i - 1) % COLS, floor((i - 1) / COLS)
     local t = cells[i]
@@ -130,6 +136,10 @@ local function Tick(_, el)
   seq = seq % 255 + 1
   Render(Pack(rec))
   nextAt = HOLD
+end
+
+function ns.BridgeLayout()
+  if frame then Layout() end
 end
 
 function ns.BridgeSetShown(on)

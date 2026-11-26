@@ -352,19 +352,8 @@ local function BuildSettings(title, close)
   MakeCheck(settingsPanel, Next(), L("Addon actif", "Addon enabled"),
     function() return ChatFRDB.enabled end,
     function(v) ChatFRDB.enabled = v end)
+  -- (la fenetre mot a mot n'est plus proposee : ses reglages sont retires du panneau)
   if not en then
-    MakeCheck(settingsPanel, Next(), L("Fenêtre mot à mot", "Word-by-word window"),
-      function() return win and win:IsShown() end,
-      function(v)
-        ChatFRDB.hidden = not v
-        if win then if v then win:Show() else win:Hide() end end
-      end)
-    MakeCheck(settingsPanel, Next(), L("Ligne traduite (->)", "Translated line (->)"),
-      function() return ChatFRDB.showfr end,
-      function(v) ChatFRDB.showfr = v end)
-    MakeCheck(settingsPanel, Next(), L("Annoter les petits mots", "Annotate small words"),
-      function() return ChatFRDB.common end,
-      function(v) ChatFRDB.common = v end)
     MakeCheck(settingsPanel, Next(), L("Annotations dans le tchat", "Annotations in the chat"),
       function() return ChatFRDB.chatnotes end,
       function(v) ChatFRDB.chatnotes = v end)
@@ -376,14 +365,6 @@ local function BuildSettings(title, close)
       if LoggingChat then LoggingChat(v) end
     end)
 
-  MakeCheck(settingsPanel, Next(), L("Alertes (pseudo / mots)", "Alerts (name / words)"),
-    function() return ChatFRDB.alert end,
-    function(v) ChatFRDB.alert = v end)
-
-  MakeCheck(settingsPanel, Next(), L("Masquer si une fenêtre est ouverte", "Hide when a window is open"),
-    function() return ChatFRDB.autohide end,
-    function(v) ChatFRDB.autohide = v end)
-
   -- envoyes en plus au traducteur externe (affiches sans traduction)
   MakeCheck(settingsPanel, Next(), L("Traducteur : PNJ", "Translator: NPCs"),
     function() return ChatFRDB.brNpc end,
@@ -394,35 +375,35 @@ local function BuildSettings(title, close)
   MakeCheck(settingsPanel, Next(), L("Traducteur : butin et argent", "Translator: loot and money"),
     function() return ChatFRDB.brLoot end,
     function(v) ChatFRDB.brLoot = v end)
-
-  if en then
-    settingsPanel:SetHeight(-y + 16)
-  else
-    MakeSlider(settingsPanel, -324, L("Opacité du fond", "Background opacity"), "%.2f", 0.2, 1, 0.05,
-      function() return ChatFRDB.alpha or 0.92 end,
-      function(v)
-        ChatFRDB.alpha = v
-        win:SetBackdropColor(0, 0, 0, v)
-      end)
-    local defSize = 14
-    if ChatFontNormal and ChatFontNormal.GetFont then
-      local _, sz = ChatFontNormal:GetFont()
-      if sz then defSize = sz end
-    end
-    MakeSlider(settingsPanel, -370, L("Taille du texte", "Text size"), "%d", 9, 20, 1,
-      function() return ChatFRDB.fontsize or defSize end,
-      function(v)
-        ChatFRDB.fontsize = math.floor(v + 0.5)
-        ApplyFont()
-      end)
-
-    MakeSlider(settingsPanel, -416, L("Confiance minimale", "Minimum confidence"), "%d%%", 0, 100, 5,
-      function() return math.floor((ChatFRDB.minconf or 0.75) * 100 + 0.5) end,
-      function(v) ChatFRDB.minconf = math.floor(v + 0.5) / 100 end)
-
-    MakeButton(settingsPanel, -464, L("Vider la fenêtre", "Clear the window"), function() msgs:Clear() end)
-    MakeButton(settingsPanel, -492, L("Position par défaut", "Default position"), function() ResetPos(); SavePos() end)
+  MakeCheck(settingsPanel, Next(), L("Bande de cases (lue par le traducteur)", "Strip of squares (read by the translator)"),
+    function() return ChatFRDB.bridge end,
+    function(v)
+      ChatFRDB.bridge = v
+      if ns.BridgeSetShown then ns.BridgeSetShown(v) end
+    end)
+  MakeCheck(settingsPanel, Next(), L("Bouton de la minicarte", "Minimap button"),
+    function() return not ChatFRDB.mmhide end,
+    function(v)
+      ChatFRDB.mmhide = not v
+      local b = _G.ChatFRMinimapButton
+      if b then if v then b:Show() else b:Hide() end end
+    end)
+  -- coin de la bande (meme reglage que /cfr pont coin)
+  local CORNER_NAME = { TOPLEFT = L("haut gauche", "top left"), TOPRIGHT = L("haut droite", "top right"),
+                        BOTTOMRIGHT = L("bas droite", "bottom right"), BOTTOMLEFT = L("bas gauche", "bottom left") }
+  local CORNER_NEXT = { TOPLEFT = "TOPRIGHT", TOPRIGHT = "BOTTOMRIGHT", BOTTOMRIGHT = "BOTTOMLEFT", BOTTOMLEFT = "TOPLEFT" }
+  local function cornerLabel()
+    return L("Coin de la bande : ", "Strip corner: ") .. (CORNER_NAME[ChatFRDB.bridgecorner or "TOPLEFT"] or CORNER_NAME.TOPLEFT)
   end
+  local cornerBtn
+  cornerBtn = MakeButton(settingsPanel, y - 2, cornerLabel(), function()
+    ChatFRDB.bridgecorner = CORNER_NEXT[ChatFRDB.bridgecorner or "TOPLEFT"] or "TOPLEFT"
+    if ns.BridgeLayout then ns.BridgeLayout() end
+    cornerBtn:SetText(cornerLabel())
+  end)
+  y = y - 32
+
+  settingsPanel:SetHeight(-y + 12)
 
   gear:SetScript("OnClick", function()
     if settingsPanel:IsShown() then settingsPanel:Hide() else settingsPanel:Show() end
@@ -1129,6 +1110,19 @@ f:SetScript("OnEvent", function(_, event, name, author, a3, a4, a5, a6, a7, a8, 
     pcall(StartLogFlush)
     local okM, errM = pcall(CreateMinimapButton)
     if not okM then Say(L("bouton minicarte indisponible : ", "minimap button unavailable: ") .. tostring(errM)) end
+    -- Premier lancement avec ChatFR (ou premiere fois avec cette option) : la fenetre de reglages
+    -- s'ouvre une seule fois, au milieu de l'ecran.
+    if not ChatFRDB.setupShown and settingsPanel then
+      ChatFRDB.setupShown = true
+      local function setup()
+        settingsPanel:ClearAllPoints()
+        settingsPanel:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+        settingsPanel:Show()
+        Say(L("voici les r\195\169glages de ChatFR (affich\195\169s une seule fois). Pour les rouvrir : la roue dent\195\169e de la fen\195\170tre ChatFR ou /cfr menu.",
+              "here are ChatFR's settings (shown only once). To open them again: the gear on the ChatFR window or /cfr menu."))
+      end
+      if C_Timer and C_Timer.After then C_Timer.After(3, function() pcall(setup) end) else pcall(setup) end
+    end
     -- Annonce d'une nouvelle version du traducteur externe : fenetre au centre de l'ecran,
     -- remontree a chaque connexion tant que le joueur n'a pas clique "OK".
     -- Changer TRAD_NOTICE (plus haut) a chaque nouvelle version du traducteur a annoncer.
@@ -1255,10 +1249,29 @@ SlashCmdList["CHATFR"] = function(msg)
   elseif msg == "auto" then
     ChatFRDB.autohide = not ChatFRDB.autohide
     Say(L("masquage automatique quand une fenêtre est ouverte : ", "auto-hide when a window is open: ") .. (ChatFRDB.autohide and L("activé.", "enabled.") or L("désactivé.", "disabled.")))
+  elseif (msg == "pont" or msg == "bridge") and arg then
+    -- "/cfr pont coin" : la bande passe au coin suivant ; "/cfr pont hg|hd|bg|bd" : coin precis
+    local NAMES = { TOPLEFT = L("en haut a gauche", "top left"), TOPRIGHT = L("en haut a droite", "top right"),
+                    BOTTOMLEFT = L("en bas a gauche", "bottom left"), BOTTOMRIGHT = L("en bas a droite", "bottom right") }
+    local ORDER = { TOPLEFT = "TOPRIGHT", TOPRIGHT = "BOTTOMRIGHT", BOTTOMRIGHT = "BOTTOMLEFT", BOTTOMLEFT = "TOPLEFT" }
+    local PICK = { hg = "TOPLEFT", hd = "TOPRIGHT", bg = "BOTTOMLEFT", bd = "BOTTOMRIGHT",
+                   tl = "TOPLEFT", tr = "TOPRIGHT", bl = "BOTTOMLEFT", br = "BOTTOMRIGHT" }
+    local cur = ChatFRDB.bridgecorner or "TOPLEFT"
+    if arg == "coin" or arg == "corner" then
+      ChatFRDB.bridgecorner = ORDER[cur] or "TOPLEFT"
+    elseif PICK[arg] then
+      ChatFRDB.bridgecorner = PICK[arg]
+    else
+      Say(L("/cfr pont coin (coin suivant) ou /cfr pont hg / hd / bg / bd", "/cfr bridge corner (next corner) or /cfr bridge tl / tr / bl / br"))
+      return
+    end
+    if ns.BridgeLayout then ns.BridgeLayout() end
+    Say(L("bande de cases deplacee ", "strip of squares moved to the ") .. NAMES[ChatFRDB.bridgecorner] ..
+      L(" (le traducteur la retrouve tout seul ; ne la cache pas avec sa fenetre).", " (the translator finds it on its own; don't cover it with its window)."))
   elseif msg == "pont" or msg == "bridge" then
     ChatFRDB.bridge = not ChatFRDB.bridge
     if ns.BridgeSetShown then ns.BridgeSetShown(ChatFRDB.bridge) end
-    Say(L("pont image (bande de couleur en haut a gauche, lue par le traducteur) : ", "image bridge (colored strip at the top left, read by the translator): ") ..
+    Say(L("pont image (bande de couleur, lue par le traducteur) : ", "image bridge (colored strip, read by the translator): ") ..
       (ChatFRDB.bridge and L("active.", "enabled.") or L("desactive.", "disabled.")))
   elseif msg == "minimap" then
     ChatFRDB.mmhide = not ChatFRDB.mmhide

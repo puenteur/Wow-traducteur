@@ -49,7 +49,7 @@ Le détail de chaque étape est plus bas.
 
 **Addon ChatFR en jeu**
 - Fenêtre de traduction hors ligne dans le jeu (dictionnaire de plus de 6 000 mots), facultative.
-- Bande de cases colorées en haut à gauche, lue par le traducteur.
+- Bande de cases colorées en haut à gauche (ou dans un autre coin : `/cfr pont coin`), lue par le traducteur.
 - Annonce en jeu des nouvelles versions du traducteur.
 
 ## Téléchargement
@@ -67,7 +67,7 @@ Deux morceaux, **tous les deux obligatoires** :
 
 | Morceau | Où | Rôle |
 | --- | --- | --- |
-| Addon **ChatFR** | dans le jeu | récupère chaque message du tchat et l'affiche dans une petite bande de cases colorées en haut à gauche de l'écran |
+| Addon **ChatFR** | dans le jeu | récupère chaque message du tchat et l'affiche dans une petite bande de cases colorées en haut à gauche de l'écran (ou dans un autre coin) |
 | **WoW Traducteur** (`translator.py`) | sur Windows | lit cette bande par capture d'écran, traduit avec Google Traduction et affiche le résultat dans sa fenêtre |
 
 Pourquoi une bande de couleurs ? Un addon WoW n'a pas accès à Internet, et le client n'écrit le fichier de log du tchat qu'à la fermeture du jeu. La bande est le seul moyen de faire sortir le texte du jeu en direct. **Sans l'addon, le traducteur ne reçoit rien.**
